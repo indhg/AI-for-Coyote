@@ -31,7 +31,7 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 
 - 本仓库整体以 **GPL-3.0** 发布（见 [LICENSE](LICENSE)）。
 - `relay/` 目录源自 [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0），保留其原始许可证。
-- **本体与 DLC**：仓库本体自带轻口味的「纯爱版」角色（`content/pure/`）。「调教版」提示词与 NSFW 语料作为 DLC1，未来还可能增加更多 DLC；这类内容较为露骨，暂不公开提供，分发方式待定。具体清单见下节「项目内容」。
+- **本体与 DLC**：仓库本体自带轻口味的「纯爱版」角色（`content/pure/`）。「调教版」提示词与 NSFW 语料作为 DLC1 存放在 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（成人内容，18+），未来还可能增加更多 DLC。具体清单见下节「项目内容」。
 
 ## 项目内容
 
@@ -47,7 +47,7 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 
 ### DLC1：调教版
 
-`content/pack/DLC1-调教版/`（gitignore）：
+存放于 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（18+），下载后放进 `content/pack/`：
 
 | 文件 | 说明 |
 |---|---|
