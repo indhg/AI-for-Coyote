@@ -17,6 +17,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+# 控制台编码可能不是 UTF-8（如 CI 的 cp1252），强制 UTF-8 输出，避免中文打印崩溃
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 VERSION = next((a for a in sys.argv[1:] if not a.startswith("--")), "0.1.0-beta")
 CI = "--ci" in sys.argv  # CI 模式：用当前解释器（依赖已装好），不建 venv、不跑 npm
 ROOT = Path(__file__).resolve().parent.parent

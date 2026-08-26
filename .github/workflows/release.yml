@@ -37,6 +37,8 @@ jobs:
 
       - name: 打包与组装
         shell: pwsh
+        env:
+          PYTHONIOENCODING: utf-8
         run: |
           # PyInstaller 把 INFO 日志写 stderr；pwsh 会把它当致命错误，这里显式关掉
           $PSNativeCommandUseErrorActionPreference = $false
