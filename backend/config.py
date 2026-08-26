@@ -9,13 +9,18 @@
 import copy
 import logging
 import os
+import sys
 from pathlib import Path
 
 import yaml
 
 from . import waveforms as wf_mod
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# 打包（PyInstaller）后以 exe 所在目录为项目根；开发时以仓库根
+if getattr(sys, "frozen", False):
+    PROJECT_ROOT = Path(sys.executable).resolve().parent
+else:
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_DIR = PROJECT_ROOT / "config"
 logger = logging.getLogger("ai-for-coyote.config")
 

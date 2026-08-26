@@ -1,0 +1,49 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 构建前端
+        run: npm ci && npm run build
+        working-directory: frontend
+
+      - name: 安装 Python 依赖
+        run: pip install -r requirements.txt pyinstaller opencv-python numpy
+
+      - name: 打包与组装
+        shell: pwsh
+        run: |
+          $ver = $env:GITHUB_REF_NAME -replace '^v', ''
+          python packaging/build_release.py $ver --ci
+          Get-ChildItem build_release/*.zip | ForEach-Object { Write-Output "ZIP=$($_.FullName)" }
+
+      - name: 上传 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build_release/AI-for-Coyote-v*.zip
+          generate_release_notes: true

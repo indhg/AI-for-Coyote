@@ -11,6 +11,7 @@ import contextlib
 import io
 import os
 import socket
+import sys
 import urllib.parse
 from pathlib import Path
 
@@ -29,7 +30,11 @@ from .logging_utils import setup_logging
 from .relay_client import RelayClient
 from .safety import SafetyManager
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# 打包（PyInstaller）后以 exe 所在目录为项目根；开发时以仓库根
+if getattr(sys, "frozen", False):
+    PROJECT_ROOT = Path(sys.executable).resolve().parent
+else:
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 
 

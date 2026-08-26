@@ -3,6 +3,7 @@ node_modules/
 frontend/dist/
 __pycache__/
 *.pyc
+build_release/
 
 # ============ 运行产物 ============
 logs/
