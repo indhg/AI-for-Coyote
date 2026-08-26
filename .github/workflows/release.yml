@@ -42,8 +42,11 @@ jobs:
         run: |
           # PyInstaller 把 INFO 日志写 stderr；pwsh 会把它当致命错误，这里显式关掉
           $PSNativeCommandUseErrorActionPreference = $false
+          # PyInstaller 产物偶发被 Defender 误报，先排除工作目录
+          Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE" -ErrorAction SilentlyContinue
           $ver = $env:GITHUB_REF_NAME -replace '^v', ''
-          python packaging/build_release.py $ver --ci
+          python packaging/build_release.py $ver --ci 2>&1 | Tee-Object -FilePath build_log.txt
+          if ($LASTEXITCODE -ne 0) { Get-Content build_log.txt -Tail 40; exit 1 }
           Get-ChildItem build_release/*.zip | ForEach-Object { Write-Output "ZIP=$($_.FullName)" }
 
       - name: 上传 Release
