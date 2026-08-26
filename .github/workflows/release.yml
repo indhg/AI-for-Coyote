@@ -47,3 +47,4 @@ jobs:
         with:
           files: build_release/AI-for-Coyote-v*.zip
           generate_release_notes: true
+          overwrite: true
