@@ -3,26 +3,29 @@ import { api } from "../api";
 import { useApp } from "../store";
 
 const STYLE_LABELS: Record<string, string> = {
-  调教: "调教版",
   纯爱: "纯爱版",
+  调教: "调教版",
 };
 
 // zustand selector 必须返回稳定引用，不能内联新数组（否则无限重渲染）
-const DEFAULT_PROFILES: string[] = ["调教", "纯爱"];
+const DEFAULT_PROFILES: string[] = ["纯爱", "调教"];
 
 export default function CharacterConfig() {
-  const profile = useApp((st) => st.state?.profile ?? "调教");
+  const profile = useApp((st) => st.state?.profile ?? "纯爱");
   const profiles = useApp((st) => st.state?.profiles ?? DEFAULT_PROFILES);
+  const avail = useApp((st) => st.state?.profile_available);
   const nick = useApp((st) => st.state?.config_info?.player_nick ?? "小柳");
   const [draft, setDraft] = useState(nick);
+  const [err, setErr] = useState("");
   useEffect(() => setDraft(nick), [nick]);
 
   const switchProfile = async (p: string) => {
     if (p === profile) return;
+    setErr("");
     try {
       await api.setProfile(p);
     } catch {
-      /* 状态由 ws 推送刷新 */
+      setErr(`「${STYLE_LABELS[p] ?? p}」未安装 DLC：请把对应 DLC 目录放入 content\\pack\\ 并在 config\\character.yaml 启用其 prompt_file，重启后即可切换。`);
     }
   };
 
@@ -45,23 +48,32 @@ export default function CharacterConfig() {
 
       <div className="mb-2 text-[11px] text-muted">对话风格</div>
       <div className="flex gap-1.5">
-        {profiles.map((p) => (
-          <button
-            key={p}
-            onClick={() => void switchProfile(p)}
-            className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] transition-colors ${
-              p === profile
-                ? "border-accent bg-accent font-semibold text-ink"
-                : "border-line bg-panel2 text-muted hover:border-line2"
-            }`}
-          >
-            {STYLE_LABELS[p] ?? p}
-          </button>
-        ))}
+        {profiles.map((p) => {
+          const ok = avail?.[p] ?? true;
+          return (
+            <button
+              key={p}
+              disabled={!ok}
+              title={ok ? undefined : `${STYLE_LABELS[p] ?? p}需要安装对应 DLC（content\\pack\\）`}
+              onClick={() => void switchProfile(p)}
+              className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] transition-colors ${
+                p === profile
+                  ? "border-accent bg-accent font-semibold text-ink"
+                  : ok
+                    ? "border-line bg-panel2 text-muted hover:border-line2"
+                    : "cursor-not-allowed border-line bg-panel2 text-faint opacity-60"
+              }`}
+            >
+              {STYLE_LABELS[p] ?? p}
+              {!ok && <span className="ml-1 text-[10px]">未装DLC</span>}
+            </button>
+          );
+        })}
       </div>
       <p className="mt-1 text-[10px] text-faint">
-        {profile === "纯爱" ? "温柔驯服·依赖顺从" : "黑暗调教·支配胁迫"}
+        {profile === "纯爱" ? "温柔驯服·依赖顺从" : "黑暗调教·支配胁迫（DLC1）"}
       </p>
+      {err && <p className="mt-1.5 text-[10px] leading-relaxed text-red-400">{err}</p>}
 
       <div className="mb-2 mt-3 text-[11px] text-muted">称谓（AI 怎么叫你）</div>
       <input

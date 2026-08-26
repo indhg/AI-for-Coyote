@@ -357,13 +357,25 @@ def _load_character(path: Path) -> dict:
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     runtime = _load_character_runtime()
 
-    # 风格版本：运行时覆盖 > 配置文件 profile > 默认「调教」
+    # 风格版本：运行时覆盖 > 配置文件 profile > 默认「纯爱」
     profiles = data.get("profiles") if isinstance(data.get("profiles"), dict) else {}
-    available = list(profiles.keys()) or ["调教"]
-    profile_name = str(runtime.get("profile") or data.get("profile") or "调教").strip()
+    available = list(profiles.keys()) or ["纯爱"]
+    profile_name = str(runtime.get("profile") or data.get("profile") or "纯爱").strip()
     if profile_name not in available:
         profile_name = available[0]
     profile = profiles.get(profile_name) or {}
+
+    # 各版本 DLC 可用性：该版本的 prompt_file 存在才算已安装（未安装则切换被拦）
+    profile_available: dict[str, bool] = {}
+    for nm in available:
+        pf = profiles.get(nm, {}).get("prompt_file") or data.get("prompt_file")
+        if pf:
+            pp = Path(str(pf))
+            if not pp.is_absolute():
+                pp = PROJECT_ROOT / pp
+            profile_available[nm] = pp.exists()
+        else:
+            profile_available[nm] = False
 
     # 提示词：版本内 prompt_file 优先，其次顶层
     prompt = ""
@@ -396,6 +408,7 @@ def _load_character(path: Path) -> dict:
         "player_nick": nick,
         "profile": profile_name,
         "profiles": available,
+        "profile_available": profile_available,
         "prompt_file": prompt_file,
         "examples": examples,
     }

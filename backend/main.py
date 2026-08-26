@@ -22,7 +22,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .audio import AudioManager
 from .camera import Camera
-from .config import load_config, save_character_runtime, save_device_channels
+from .config import load_config, reload_character, save_character_runtime, save_device_channels
 from .game_loop import GameLoop
 from .llm import LLM
 from .logging_utils import setup_logging
@@ -392,11 +392,24 @@ def make_app() -> FastAPI:
 
     @app.post("/api/character/profile")
     async def api_character_profile(body: dict) -> JSONResponse:
-        """切换风格版本：{profile: "纯爱"|"调教"}，保存并热加载。"""
+        """切换风格版本：{profile: "纯爱"|"调教"}，保存并热加载；目标版本 DLC 未安装时拒绝。"""
         profile = str(body.get("profile") or "").strip()
+        # 以文件当前状态为准：先热加载再校验，避免陈旧内存配置放行未安装的 DLC
+        reload_character(cfg)
         available = list(cfg["character"].get("profiles") or [])
         if profile not in available:
             return JSONResponse({"error": f"未知版本，可用：{available}"}, status_code=400)
+        if not cfg["character"].get("profile_available", {}).get(profile, True):
+            return JSONResponse(
+                {
+                    "error": (
+                        f"「{profile}」版的 DLC 未安装：请把对应 DLC 目录放入 content\\pack\\，"
+                        "并在 config\\character.yaml 中启用该版本的 prompt_file 后重启程序。"
+                    ),
+                    "detail": "dlc_missing",
+                },
+                status_code=400,
+            )
         save_character_runtime(cfg, profile=profile)
         await state.broadcast()
         return JSONResponse({"ok": True, "profile": cfg["character"]["profile"]})

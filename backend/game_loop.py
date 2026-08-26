@@ -113,8 +113,9 @@ class GameLoop:
         state["dull_rounds"] = self.dull_rounds
         state["sensor_dull"] = self.sensor_dull
         # 风格版本（纯爱版 / 调教版）与可用版本列表（页面切换用）
-        state["profile"] = str(self.cfg["character"].get("profile") or "调教")
-        state["profiles"] = list(self.cfg["character"].get("profiles") or ["调教"])
+        state["profile"] = str(self.cfg["character"].get("profile") or "纯爱")
+        state["profiles"] = list(self.cfg["character"].get("profiles") or ["纯爱"])
+        state["profile_available"] = dict(self.cfg["character"].get("profile_available") or {})
         state["autopilot"] = bool(self.autopilot)
         state["autopilot_interval_s"] = self.autopilot_interval
         return state

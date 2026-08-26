@@ -48,6 +48,7 @@ export interface FullState {
   patterns: Record<"A" | "B", string | null>;
   profile: string;
   profiles: string[];
+  profile_available: Record<string, boolean>;
   autopilot: boolean;
   autopilot_interval_s: number;
   sensors_on: boolean;
