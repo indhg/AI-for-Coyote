@@ -101,8 +101,7 @@ GPL-3.0。源码：https://github.com/indhg/AI-for-Coyote
 def main() -> None:
     if CI:
         py = Path(sys.executable)
-        pyinstaller = py.parent / "pyinstaller.exe"
-        step("1/4 CI：前端假定已构建，直接用当前环境打包")
+        pyinstaller = None
     else:
         step("1/6 构建前端")
         run(["npm.cmd", "run", "build"], cwd=ROOT / "frontend")
@@ -126,6 +125,25 @@ def main() -> None:
                "--timeout", "30", "--retries", "5"]
         run(pip + ["-r", str(ROOT / "requirements.txt"), "pyinstaller", "opencv-python", "numpy"], env=env)
         pyinstaller = venv / "Scripts" / "pyinstaller.exe"
+
+    # pyinstaller 可能在 python 同目录（venv）或 Scripts\ 子目录（setup-python 布局），再从 PATH 兜底
+    if pyinstaller is None:
+        pyinstaller = next(
+            (
+                p
+                for p in (
+                    py.parent / "pyinstaller.exe",
+                    py.parent / "Scripts" / "pyinstaller.exe",
+                )
+                if p.exists()
+            ),
+            None,
+        )
+        if pyinstaller is None:
+            found = shutil.which("pyinstaller") or shutil.which("pyinstaller.exe")
+            pyinstaller = Path(found) if found else None
+    if pyinstaller is None:
+        raise SystemExit("找不到 pyinstaller：请先 pip install pyinstaller")
 
     step("3/6 PyInstaller 打包后端")
     run(
