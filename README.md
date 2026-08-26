@@ -65,7 +65,8 @@ copy config\character.example.yaml config\character.yaml
 ```
 
 - `config/config.yaml`：填 `llm.api_key`（或环境变量 `DGLAB_LLM_API_KEY`）、模型地址；先 `dry_run: true` 联调，接真机时改 `false`
-- `config/character.yaml`：角色设定（默认「纯爱版」；调教版见内容包）
+- 也可以启动后打开网页 **「设置 → AI 模型配置」** 直接填写 API Key / 地址 / 模型名：点「测试连接」验证、点「保存并生效」即时生效（无需重启；首次保存自动生成 config.yaml）
+- `config/character.yaml`：角色设定（默认「纯爱版」；调教版见 DLC1）
 - `config/device_channels.yaml`：通道与配件映射、强度基准（首次运行自动生成）
 
 ### 3. 启动

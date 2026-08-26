@@ -9,10 +9,12 @@
 import asyncio
 import contextlib
 import io
+import os
 import socket
 import urllib.parse
 from pathlib import Path
 
+import httpx
 import qrcode
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -417,6 +419,104 @@ def make_app() -> FastAPI:
         await state.set_sensors(enabled)
         await state.broadcast()
         return JSONResponse({"ok": True, "autopilot": bool(state.loop.autopilot)})
+
+    # ---------- AI 模型配置（设置页填写，保存即生效） ----------
+    @app.get("/api/settings/llm")
+    async def api_settings_llm() -> JSONResponse:
+        llm = cfg.get("llm", {})
+        key = str(llm.get("api_key") or "")
+        masked = (
+            key[:4] + "*" * (len(key) - 8) + key[-4:]
+            if len(key) > 12
+            else ("*" * len(key) or "")
+        )
+        return JSONResponse(
+            {
+                "base_url": str(llm.get("base_url", "")),
+                "model": str(llm.get("model", "")),
+                "api_key_masked": masked,
+                "has_key": bool(key),
+                "saved": (PROJECT_ROOT / "config" / "config.yaml").exists(),
+            }
+        )
+
+    def _patch_llm_text(text: str, api_key: str, base_url: str, model: str) -> str:
+        """文本级更新 config.yaml 的 llm 小节（仅 2 空格缩进键），保留其余注释与内容。"""
+        lines = text.splitlines()
+        out: list[str] = []
+        in_llm = False
+        for ln in lines:
+            if ln and not ln.startswith(" "):
+                in_llm = ln.startswith("llm:")
+                out.append(ln)
+                continue
+            if in_llm and ln.startswith("  ") and not ln.startswith("    "):
+                key = ln.lstrip().split(":", 1)[0]
+                if key == "api_key":
+                    out.append(f'  api_key: "{api_key}"')
+                    continue
+                if key == "base_url":
+                    out.append(f"  base_url: {base_url}")
+                    continue
+                if key == "model":
+                    out.append(f"  model: {model}")
+                    continue
+            out.append(ln)
+        return "\n".join(out) + "\n"
+
+    @app.post("/api/settings/llm")
+    async def api_settings_llm_save(body: dict) -> JSONResponse:
+        """保存 AI 配置并热加载：{api_key, base_url, model}；config.yaml 不存在时自动从示例生成。"""
+        api_key = str(body.get("api_key") or "").strip()
+        base_url = str(body.get("base_url") or "").strip()
+        model = str(body.get("model") or "").strip()
+        if not base_url or not model:
+            return JSONResponse({"error": "地址与模型名不能为空"}, status_code=400)
+        cfg_path = PROJECT_ROOT / "config" / "config.yaml"
+        example = PROJECT_ROOT / "config" / "config.example.yaml"
+        if not cfg_path.exists():
+            cfg_path.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
+        cfg_path.write_text(
+            _patch_llm_text(cfg_path.read_text(encoding="utf-8"), api_key, base_url, model),
+            encoding="utf-8",
+        )
+        # 同步内存并热加载（key 留空时回退环境变量 DGLAB_LLM_API_KEY）
+        llm = cfg.setdefault("llm", {})
+        llm["api_key"] = api_key or os.environ.get("DGLAB_LLM_API_KEY", "")
+        llm["base_url"] = base_url
+        llm["model"] = model
+        old = state.llm
+        state.llm = LLM(cfg)
+        state.loop.llm = state.llm
+        with contextlib.suppress(Exception):
+            await old.client.aclose()
+        await state.broadcast()
+        return JSONResponse({"ok": True, "model": model})
+
+    @app.post("/api/settings/llm/test")
+    async def api_settings_llm_test(body: dict) -> JSONResponse:
+        """测试连接：用表单值发一条最小请求（不保存）。"""
+        api_key = str(body.get("api_key") or "").strip() or os.environ.get("DGLAB_LLM_API_KEY", "")
+        base = str(body.get("base_url") or "").strip()
+        model = str(body.get("model") or "").strip()
+        if not api_key or not base or not model:
+            return JSONResponse({"ok": False, "error": "请先填写 API Key、地址与模型名"})
+        try:
+            async with httpx.AsyncClient(timeout=20) as client:
+                r = await client.post(
+                    f"{base.rstrip('/')}/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={
+                        "model": model,
+                        "messages": [{"role": "user", "content": "hi"}],
+                        "max_tokens": 1,
+                    },
+                )
+            if r.status_code == 200:
+                return JSONResponse({"ok": True, "detail": "连接成功，模型可用"})
+            return JSONResponse({"ok": False, "error": f"HTTP {r.status_code}: {r.text[:200]}"})
+        except Exception as exc:  # noqa: BLE001
+            return JSONResponse({"ok": False, "error": str(exc)[:300]})
 
     # ---------- 实时推送 ----------
     @app.websocket("/ws")

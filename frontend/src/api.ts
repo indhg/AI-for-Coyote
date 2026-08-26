@@ -38,4 +38,19 @@ export const api = {
     j<{ ok: boolean }>("/api/character/nick", json({ nick })),
   setAutopilot: (enabled: boolean) =>
     j<{ ok: boolean }>("/api/autopilot", json({ enabled })),
+  getLlm: () =>
+    j<{
+      base_url: string;
+      model: string;
+      api_key_masked: string;
+      has_key: boolean;
+      saved: boolean;
+    }>("/api/settings/llm"),
+  setLlm: (body: { api_key: string; base_url: string; model: string }) =>
+    j<{ ok: boolean; model?: string }>("/api/settings/llm", json(body)),
+  testLlm: (body: { api_key: string; base_url: string; model: string }) =>
+    j<{ ok: boolean; error?: string; detail?: string }>(
+      "/api/settings/llm/test",
+      json(body),
+    ),
 };
