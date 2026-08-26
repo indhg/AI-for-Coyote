@@ -160,7 +160,7 @@ AI-for-Coyote\
 ├── relay\               dglab-websocket-server（Bun，v4 端口 9998）
 ├── config\              config.example.yaml（示例配置）、waveforms.yaml（波形库）
 ├── content\pure\        仓库自带内容：纯爱版提示词/语料/设定（默认角色）
-├── content\pack\        DLC 系列（DLC1-调教版等，gitignore）
+├── content\pack\        DLC 系列（DLC1-触手-调教版等，gitignore）
 ├── logs\                程序运行日志（app.log）
 └── start.bat            一键启动
 ```

@@ -3,8 +3,8 @@
 # 支持双版本风格（profiles），页面侧边栏可切换；每版各自 prompt_file + examples。
 #
 # 开箱即玩：纯爱版=本体，提示词在仓库 content\pure\ 里，复制本文件即可跑。
-# 调教版=DLC1（NSFW），本地另存于 content\pack\DLC1-调教版\，分发方式待定；
-# 安装后把下面 调教 的 prompt_file 指向 content/pack/DLC1-调教版/触手-角色提示词-调教.md。
+# 调教版=DLC1（NSFW），存放于 AI-for-Coyote-DLC 仓库（content\pack\DLC1-触手-调教版\）；
+# 安装后把下面 调教 的 prompt_file 指向 content/pack/DLC1-触手-调教版/触手-角色提示词-调教.md。
 
 name: 触手
 
@@ -24,8 +24,8 @@ profiles:
           actions:
             - { op: hold_strength, channel: A, value: 10 }
   调教:
-    # DLC1 安装后取消注释：content/pack/DLC1-调教版/触手-角色提示词-调教.md
-    # prompt_file: content/pack/DLC1-调教版/触手-角色提示词-调教.md
+    # DLC1 安装后取消注释：content/pack/DLC1-触手-调教版/触手-角色提示词-调教.md
+    # prompt_file: content/pack/DLC1-触手-调教版/触手-角色提示词-调教.md
     examples:
       - user: 我进来了。
         assistant:
