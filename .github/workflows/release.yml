@@ -38,6 +38,8 @@ jobs:
       - name: 打包与组装
         shell: pwsh
         run: |
+          # PyInstaller 把 INFO 日志写 stderr；pwsh 会把它当致命错误，这里显式关掉
+          $PSNativeCommandUseErrorActionPreference = $false
           $ver = $env:GITHUB_REF_NAME -replace '^v', ''
           python packaging/build_release.py $ver --ci
           Get-ChildItem build_release/*.zip | ForEach-Object { Write-Output "ZIP=$($_.FullName)" }
