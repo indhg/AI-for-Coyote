@@ -1,0 +1,60 @@
+# ============ AI 郊狼驯服师 主配置 ============
+# 修改后重启程序生效。
+
+app:
+  host: 127.0.0.1        # Web 页面监听地址（本机访问用 127.0.0.1）
+  port: 8000
+  title: AI for Coyote   # 控制台标题（顶部与浏览器标签页显示）
+  dry_run: false          # true = 不发送真实设备命令，只模拟记录（无设备时联调用）；接真机时改为 false
+
+relay:
+  url: ws://127.0.0.1:9998   # dglab-websocket-server v4 地址
+  reconnect_delay_s: 3       # 断线重连间隔
+  lan_ip: auto               # 生成配对二维码用的局域网 IP；auto=自动探测，也可写死如 192.168.1.5
+  public_url: ""             # 计划B：填公网中继地址（如 wss://trex.dungeon-lab.cn/v4），二维码改用它，手机任何网络都能连
+
+llm:
+  base_url: https://api.deepseek.com   # OpenAI 兼容接口地址（通义/豆包/GLM 等填对应地址）
+  api_key: "你的密钥，或用环境变量 DGLAB_LLM_API_KEY"                            # 你的密钥；也可用环境变量 DGLAB_LLM_API_KEY
+  model: deepseek-v4-flash-vision-exp                       # 模型名
+  temperature: 1.0
+  max_tokens: 1500
+  timeout_s: 60
+  json_mode: true                        # 是否请求 JSON 输出模式；模型不支持就改 false（程序有兜底解析）
+  vision:                                # 视觉任务独立端点；留空 = 与主模型相同（实测 DS Vision 对漫画提炼效果更好，暂用 DS）
+    base_url: ""                         # 备用本地模型：http://127.0.0.1:11434/v1 + model: qwen2.5vl:7b
+    api_key: "你的密钥，或用环境变量 DGLAB_LLM_API_KEY"
+    model: ""
+
+character_file: config/character.yaml    # 角色设定文件（自己写，可随时改）
+
+# ============ 安全（任何来源的命令都经过这里钳制） ============
+safety:
+  channels:
+    A:
+      max_strength: 100   # A 通道强度上限（按配件自行调低）
+    B:
+      max_strength: 100   # B 通道强度上限
+  max_temp_duration_s: 10       # 「爆发」最长秒数
+  max_strength_step: 40         # 单条指令允许的最大强度变化量（防跳变）
+  auto_clear_on_disconnect: true  # 中继/App 断开时自动清零
+  overheat_reduce_to: 20        # 设备过热时强度上限临时降到该值
+
+# ============ 页面 UI 细节 ============
+ui:
+  quick_strengths: [20, 40, 60, 80]   # 每通道的快捷强度按钮
+  default_temp_s: 3                   # 「爆发」默认秒数
+  default_pulse_s: 5                  # 波形默认时长
+
+# ============ 摄像头（阶段 3，可选） ============
+camera:
+  enabled: false            # true = 开启摄像头画面分析（需 pip install opencv-python）
+  index: 0                  # 摄像头编号（0=默认；用 OBS 虚拟摄像头就选对应编号）
+  interval_s: 1.5           # 截帧频率（秒/张）
+  auto_observe: true        # AI 自动观察循环：每隔 observe_interval_s 看一次画面并决定是否调整
+  observe_interval_s: 10    # 自动观察间隔（秒）
+
+log:
+  dir: logs
+  level: INFO
+  history_keep: 40   # 发给模型保留的最近对话条数

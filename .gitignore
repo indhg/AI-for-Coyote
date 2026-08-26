@@ -1,0 +1,37 @@
+# ============ 依赖与构建产物 ============
+node_modules/
+frontend/dist/
+__pycache__/
+*.pyc
+
+# ============ 运行产物 ============
+logs/
+*.log
+
+# ============ 隐私与密钥（绝不入库） ============
+# 含 API 密钥与个人安全配置
+config/config.yaml
+# 含个人角色设定（NSFW）
+config/character.yaml
+# 配件与强度基准（NSFW）
+config/device_channels.yaml
+# 风格版本/昵称运行时覆盖
+config/character_runtime.yaml
+# 配置文件备份
+*.bak
+.env
+*.pem
+
+# ============ 私有内容包与生产工具（不上传） ============
+# 调教版提示词/语料（NSFW，私发内容包）
+content/pack/
+# 蒸馏/反推等生产工具
+tools/
+
+# ============ 个人素材与本地大模型 ============
+素材/
+ollama/
+
+# ============ IDE ============
+.vscode/
+.idea/

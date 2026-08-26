@@ -1,0 +1,19 @@
+{
+  "name": "dglab-websocket-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.14",
+  "scripts": {
+    "v3": "bun run v3-server.ts",
+    "v4": "bun run v4-server.ts",
+    "dev:v3": "bun --watch v3-server.ts",
+    "dev:v4": "bun --watch v4-server.ts"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
