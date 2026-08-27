@@ -10,6 +10,7 @@ export default function PresetPanel() {
   const setLastPreset = useApp((st) => st.setLastPreset);
 
   const presets = s?.presets ?? [];
+  const paired = s?.relay_status === "paired";
   const cats: string[] = [];
   for (const p of presets) if (!cats.includes(p.category)) cats.push(p.category);
   const [activeCat, setActiveCat] = useState<string>("");
@@ -25,6 +26,11 @@ export default function PresetPanel() {
   return (
     <div className="flex min-h-0 flex-1 flex-col rounded-[14px] border border-line bg-panel p-3">
       <h3 className="mb-2 flex-none text-[12px] font-semibold tracking-[1.5px] text-muted">自选组合</h3>
+      {!paired && (
+        <p className="mb-2 flex-none rounded-lg border border-line bg-ink3 px-2 py-1.5 text-[11px] leading-relaxed text-muted">
+          郊狼未配对：强度/波形暂不生效。用 DG-LAB App 扫右侧二维码重新配对。
+        </p>
+      )}
       <div className="mb-2 flex flex-none flex-wrap gap-1">
         {cats.map((c) => (
           <button
