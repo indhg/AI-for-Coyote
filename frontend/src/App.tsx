@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import TopBar, { type ViewName } from "./components/TopBar";
 import Sidebar from "./components/Sidebar";
 import DeviceStatus from "./components/DeviceStatus";
-import WaveformCard from "./components/WaveformCard";
 import ChannelControl from "./components/ChannelControl";
 import PresetPanel from "./components/PresetPanel";
 import BottomBar from "./components/BottomBar";
@@ -85,9 +84,8 @@ export default function App() {
         <main className="min-h-0 overflow-y-auto px-4 pb-14 pt-3">
           {view === "control" && (
             <div className="flex h-full min-h-0 flex-col gap-2.5">
-              <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-2.5">
+              <div className="min-h-0 flex-1">
                 <DeviceStatus />
-                <WaveformCard />
               </div>
               <ChannelControl />
               <PresetPanel />
