@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TopBar, { type ViewName } from "./components/TopBar";
 import Sidebar from "./components/Sidebar";
 import DeviceStatus from "./components/DeviceStatus";
@@ -10,6 +10,9 @@ import { PairView, SettingsView } from "./components/views";
 import { api } from "./api";
 import { useApp, useChat, useLayout } from "./store";
 import { doEstop } from "./commands";
+
+/** 空格长按触发急停的时长（毫秒，与进度条动画同步） */
+const ESTOP_HOLD_MS = 1000;
 
 export default function App() {
   const [view, setView] = useState<ViewName>("control");
@@ -25,6 +28,17 @@ export default function App() {
     window.addEventListener("resize", calc);
     return () => window.removeEventListener("resize", calc);
   }, []);
+
+  // 空格长按急停的进行中状态与计时器
+  const [holding, setHolding] = useState(false);
+  const holdTimer = useRef<number | null>(null);
+  const cancelHold = () => {
+    if (holdTimer.current !== null) {
+      window.clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+    setHolding(false);
+  };
 
   useEffect(() => {
     // 初始状态
@@ -56,19 +70,33 @@ export default function App() {
       ws.onclose = () => setTimeout(connect, 2000);
     };
     connect();
-    // 空格急停（不在输入框时）
-    const onKey = (e: KeyboardEvent) => {
+    // 空格长按 1s 急停（防误触：松手 / 窗口失焦即取消；已急停时不重复触发）
+    const onKeyDown = (e: KeyboardEvent) => {
       const tag = (document.activeElement?.tagName ?? "").toUpperCase();
-      if (e.code === "Space" && !["INPUT", "TEXTAREA"].includes(tag)) {
-        e.preventDefault();
+      if (e.code !== "Space" || ["INPUT", "TEXTAREA"].includes(tag)) return;
+      e.preventDefault();
+      if (e.repeat) return;
+      if (useApp.getState().state?.estop) return;
+      setHolding(true);
+      holdTimer.current = window.setTimeout(() => {
+        holdTimer.current = null;
+        setHolding(false);
         void doEstop();
-      }
+      }, ESTOP_HOLD_MS);
     };
-    document.addEventListener("keydown", onKey);
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") cancelHold();
+    };
+    const onBlur = () => cancelHold();
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
     return () => {
       closed = true;
       ws?.close();
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
     };
   }, []);
 
@@ -98,6 +126,25 @@ export default function App() {
         <ChatPanel />
       </div>
       <BottomBar />
+      {holding && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center">
+          <div className="w-64 rounded-[10px] border border-line bg-panel2 px-4 py-3 shadow-lg">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-semibold text-text">「急停中…」</span>
+              <span className="text-xs text-muted">松开取消</span>
+            </div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink3">
+              <div
+                className="h-full rounded-full bg-bad"
+                style={{
+                  transformOrigin: "left",
+                  animation: `estop-fill ${ESTOP_HOLD_MS}ms linear forwards`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

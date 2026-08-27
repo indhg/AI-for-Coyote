@@ -49,7 +49,7 @@ export default function Sidebar({ view, onView }: Props) {
         <SideBtn icon={<SlidersHorizontal size={16} />} label="控制台" active={view === "control"} onClick={() => onView("control")} />
         <SideBtn icon={<Plus size={16} />} label="添加 / 配对设备" active={view === "pair"} onClick={() => onView("pair")} />
         <SideBtn icon={<Settings size={16} />} label="设置" active={view === "settings"} onClick={() => onView("settings")} />
-        <SideBtn icon={<ShieldAlert size={16} />} label="急停（空格）" danger onClick={doEstop} />
+        <SideBtn icon={<ShieldAlert size={16} />} label="急停（长按空格）" danger onClick={doEstop} />
       </div>
 
       <AccessoryConfig />
@@ -59,7 +59,7 @@ export default function Sidebar({ view, onView }: Props) {
       <p className="mt-3 px-3 text-[11px] leading-relaxed text-faint">
         强度与波形均受安全上限钳制；
         <br />
-        急停（空格 / 底部按钮）可随时清零。
+        急停（长按空格 / 底部按钮）可随时清零。
       </p>
     </aside>
   );

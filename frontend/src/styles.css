@@ -69,3 +69,13 @@ input[type="range"]::-moz-range-thumb {
   scrollbar-width: thin;
   scrollbar-color: rgba(247, 217, 122, 0.35) transparent;
 }
+
+/* ---------- 急停长按进度条 ---------- */
+@keyframes estop-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
