@@ -393,7 +393,7 @@ class GameLoop:
         logger.info("自动挂载默认波形：%s 通道「%s」（强度需波形承载）", ch_name, pattern)
 
     async def _apply_channel_floor(self) -> None:
-        """双通道保底：两轮后 A/B 都必须有波形且强度≠0；每 3 轮内强度与波形至少各调一次。"""
+        """双通道保底：两轮后 A/B 都必须有波形且强度≠0；每 2 轮内强度与波形至少各调一次。"""
         if not (self.safety.enabled.get("A") and self.safety.enabled.get("B")):
             return
         if self.safety.estop_active:
@@ -422,8 +422,8 @@ class GameLoop:
                     self.safety.record(cmd)
                     self.last_strength[ch] = self.turn_count
                     fixed = True
-            # 规则 2：每 3 轮内，强度与波形至少各调整一次
-            if self.turn_count - self.last_strength.get(ch, 0) >= 3:
+            # 规则 2：每 2 轮内，强度与波形至少各调整一次
+            if self.turn_count - self.last_strength.get(ch, 0) >= 2:
                 delta = 5 if strength < self.safety.cap_for(ch) else -5
                 cmd = {"kind": "add", "channel": ch, "delta": delta}
                 self._scale_cmd(cmd)
@@ -432,7 +432,7 @@ class GameLoop:
                 self.safety.record(cmd)
                 self.last_strength[ch] = self.turn_count
                 fixed = True
-            if self.turn_count - self.last_wave.get(ch, 0) >= 3:
+            if self.turn_count - self.last_wave.get(ch, 0) >= 2:
                 await self._ensure_default_wave(ch, client_id, slot_id, ready, self.safety.dry_run)
                 self.last_wave[ch] = self.turn_count
                 fixed = True
