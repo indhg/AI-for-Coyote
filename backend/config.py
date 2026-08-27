@@ -29,7 +29,7 @@ DEFAULTS = {
         "host": "127.0.0.1",
         "port": 8000,
         "dry_run": True,
-        "title": "郊狼 · AI 驯服师",
+        "title": "Coyote in Cradle",
         "sensor_idle_timeout_s": 30,
     },
     "relay": {"url": "ws://127.0.0.1:9998", "reconnect_delay_s": 3, "lan_ip": "auto", "public_url": ""},

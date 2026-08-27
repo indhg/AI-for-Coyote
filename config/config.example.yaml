@@ -4,7 +4,7 @@
 app:
   host: 127.0.0.1        # Web 页面监听地址（本机访问用 127.0.0.1）
   port: 8000
-  title: AI for Coyote   # 控制台标题（顶部与浏览器标签页显示）
+  title: Coyote in Cradle   # 控制台标题（顶部与浏览器标签页显示）
   dry_run: false          # true = 不发送真实设备命令，只模拟记录（无设备时联调用）；接真机时改为 false
 
 relay:
