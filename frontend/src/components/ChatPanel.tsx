@@ -105,7 +105,7 @@ export default function ChatPanel() {
               ? sensorsOn
                 ? `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头/麦克风运行中）`
                 : `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头/麦克风已关闭）`
-              : "AI 只在你发消息时回应（摄像头/麦克风已关闭）"}
+              : "自动运行已停止，AI 暂停行动（摄像头/麦克风已关闭）"}
           </span>
         </div>
         <button

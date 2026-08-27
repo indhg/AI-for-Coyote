@@ -29,7 +29,7 @@ export default function PresetPanel() {
       <h3 className="mb-2 flex-none text-[12px] font-semibold tracking-[1.5px] text-muted">自选组合</h3>
       {estop && (
         <p className="mb-2 flex-none rounded-lg border border-red-500/60 bg-red-950/40 px-2 py-1.5 text-[11px] leading-relaxed text-red-300">
-          急停中：所有设备动作被拒绝。点「解除急停」恢复（页面焦点不在输入框时按空格会触发急停）。
+          急停中：所有设备动作被拒绝。点「解除急停」恢复（焦点不在输入框时长按空格 1 秒触发急停）。
         </p>
       )}
       {!paired && !estop && (
