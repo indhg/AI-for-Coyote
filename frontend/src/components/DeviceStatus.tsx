@@ -30,7 +30,10 @@ export default function DeviceStatus() {
   const paired = st === "paired";
   const waveOf = (ch: "A" | "B") =>
     !s?.pulse_active?.[ch] ? "空闲" : s?.patterns?.[ch] ?? "播放中";
-  const audioLevel = s?.audio?.running ? Math.max(0, Math.min(1, s.audio.level ?? 0)) : 0;
+  // 音量显示：相对「惨叫档」的百分比（后端 level_pct；旧版无此字段时回退原始电平×100）
+  const audioPct = s?.audio?.running
+    ? Math.max(0, Math.min(100, s.audio.level_pct ?? Math.round((s.audio.level ?? 0) * 100)))
+    : 0;
   const acc = (ch: "A" | "B") => {
     const d = s?.device_channels?.[ch];
     const name = d?.name ?? "未设置";
@@ -50,11 +53,11 @@ export default function DeviceStatus() {
             <div className="h-[8px] w-24 flex-none overflow-hidden rounded-full bg-ink3">
               <div
                 className="h-full rounded-full bg-accent transition-all"
-                style={{ width: `${s?.audio?.running ? Math.round(audioLevel * 100) : 0}%` }}
+                style={{ width: `${audioPct}%` }}
               />
             </div>
             <span className="w-6 flex-none text-right text-[12px] font-semibold tabular-nums">
-              {s?.audio?.running ? Math.round(audioLevel * 100) : 0}
+              {audioPct}
             </span>
             <span className="w-24 flex-none truncate text-[11px] text-faint">
               {s?.audio?.running ? s.audio.last_text || "监听中…" : "未开启"}

@@ -55,13 +55,13 @@ class GameLoop:
         self.last_strength = {"A": 0, "B": 0}
         self.last_wave = {"A": 0, "B": 0}
 
-        # 呆滞检测：画面持续黑暗 / 麦克风持续无声 → 触手逐轮暴怒
-        self.dull_rounds = 0
-        self.sensor_dull = False
+        # 怒气值检测：画面持续黑暗 / 麦克风持续无声 → 触手怒气逐轮上升
+        self.rage_rounds = 0
+        self.rage_triggered = False
 
     # ---------- 状态 ----------
-    def _sensor_dull(self) -> bool:
-        """画面持续黑暗 或 麦克风持续无声 → 视为呆滞。"""
+    def _sensor_rage(self) -> bool:
+        """画面持续黑暗 或 麦克风持续无声 → 怒气积累。"""
         dark = False
         if self.camera and self.camera.enabled:
             cs = self.camera.to_state()
@@ -71,13 +71,13 @@ class GameLoop:
             silent = bool(self.audio.to_state().get("silent"))
         return dark or silent
 
-    def _note_dull(self) -> None:
-        """每轮开始前更新呆滞轮数。"""
-        self.sensor_dull = self._sensor_dull()
-        if self.sensor_dull:
-            self.dull_rounds += 1
+    def _note_rage(self) -> None:
+        """每轮开始前更新怒气值轮数。"""
+        self.rage_triggered = self._sensor_rage()
+        if self.rage_triggered:
+            self.rage_rounds += 1
         else:
-            self.dull_rounds = 0
+            self.rage_rounds = 0
 
     def build_state(self) -> dict:
         relay_state = self.relay.to_state()
@@ -110,8 +110,8 @@ class GameLoop:
             except (TypeError, ValueError):
                 value = 15 if ch == "A" else 5
             state["baseline_strength"][ch] = max(0, min(100, value))
-        state["dull_rounds"] = self.dull_rounds
-        state["sensor_dull"] = self.sensor_dull
+        state["rage_rounds"] = self.rage_rounds
+        state["rage_triggered"] = self.rage_triggered
         # 风格版本（纯爱版 / 调教版）与可用版本列表（页面切换用）
         state["profile"] = str(self.cfg["character"].get("profile") or "纯爱")
         state["profiles"] = list(self.cfg["character"].get("profiles") or ["纯爱"])
@@ -132,7 +132,7 @@ class GameLoop:
 
         self.turn_busy = True
         try:
-            self._note_dull()
+            self._note_rage()
             state = self.build_state()
             error = None
             try:

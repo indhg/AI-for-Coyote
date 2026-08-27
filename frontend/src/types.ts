@@ -77,6 +77,7 @@ export interface FullState {
     last_text: string;
     last_ts: number;
     level: number;
+    level_pct?: number;
     threshold: number;
     model_size: string;
     error: string;

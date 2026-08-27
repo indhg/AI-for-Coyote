@@ -82,12 +82,12 @@ DEFAULTS = {
     "audio": {
         "enabled": False,
         "interval_s": 4.0,
-        "threshold": 0.02,
+        "threshold": 0.005,
         "min_segment_s": 0.8,
         "model_size": "small",
         "language": "zh",
         # 呻吟分级：片段电平 >= threshold*moan_high_multiple 算高声呻吟/惨叫
-        "moan_high_multiple": 8.0,
+        "moan_high_multiple": 4.0,
         "moan_cooldown_s": 5.0,
         "silence_timeout_s": 90.0,
     },

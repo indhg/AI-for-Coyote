@@ -19,13 +19,13 @@ class AudioManager:
         c = cfg.get("audio", {})
         self.enabled = bool(c.get("enabled", False))
         self.interval_s = float(c.get("interval_s", 4.0))
-        self.threshold = float(c.get("threshold", 0.02))
+        self.threshold = float(c.get("threshold", 0.005))
         self.min_segment_s = float(c.get("min_segment_s", 0.8))
         self.model_size = str(c.get("model_size", "small"))
         self.device = c.get("device") or None
         self.language = str(c.get("language", "zh"))
         # 呻吟分级：电平 >= threshold*倍数 算高声呻吟/惨叫；同类信号冷却期
-        self.moan_high_multiple = float(c.get("moan_high_multiple", 8.0))
+        self.moan_high_multiple = float(c.get("moan_high_multiple", 4.0))
         self.moan_cooldown_s = float(c.get("moan_cooldown_s", 5.0))
         self.silence_timeout_s = float(c.get("silence_timeout_s", 90.0))
         self.on_text = on_text
@@ -171,12 +171,15 @@ class AudioManager:
 
     # ---------- 状态 ----------
     def to_state(self) -> dict:
+        denom = max(self.threshold * self.moan_high_multiple, 1e-6)
         return {
             "enabled": self.enabled,
             "running": bool(self._task and not self._task.done()),
             "last_text": self.last_text,
             "last_ts": self.last_ts,
             "level": round(self.level, 4),
+            # UI 音量条：相对「惨叫档」（threshold×倍数）的百分比，100=惨叫级
+            "level_pct": round(min(100.0, self.level / denom * 100.0), 1),
             "last_sound_ts": self.last_sound_ts,
             "silent": (time.time() - self.last_sound_ts) > self.silence_timeout_s,
             "threshold": self.threshold,

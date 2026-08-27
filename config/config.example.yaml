@@ -54,6 +54,17 @@ camera:
   auto_observe: true        # AI 自动观察循环：每隔 observe_interval_s 看一次画面并决定是否调整
   observe_interval_s: 10    # 自动观察间隔（秒）
 
+# ============ 麦克风检测（可选，本地 Whisper 转写） ============
+audio:
+  enabled: false            # true = 开启麦克风监听（需 pip install faster-whisper sounddevice；首次启用自动下载模型 ~500MB）
+  interval_s: 4             # 每 N 秒检查一次响度
+  threshold: 0.005          # 响度门限（0~1，越小越灵敏）
+  min_segment_s: 0.8        # 最短有效片段
+  model_size: small         # Whisper 模型：tiny/base/small/medium（越大越准越慢）
+  language: zh              # 转写语言
+  moan_high_multiple: 4.0   # 呻吟分级：电平 >= threshold×倍数 算高声呻吟/惨叫
+  moan_cooldown_s: 5.0      # 同类呻吟信号冷却期（秒）
+
 log:
   dir: logs
   level: INFO
