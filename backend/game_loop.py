@@ -168,7 +168,7 @@ class GameLoop:
     async def auto_open(self) -> dict:
         """场景开始：AI 主动开口挑逗并给出第一个轻微试探。"""
         reload_character(self.cfg)
-        self._note_dull()
+        self._note_rage()
         state = self.build_state()
         prompt_msg = {
             "role": "user",
@@ -250,7 +250,7 @@ class GameLoop:
     async def _auto_observe_turn(self) -> dict | None:
         """观察最新画面，决定是否调整，并把台词推给页面（由调用方广播）。"""
         reload_character(self.cfg)
-        self._note_dull()
+        self._note_rage()
         state = self.build_state()
         prompt_msg = {
             "role": "user",
@@ -299,19 +299,23 @@ class GameLoop:
     async def _autopilot_loop(self) -> None:
         while not self.autopilot_stop.is_set():
             try:
-                await asyncio.wait_for(self.autopilot_stop.wait(), timeout=self.autopilot_interval)
-                break
-            except asyncio.TimeoutError:
-                pass
-            if self.safety.estop_active or self.turn_busy:
-                continue
-            if not (self.relay.to_state()["status"] == "paired" or self.safety.dry_run):
-                continue  # 设备未配对不自动运行（用户设定：连接设备后才开始）
-            await self._autopilot_turn()
+                try:
+                    await asyncio.wait_for(self.autopilot_stop.wait(), timeout=self.autopilot_interval)
+                    break
+                except asyncio.TimeoutError:
+                    pass
+                if self.safety.estop_active or self.turn_busy:
+                    continue
+                if not (self.relay.to_state()["status"] == "paired" or self.safety.dry_run):
+                    continue  # 设备未配对不自动运行（用户设定：连接设备后才开始）
+                await self._autopilot_turn()
+            except Exception:  # noqa: BLE001
+                # 任何异常都不能杀死循环任务（曾因此静默死亡导致 AI 一直不说话）
+                logger.exception("自动运行循环异常，跳过本轮继续")
 
     async def _autopilot_turn(self) -> dict | None:
         reload_character(self.cfg)
-        self._note_dull()
+        self._note_rage()
         state = self.build_state()
         has_ai = any(m["role"] == "assistant" for m in self.history)
         prompt_msg = {
