@@ -155,6 +155,7 @@ def main() -> None:
             str(pyinstaller),
             "--noconfirm", "--clean", "--onefile",
             "--name", "AI-for-Coyote",
+            "--icon", str(ROOT / "desktop" / "app.ico"),
             "--distpath", str(BUILD / "dist"),
             "--workpath", str(BUILD / "pyi_work"),
             "--specpath", str(BUILD),
