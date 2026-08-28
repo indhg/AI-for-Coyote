@@ -26,7 +26,7 @@ VERSION = next((a for a in sys.argv[1:] if not a.startswith("--")), "0.1.0-beta"
 CI = "--ci" in sys.argv  # CI 模式：用当前解释器（依赖已装好），不建 venv、不跑 npm
 ROOT = Path(__file__).resolve().parent.parent
 BUILD = ROOT / "build_release"
-PKG = BUILD / f"AI-for-Coyote-v{VERSION}"
+PKG = BUILD / f"Coyote-in-Cradle-v{VERSION}"
 
 
 def step(msg: str) -> None:
@@ -43,10 +43,10 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 echo ============================================
-echo   AI for Coyote v{version}
+echo   Coyote in Cradle v{version}
 echo   仅供成年人、双方自愿的虚构角色扮演使用
 echo   心脏病 / 心脏起搏器等健康风险人群请勿使用
-echo   随时可按 空格 或页面急停按钮中断
+echo   随时可长按空格 1 秒或页面急停按钮中断
 echo ============================================
 timeout /t 2 /nobreak >nul
 
@@ -68,13 +68,17 @@ echo 已启动。关闭两个命令窗口即停止程序。
 pause
 """
 
-README_TXT = """AI for Coyote v{version}（绿色免装版）
+README_TXT = """Coyote in Cradle v{version}（绿色免装版）
 ========================================
 
 仅供成年人、双方自愿的虚构角色扮演使用。
 健康风险人群（心脏病、心脏起搏器等）请勿使用。
 
-【启动】
+【启动（推荐）】
+双击 Coyote-in-Cradle.exe：静默启动中继 + 主程序，弹出应用窗口；
+关闭窗口即全部退出，无命令行窗口。
+
+【启动（备用）】
 双击 start.bat：自动启动中继 + 主程序，并打开浏览器 http://127.0.0.1:8000
 
 【配置 AI】
@@ -86,7 +90,7 @@ README_TXT = """AI for Coyote v{version}（绿色免装版）
 手机连与电脑相同的 Wi-Fi，用 DG-LAB 4.0 App 扫页面右侧二维码。
 
 【急停】
-页面大红按钮，或页面不在输入框时按空格。
+页面大红按钮，或页面不在输入框时长按空格 1 秒（松手取消）。
 
 【风格版本】
 默认纯爱版。调教版（DLC1）等额外内容另发：放入 content\\pack\\ 后，
@@ -123,7 +127,7 @@ def main() -> None:
         pip = [str(py), "-m", "pip", "install", "-q", "--disable-pip-version-check",
                "-i", "https://pypi.tuna.tsinghua.edu.cn/simple",
                "--timeout", "30", "--retries", "5"]
-        run(pip + ["-r", str(ROOT / "requirements.txt"), "pyinstaller", "opencv-python", "numpy"], env=env)
+        run(pip + ["-r", str(ROOT / "requirements.txt"), "pyinstaller", "opencv-python", "numpy", "pywebview"], env=env)
         pyinstaller = venv / "Scripts" / "pyinstaller.exe"
 
     # pyinstaller 可能在 python 同目录（venv）或 Scripts\ 子目录（setup-python 布局），再从 PATH 兜底
@@ -167,12 +171,28 @@ def main() -> None:
         ]
     )
 
-    step("4/6 组装发布目录")
+    step("3.5/7 PyInstaller 打包桌面壳")
+    run(
+        [
+            str(pyinstaller),
+            "--noconfirm", "--clean", "--onefile", "--windowed",
+            "--name", "Coyote-in-Cradle",
+            "--distpath", str(BUILD / "dist"),
+            "--workpath", str(BUILD / "pyi_work_shell"),
+            "--specpath", str(BUILD),
+            "--collect-all", "webview",
+            "--collect-all", "pywebview",
+            str(ROOT / "desktop" / "shell.py"),
+        ]
+    )
+
+    step("4/7 组装发布目录")
     if PKG.exists():
         shutil.rmtree(PKG)
     (PKG / "config").mkdir(parents=True)
     (PKG / "content").mkdir(parents=True)
     shutil.copy2(BUILD / "dist" / "AI-for-Coyote.exe", PKG / "AI-for-Coyote.exe")
+    shutil.copy2(BUILD / "dist" / "Coyote-in-Cradle.exe", PKG / "Coyote-in-Cradle.exe")
     bun = next(
         (
             p
@@ -203,13 +223,22 @@ def main() -> None:
     (PKG / "start.bat").write_text(START_BAT.format(version=VERSION), encoding="utf-8")
     (PKG / "说明.txt").write_text(README_TXT.format(version=VERSION), encoding="utf-8")
 
-    step("5/6 压缩")
-    zip_path = BUILD / f"AI-for-Coyote-v{VERSION}.zip"
+    step("5/7 压缩")
+    zip_path = BUILD / f"Coyote-in-Cradle-v{VERSION}.zip"
     if zip_path.exists():
         zip_path.unlink()
     shutil.make_archive(str(zip_path.with_suffix("")), "zip", PKG.parent, PKG.name)
 
-    step(f"6/6 完成：{zip_path}（{zip_path.stat().st_size / 1024 / 1024:.1f} MB）")
+    step("6/7 生成安装器脚本")
+    iss = (ROOT / "packaging" / "installer.iss").read_text(encoding="utf-8")
+    iss = (
+        iss.replace("{version}", VERSION)
+        .replace("{pkgdir}", str(PKG))
+        .replace("{outdir}", str(BUILD))
+    )
+    (BUILD / "installer.iss").write_text(iss, encoding="utf-8")
+
+    step(f"7/7 完成：{zip_path}（{zip_path.stat().st_size / 1024 / 1024:.1f} MB）")
 
 
 if __name__ == "__main__":

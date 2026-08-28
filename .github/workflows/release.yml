@@ -33,7 +33,7 @@ jobs:
         working-directory: frontend
 
       - name: 安装 Python 依赖
-        run: pip install -r requirements.txt pyinstaller opencv-python numpy
+        run: pip install -r requirements.txt pyinstaller opencv-python numpy pywebview
 
       - name: 打包与组装
         shell: pwsh
@@ -49,9 +49,18 @@ jobs:
           if ($LASTEXITCODE -ne 0) { Get-Content build_log.txt -Tail 40; exit 1 }
           Get-ChildItem build_release/*.zip | ForEach-Object { Write-Output "ZIP=$($_.FullName)" }
 
+      - name: 编译安装包（Inno Setup）
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build_release\installer.iss
+          Get-ChildItem build_release/*.exe | ForEach-Object { Write-Output "SETUP=$($_.FullName)" }
+
       - name: 上传 Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build_release/AI-for-Coyote-v*.zip
+          files: |
+            build_release/Coyote-in-Cradle-v*.zip
+            build_release/Coyote-in-Cradle-setup-v*.exe
           generate_release_notes: true
           overwrite: true

@@ -4,14 +4,14 @@ AI 角色扮演系统：AI 扮演角色，通过摄像头观察、麦克风听�
 
 ## 📦 相关仓库（重要）
 
-本项目是**多端应用**，除本仓库（PC 主仓库）外还有两个配套仓库：
+本项目是**多端应用**，除本仓库（PC 端主仓库）外还有两个配套仓库：
 
-| 仓库 | 地址 | 说明 |
-|---|---|---|
-| 🧪 **DLC 拓展仓库** | [indhg/AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) | 18+ 拓展内容（当前首个包：DLC1-触手-调教版）；未来新角色/新风格也放这里 |
-| 📱 **安卓端** | [indhg/Coyote-in-Cradle-Android](https://github.com/indhg/Coyote-in-Cradle-Android) | 纯安卓、零电脑依赖版（BLE 直连郊狼 3.0，无需官方 App/中继） |
+| 仓库 | 地址 | 说明                       |
+|---|---|--------------------------|
+| 🧪 **DLC 拓展仓库** | [indhg/AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) | 18+ 拓展内容（当前：DLC1-触手-调教版） |
+| 📱 **安卓端** | [indhg/Coyote-in-Cradle-Android](https://github.com/indhg/Coyote-in-Cradle-Android) | 无需电脑设备，仅支持安卓             |
 
-参考示例（ESP32 闭环）换成了 **郊狼 + dglab-websocket-server 的 socket 接口**：
+依赖 **郊狼 + dglab-websocket-server 的 socket 接口**
 
 ```
 浏览器 Web 页面 ⇄ Python 主程序(FastAPI) ⇄ dglab-websocket-server v4(Bun) ⇄ DG-LAB 4.0 App(手机) ⇄ 郊狼主机(A/B 通道)
@@ -25,7 +25,7 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 
 摄像头和麦克风各自形成反馈。画面变黑或没人，角色会不耐烦，再升级到愤怒、暴怒。呻吟声分级：普通呻吟小幅加码，惨叫立即降低；长时间没声音，角色主动挑逗。
 
-设备侧 A/B 双通道独立控制，内置 24 个波形（面板分类名「经典波形」）。网页控制台负责聊天、手动控制、通道开关、强度修正（50%~150%）和风格切换；安全层管强度上限、步长限制、过热保护，空格键急停。
+设备侧 A/B 双通道独立控制，内置 24 个波形（面板分类名「经典波形」）。网页控制台负责聊天、手动控制、通道开关、强度修正（50%~150%）和风格切换；安全层管强度上限、步长限制、过热保护，长按空格急停。
 
 ## 目标
 
@@ -79,6 +79,12 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 新角色/新风格照 `content/pack/DLC<序号>-<角色>-<风格>/` 建目录，文件名沿用「角色名-」前缀；在 `config/character.yaml` 里加对应 profile 并指向其提示词文件，重启后侧边栏即可切换。没装好的 DLC 会显示「未装DLC」并被切换拦截。
 
 ## 快速开始
+
+### 一键安装（推荐）
+
+下载最新 Release 的 `Coyote-in-Cradle-setup-v*.exe`，双击安装。桌面图标「Coyote in Cradle」点开即用：一个应用窗口，关窗口即全部退出，无需命令行与浏览器。
+
+不想安装可下载免装 zip，解压后双击 `Coyote-in-Cradle.exe`（或备用 `start.bat`）。
 
 ### 环境要求
 
