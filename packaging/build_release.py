@@ -177,6 +177,7 @@ def main() -> None:
             str(pyinstaller),
             "--noconfirm", "--clean", "--onefile", "--windowed",
             "--name", "Coyote-in-Cradle",
+            "--icon", str(ROOT / "desktop" / "app.ico"),
             "--distpath", str(BUILD / "dist"),
             "--workpath", str(BUILD / "pyi_work_shell"),
             "--specpath", str(BUILD),

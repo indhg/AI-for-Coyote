@@ -11,6 +11,7 @@ OutputDir={outdir}
 OutputBaseFilename=Coyote-in-Cradle-setup-v{version}
 DisableProgramGroupPage=yes
 WizardStyle=modern
+SetupIconFile={pkgdir}\Coyote-in-Cradle.exe
 LicenseFile={pkgdir}\说明.txt
 ArchitecturesInstallIn64BitMode=x64compatible
 
