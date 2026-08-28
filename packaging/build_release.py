@@ -194,6 +194,7 @@ def main() -> None:
     (PKG / "content").mkdir(parents=True)
     shutil.copy2(BUILD / "dist" / "AI-for-Coyote.exe", PKG / "AI-for-Coyote.exe")
     shutil.copy2(BUILD / "dist" / "Coyote-in-Cradle.exe", PKG / "Coyote-in-Cradle.exe")
+    shutil.copy2(ROOT / "desktop" / "setup.ico", PKG / "setup.ico")
     bun = next(
         (
             p
