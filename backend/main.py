@@ -225,6 +225,10 @@ class AppState:
     # ---------- 生命周期 ----------
     async def start_background(self) -> None:
         self.tasks.append(asyncio.create_task(self.relay.run()))
+        # 配置里自动运行开着时，启动真正的循环任务（此前只置状态、不启动任务，
+        # 导致重启后「假开真停」：AI 一直不说话）
+        if self.loop.autopilot:
+            self.loop.set_autopilot(True)
         # 自动运行开着也只在「已有浏览器接入」时才启动传感器；
         # 无浏览器时不占摄像头/麦克风，等页面连上后由 _on_ws_clients_change 再启动
         if self.loop.autopilot and self.ws_clients:

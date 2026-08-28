@@ -131,7 +131,7 @@ class AudioManager:
             idx = np.where(np.abs(audio) >= self.threshold)[0]
             if len(idx) < int(self.min_segment_s * sr):
                 return
-            seg = audio[idx[0]: idx[-1] + 1]
+            seg = np.asarray(audio[idx[0]: idx[-1] + 1], dtype="float32").ravel()  # 拉平防 VAD 断言崩溃
             if len(seg) < sr // 4:  # 短于 0.25s 忽略
                 return
             segments, info = self.whisper.transcribe(  # noqa: F841
