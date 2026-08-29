@@ -227,6 +227,7 @@ def main() -> None:
     shutil.copy2(ROOT / "LICENSE", PKG / "LICENSE")
     (PKG / "start.bat").write_text(START_BAT.format(version=VERSION), encoding="utf-8")
     (PKG / "说明.txt").write_text(README_TXT.format(version=VERSION), encoding="utf-8")
+    (PKG / "version.txt").write_text(VERSION, encoding="utf-8")
 
     step("5/7 压缩")
     zip_path = BUILD / f"Coyote-in-Cradle-v{VERSION}.zip"

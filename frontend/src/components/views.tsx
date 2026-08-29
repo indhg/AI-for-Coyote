@@ -48,6 +48,7 @@ export function SettingsView() {
   const s = useApp((st) => st.state);
   const ci = s?.config_info;
   const rows: [string, string][] = [
+    ["版本", ci?.version ?? "dev"],
     ["AI 模型", ci?.model ?? "—"],
     ["角色", s?.character ?? "—"],
     ["角色设定文件", ci?.character_file ?? "—"],

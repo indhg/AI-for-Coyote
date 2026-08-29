@@ -109,6 +109,7 @@ export interface FullState {
     title: string;
     profile: string;
     player_nick: string;
+    version: string;
   };
 }
 

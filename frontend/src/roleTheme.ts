@@ -6,10 +6,10 @@ export const LEVEL_BADGE_CLS: Record<string, string> = {
   重: "border-red-500/60 bg-red-500/15 text-red-300",
 };
 
-// 档位显示名：重档对外叫「凌辱」（用户定名）
+// 档位显示名（用户定名）：轻→纯爱、中→调教、重→凌辱
 export const LEVEL_LABELS: Record<string, string> = {
-  轻: "轻",
-  中: "中",
+  轻: "纯爱",
+  中: "调教",
   重: "凌辱",
 };
 

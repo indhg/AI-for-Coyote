@@ -47,6 +47,16 @@ else:
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 
 
+def _app_version() -> str:
+    """版本号：打包时写入 version.txt；源码运行时显示 dev。"""
+    f = PROJECT_ROOT / "version.txt"
+    if f.exists():
+        v = f.read_text(encoding="utf-8").strip()
+        if v:
+            return v
+    return "dev"
+
+
 def get_lan_ip() -> str:
     """探测本机局域网 IP（用于配对二维码）。"""
     try:
@@ -195,6 +205,7 @@ class AppState:
             "title": str(self.cfg["app"].get("title", "郊狼 · AI 驯服师")),
             "profile": str(self.cfg["character"].get("profile") or "调教"),
             "player_nick": str(self.cfg["character"].get("player_nick") or "小柳"),
+            "version": _app_version(),
         }
         return state
 

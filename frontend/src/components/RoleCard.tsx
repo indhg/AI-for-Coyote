@@ -9,7 +9,6 @@ import {
   LEVEL_LABELS,
   ROLE_RING_ACTIVE_CLS,
   ROLE_RING_CLS,
-  STYLE_LABELS,
   styleDesc,
 } from "../roleTheme";
 
@@ -24,11 +23,14 @@ export default function RoleCard() {
   const roles = useApp((st) => st.state?.roles ?? EMPTY_ROLES);
   const profile = useApp((st) => st.state?.profile ?? "纯爱");
   const [open, setOpen] = useState(false);
+  const [roleStep, setRoleStep] = useState(false); // false=角色列表收起成一行（默认）；点它展开列表
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLButtonElement>(null);
 
   const current = roles.find((r) => r.name === role);
   const curProfile = current?.profiles?.find((p) => p.name === profile);
@@ -48,6 +50,20 @@ export default function RoleCard() {
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
+  // 角色列表展开时：点列表外任意处收起列表（浮层本身保持打开，三档位置不动）
+  useEffect(() => {
+    if (!open || !roleStep) return;
+    const onDown = (ev: MouseEvent) => {
+      if (listRef.current && !listRef.current.contains(ev.target as Node)) {
+        // 点「点击换角色」那一行时交给它的 click 切换，不要在这里先收掉（否则再点永远展开）
+        if (rowRef.current && rowRef.current.contains(ev.target as Node)) return;
+        setRoleStep(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open, roleStep]);
+
   const switchRole = async (r: string) => {
     if (r === role) return;
     setErr("");
@@ -59,7 +75,7 @@ export default function RoleCard() {
     }
     try {
       await api.setProfile(r, first.name);
-      setOpen(false);
+      setRoleStep(false); // 选完角色：收起角色列表段，浮层保留三档等选档
     } catch (e) {
       setErr(`切换失败：${(e as Error).message}`);
     }
@@ -72,7 +88,7 @@ export default function RoleCard() {
       await api.setProfile(role, p);
       setOpen(false);
     } catch (e) {
-      setErr(`「${STYLE_LABELS[p] ?? p}」未安装：点下方「导入 DLC」安装后即可切换。${(e as Error).message ? `（${(e as Error).message}）` : ""}`);
+      setErr(`该档位未安装：点下方「导入 DLC」安装后即可切换。${(e as Error).message ? `（${(e as Error).message}）` : ""}`);
     }
   };
 
@@ -101,7 +117,7 @@ export default function RoleCard() {
     <div ref={rootRef} className="relative mb-3.5 rounded-[14px] border border-line bg-panel p-3.5">
       <button
         className="flex w-full items-center gap-2.5 text-left"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((v) => (v ? false : (setRoleStep(false), true)))}
         title="切换角色与风格档"
       >
         <span
@@ -117,7 +133,7 @@ export default function RoleCard() {
             <span
               className={`rounded-md border px-1.5 py-px text-[10px] font-normal ${LEVEL_BADGE_CLS[level] ?? LEVEL_BADGE_CLS["中"]}`}
             >
-              {STYLE_LABELS[profile] ?? profile} · {LEVEL_LABELS[level] ?? level}
+              {LEVEL_LABELS[level] ?? level}
             </span>
           </span>
           <span className="mt-0.5 block truncate text-[11px] text-muted">
@@ -134,34 +150,57 @@ export default function RoleCard() {
       {open && (
         <div className="absolute left-0 right-0 top-full z-30 mt-2 rounded-[12px] border border-line bg-panel shadow-xl shadow-black/50">
           <div className="flex flex-col gap-2 p-3">
-            <div className="flex flex-col gap-0.5">
+            <div className="relative flex flex-col gap-0.5">
               <span className="px-1 text-[10px] tracking-wide text-faint">角色</span>
-              {roles.map((r) => {
-                const usable = (r.profiles ?? []).some((p) => p.available);
-                return (
-                  <button
-                    key={r.name}
-                    disabled={!usable}
-                    title={usable ? undefined : `${r.label}需要安装对应 DLC（content\\pack\\）`}
-                    onClick={() => void switchRole(r.name)}
-                    className={`flex items-center gap-2 rounded-[6px] border px-2 py-1.5 text-left text-[12px] transition-colors ${
-                      r.name === role
-                        ? `${ROLE_RING_ACTIVE_CLS[r.name] ?? "border-line2 bg-accent/15"} text-text`
-                        : usable
-                          ? `border-transparent text-muted hover:bg-panel2 ${ROLE_RING_CLS[r.name] ?? ""}`
-                          : "cursor-not-allowed border-transparent text-faint opacity-60"
-                    }`}
-                  >
-                    <span className="min-w-0 flex-1">{r.label}</span>
-                    {!usable && <span className="text-[10px]">未装</span>}
-                    {r.name === role && <Check size={12} className="flex-none text-accent" />}
-                  </button>
-                );
-              })}
+              <button
+                ref={rowRef}
+                onClick={() => setRoleStep((v) => !v)}
+                className="flex items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] text-muted transition-colors hover:bg-panel2"
+                title="展开角色列表"
+              >
+                <span className="flex-1 text-text">
+                  {current?.label ?? role}
+                  <span className="ml-1 text-[10px] text-faint">（点击换角色）</span>
+                </span>
+                {roleStep ? (
+                  <ChevronUp size={12} className="flex-none text-faint" />
+                ) : (
+                  <ChevronDown size={12} className="flex-none text-faint" />
+                )}
+              </button>
+              {roleStep && (
+                <div
+                  ref={listRef}
+                  className="absolute left-0 right-0 top-full z-40 mt-1 flex flex-col gap-0.5 rounded-[8px] border border-line bg-panel p-1 shadow-xl shadow-black/60"
+                >
+                  {roles.map((r) => {
+                    const usable = (r.profiles ?? []).some((p) => p.available);
+                    return (
+                      <button
+                        key={r.name}
+                        disabled={!usable}
+                        title={usable ? undefined : `${r.label}需要安装对应 DLC（content\\pack\\）`}
+                        onClick={() => void switchRole(r.name)}
+                        className={`flex items-center gap-2 rounded-[6px] border px-2 py-1.5 text-left text-[12px] transition-all ${
+                          r.name === role
+                            ? `${ROLE_RING_ACTIVE_CLS[r.name] ?? "border-line2 bg-accent/15"} text-text scale-[1.03]`
+                            : usable
+                              ? `border-transparent text-muted hover:bg-panel2 hover:scale-[1.03] ${ROLE_RING_CLS[r.name] ?? ""}`
+                              : "cursor-not-allowed border-transparent text-faint opacity-60"
+                        }`}
+                      >
+                        <span className="min-w-0 flex-1">{r.label}</span>
+                        {!usable && <span className="text-[10px]">未装</span>}
+                        {r.name === role && <Check size={12} className="flex-none text-accent" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <span className="px-1 text-[10px] tracking-wide text-faint">风格档（按强度三档）</span>
+              <span className="px-1 text-[10px] tracking-wide text-faint">风格档</span>
               <div className="grid grid-cols-3 gap-1">
                 {LEVELS.map((lv) => {
                   const p = profileOfLevel(current, lv);
@@ -208,7 +247,7 @@ export default function RoleCard() {
               onClick={() => fileRef.current?.click()}
               className="w-full rounded-[6px] border border-dashed border-line px-2 py-1 text-[11px] text-muted transition-colors hover:border-line2 disabled:opacity-60"
             >
-              {busy ? "导入中…" : "导入 DLC（.zip 或 .md，自动装进 content\\pack）"}
+              {busy ? "导入中…" : "导入 DLC（.zip 或 .md）"}
             </button>
 
             {err && <p className="text-[10px] leading-relaxed text-red-400">{err}</p>}

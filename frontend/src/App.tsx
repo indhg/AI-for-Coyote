@@ -105,13 +105,13 @@ export default function App() {
       <TopBar view={view} onView={setView} />
       <div
         className="grid min-h-0 flex-1"
-        style={{ gridTemplateColumns: `${sidebarW}px 4px 1fr 4px ${chatW}px` }}
+        style={{ gridTemplateColumns: `${sidebarW}px 4px ${chatW}px 4px 1fr` }}
       >
         <Sidebar view={view} onView={setView} />
         <Resizer side="left" />
         <ChatPanel />
         <Resizer side="right" />
-        <main className="min-h-0 overflow-y-auto px-4 pb-14 pt-3">
+        <main className="min-h-0 overflow-y-auto border-l border-line px-4 pb-14 pt-3">
           {view === "control" && (
             <div className="flex h-full min-h-0 flex-col gap-2.5">
               <div className="min-h-0 flex-1">
@@ -161,7 +161,7 @@ function Resizer({ side }: { side: "left" | "right" }) {
     const move = (ev: PointerEvent) => {
       const dx = ev.clientX - startX;
       if (side === "left") setSidebarW(Math.min(360, Math.max(160, startW + dx)));
-      else setChatW(Math.min(800, Math.max(300, startW + dx)));
+      else setChatW(Math.min(800, Math.max(300, startW - dx)));
     };
     const up = () => {
       window.removeEventListener("pointermove", move);

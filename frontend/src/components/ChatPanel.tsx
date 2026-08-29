@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useApp, useChat } from "../store";
-import { LEVEL_BADGE_CLS, LEVEL_LABELS, STYLE_LABELS } from "../roleTheme";
+import { LEVEL_BADGE_CLS, LEVEL_LABELS } from "../roleTheme";
 
 export default function ChatPanel() {
   const messages = useChat((st) => st.messages);
@@ -26,7 +26,7 @@ export default function ChatPanel() {
       roleKeyRef.current = key;
       pushMsg({
         role: "sys",
-        text: `—— 已切换至 ${role} · ${STYLE_LABELS[profile] ?? profile}（${LEVEL_LABELS[level] ?? level}）——`,
+        text: `—— 已切换至 ${role} · ${LEVEL_LABELS[level] ?? level} ——`,
       });
     }
   }, [role, profile, level, pushMsg]);
@@ -59,7 +59,7 @@ export default function ChatPanel() {
         <span
           className={`rounded-md border px-1.5 py-px text-[10px] ${LEVEL_BADGE_CLS[level] ?? LEVEL_BADGE_CLS["中"]}`}
         >
-          {STYLE_LABELS[profile] ?? profile} · {LEVEL_LABELS[level] ?? level}
+          {LEVEL_LABELS[level] ?? level}
         </span>
       </div>
       {!paired ? (
