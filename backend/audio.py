@@ -7,6 +7,7 @@
 """
 import asyncio
 import logging
+import sys
 import time
 
 logger = logging.getLogger("ai-for-coyote.audio")
@@ -59,8 +60,13 @@ class AudioManager:
         try:
             import sounddevice as sd  # noqa: F401
         except ImportError as exc:
-            self.error = f"缺少依赖（pip install sounddevice）：{exc}"
-            logger.error("麦克风不可用：%s", self.error)
+            hint = (
+                "请下载最新版本（旧版安装包缺少麦克风组件）"
+                if getattr(sys, "frozen", False)
+                else "源码运行请 pip install sounddevice"
+            )
+            self.error = f"缺少依赖（sounddevice）：{hint}"
+            logger.error("麦克风不可用：%s（%s）", self.error, exc)
             return
         self._stop = asyncio.Event()
         self._loop = asyncio.get_running_loop()

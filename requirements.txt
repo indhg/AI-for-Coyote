@@ -6,3 +6,4 @@ pyyaml>=6.0
 qrcode>=7.4
 pillow>=10.0
 python-multipart>=0.0.9
+sounddevice>=0.4

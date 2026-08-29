@@ -161,7 +161,6 @@ def main() -> None:
             "--workpath", str(BUILD / "pyi_work"),
             "--specpath", str(BUILD),
             "--exclude-module", "faster_whisper",
-            "--exclude-module", "sounddevice",
             "--exclude-module", "torch",
             "--exclude-module", "tensorflow",
             "--hidden-import", "uvicorn.logging",
