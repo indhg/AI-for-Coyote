@@ -42,12 +42,25 @@ export default function DeviceStatus() {
   };
 
   return (
-    <div className="flex min-h-0 flex-col rounded-[14px] border border-line bg-panel p-3">
+    <div className="flex min-h-0 flex-none flex-col rounded-[14px] border border-line bg-panel p-3">
       <h3 className="mb-2 flex-none text-[12px] font-semibold tracking-[1.5px] text-muted">设备状态</h3>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
         {/* 第一行：连接 + 麦克风（音量条常驻，未开启时显示空条） */}
         <div className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border border-line bg-panel2 px-4 py-2">
-          <Seg k="连接" v={paired ? "已连接" : "未连接"} />
+          <span
+            className={`flex w-fit items-center gap-1.5 rounded-md border px-2 py-0.5 text-[12px] font-bold ${
+              paired
+                ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
+                : "border-bad/60 bg-bad/15 text-bad"
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                paired ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-bad"
+              }`}
+            />
+            {paired ? "已连接" : "未连接"}
+          </span>
           <span className="flex items-center gap-2">
             <span className="flex-none text-[11px] text-muted">麦克风</span>
             <div className="h-[8px] w-24 flex-none overflow-hidden rounded-full bg-ink3">

@@ -43,7 +43,6 @@ export default function TopBar({ view, onView }: Props) {
       <div className="flex-1" />
       <Pill cls={st === "paired" ? "ok" : st === "disconnected" ? "off" : "warn"} text={`中继: ${relayText}`} />
       <Pill cls={clients ? "ok" : "off"} text={`App: ${clients ? clients + " 台在线" : "未接入"}`} />
-      <Pill cls={s?.dry_run ? "warn" : "ok"} text={`模式: ${s?.dry_run ? "模拟" : "真实控制"}`} />
       <Pill cls={s?.estop ? "off" : "ok"} text={`急停: ${s?.estop ? "已触发" : "否"}`} />
     </header>
   );

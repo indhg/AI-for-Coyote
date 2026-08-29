@@ -1,5 +1,17 @@
 // 角色/风格档的 UI 主题映射：档位轻/中/重 = 绿/金/红；角色标识色用于卡片描边
 // Tailwind v4 必须用完整字面类名（运行时拼接不会被打包）
+import avatarCushou from "./assets/theme-cushou.png";
+import avatarPingpinghui from "./assets/theme-pingpinghui.png";
+
+// 主题头像（像素风，随包分发）；未配置的主题回退首字块
+export const ROLE_AVATARS: Record<string, string> = {
+  触手: avatarCushou,
+  品评会: avatarPingpinghui,
+};
+
+export function roleAvatar(role: string): string | null {
+  return ROLE_AVATARS[role] ?? null;
+}
 export const LEVEL_BADGE_CLS: Record<string, string> = {
   轻: "border-emerald-500/60 bg-emerald-500/15 text-emerald-300",
   中: "border-line2 bg-accent/15 text-accent",

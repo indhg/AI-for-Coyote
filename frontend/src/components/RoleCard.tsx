@@ -9,7 +9,7 @@ import {
   LEVEL_LABELS,
   ROLE_RING_ACTIVE_CLS,
   ROLE_RING_CLS,
-  styleDesc,
+  roleAvatar,
 } from "../roleTheme";
 
 // zustand selector 必须返回稳定引用，不能内联新数组（否则无限重渲染）
@@ -86,7 +86,7 @@ export default function RoleCard() {
     setErr("");
     try {
       await api.setProfile(role, p);
-      setOpen(false);
+      // 选完风格不关浮窗（用户要求），点外部再收起
     } catch (e) {
       setErr(`该档位未安装：点下方「导入 DLC」安装后即可切换。${(e as Error).message ? `（${(e as Error).message}）` : ""}`);
     }
@@ -118,14 +118,18 @@ export default function RoleCard() {
       <button
         className="flex w-full items-center gap-2.5 text-left"
         onClick={() => setOpen((v) => (v ? false : (setRoleStep(false), true)))}
-        title="切换角色与风格档"
+        title="切换主题与风格档"
       >
         <span
-          className={`flex h-9 w-9 flex-none items-center justify-center rounded-[10px] border text-[16px] font-bold ${
+          className={`flex h-9 w-9 flex-none items-center justify-center overflow-hidden rounded-[10px] border text-[16px] font-bold ${
             ROLE_RING_ACTIVE_CLS[role] ?? "border-line2 bg-accent/15"
           }`}
         >
-          {(current?.label ?? role).slice(0, 1)}
+          {roleAvatar(role) ? (
+            <img src={roleAvatar(role)!} alt={current?.label ?? role} className="h-full w-full object-cover" />
+          ) : (
+            (current?.label ?? role).slice(0, 1)
+          )}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 text-[14px] font-semibold">
@@ -135,9 +139,6 @@ export default function RoleCard() {
             >
               {LEVEL_LABELS[level] ?? level}
             </span>
-          </span>
-          <span className="mt-0.5 block truncate text-[11px] text-muted">
-            {styleDesc(role, profile) || "点击切换角色与风格"}
           </span>
         </span>
         {open ? (
@@ -151,16 +152,16 @@ export default function RoleCard() {
         <div className="absolute left-0 right-0 top-full z-30 mt-2 rounded-[12px] border border-line bg-panel shadow-xl shadow-black/50">
           <div className="flex flex-col gap-2 p-3">
             <div className="relative flex flex-col gap-0.5">
-              <span className="px-1 text-[10px] tracking-wide text-faint">角色</span>
+              <span className="px-1 text-[10px] tracking-wide text-faint">主题</span>
               <button
                 ref={rowRef}
                 onClick={() => setRoleStep((v) => !v)}
                 className="flex items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] text-muted transition-colors hover:bg-panel2"
-                title="展开角色列表"
+                title="展开主题列表"
               >
                 <span className="flex-1 text-text">
                   {current?.label ?? role}
-                  <span className="ml-1 text-[10px] text-faint">（点击换角色）</span>
+                  <span className="ml-1 text-[10px] text-faint">（点击换主题）</span>
                 </span>
                 {roleStep ? (
                   <ChevronUp size={12} className="flex-none text-faint" />
@@ -189,7 +190,14 @@ export default function RoleCard() {
                               : "cursor-not-allowed border-transparent text-faint opacity-60"
                         }`}
                       >
-                        <span className="min-w-0 flex-1">{r.label}</span>
+                        <span className="flex h-5 w-5 flex-none items-center justify-center overflow-hidden rounded-[5px]">
+                        {roleAvatar(r.name) ? (
+                          <img src={roleAvatar(r.name)!} alt={r.label} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-[10px] font-bold">{r.label.slice(0, 1)}</span>
+                        )}
+                      </span>
+                      <span className="min-w-0 flex-1">{r.label}</span>
                         {!usable && <span className="text-[10px]">未装</span>}
                         {r.name === role && <Check size={12} className="flex-none text-accent" />}
                       </button>
@@ -200,7 +208,7 @@ export default function RoleCard() {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <span className="px-1 text-[10px] tracking-wide text-faint">风格档</span>
+              <span className="px-1 text-[10px] tracking-wide text-faint">风格</span>
               <div className="grid grid-cols-3 gap-1">
                 {LEVELS.map((lv) => {
                   const p = profileOfLevel(current, lv);

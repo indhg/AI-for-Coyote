@@ -53,14 +53,16 @@ export default function ChatPanel() {
 
   return (
     <aside className="flex min-h-0 flex-col border-l border-line bg-ink2">
-      <div className="flex flex-none items-center gap-2 border-b border-line px-4 py-2">
-        <span className="text-[11px] text-faint">当前角色</span>
-        <span className="text-[12px] font-semibold text-text">{role}</span>
-        <span
-          className={`rounded-md border px-1.5 py-px text-[10px] ${LEVEL_BADGE_CLS[level] ?? LEVEL_BADGE_CLS["中"]}`}
-        >
-          {LEVEL_LABELS[level] ?? level}
-        </span>
+      <div className="flex flex-none items-center border-b border-line px-4 py-2">
+        <div className="flex items-center gap-2 rounded-lg border border-line bg-panel2 px-2.5 py-1">
+          <span className="text-[11px] text-faint">当前主题</span>
+          <span className="text-[12px] font-semibold text-text">{role}</span>
+          <span
+            className={`rounded-md border px-1.5 py-px text-[10px] ${LEVEL_BADGE_CLS[level] ?? LEVEL_BADGE_CLS["中"]}`}
+          >
+            {LEVEL_LABELS[level] ?? level}
+          </span>
+        </div>
       </div>
       {!paired ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 py-6 text-center">

@@ -160,14 +160,6 @@ def build_system_prompt(character: dict, state: dict) -> str:
             "【通道禁用】" + "、".join(disabled)
             + " 通道已被手动关闭：禁止对其输出任何设备动作，台词里也不要描写该通道位置的刺激。"
         )
-    scales = state.get("strength_scale") or {}
-    scaled = [ch for ch in ("A", "B") if abs(float(scales.get(ch, 1.0)) - 1.0) > 0.001]
-    if scaled:
-        lines.append(
-            "【强度修正】玩家已把" + "、".join(scaled)
-            + " 通道的强度倍率调成非 100%（低/中/高 = 70%/100%/130%）："
-            "你照常按基准给强度数值，程序会自动乘以倍率——不要自己再换算或改变数值。"
-        )
     # 强度基准与双通道协同（基准跟随配件：敏感配件低，如贴片15/肛塞5）
     base = state.get("baseline_strength") or {"A": 15, "B": 5}
     ba = int(base.get("A", 15))

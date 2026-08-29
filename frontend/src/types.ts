@@ -56,7 +56,6 @@ export interface FullState {
   device_channels: Record<"A" | "B", ChannelDevice>;
   active_channels: Record<"A" | "B", boolean>;
   enabled_channels: Record<"A" | "B", boolean>;
-  strength_scale: Record<"A" | "B", number>;
   baseline_strength: Record<"A" | "B", number>;
   patterns: Record<"A" | "B", string | null>;
   role: string;

@@ -117,6 +117,7 @@ class AppState:
         self.auto_opened = False
         self.sensors_on = False
         self.sensor_watch_task: asyncio.Task | None = None
+        self.layout: dict = {}  # 前端上报的三栏布局（监测/调试用）
 
     # ---------- 麦克风转写回调 ----------
     async def on_audio_text(self, text: str) -> None:
@@ -197,6 +198,7 @@ class AppState:
         state["sensors_on"] = self.sensors_on
         state["relay"] = self.relay.to_state()
         state["audio"] = self.audio.to_state()
+        state["layout"] = dict(self.layout)
         state["character"] = self.cfg["character"]["name"]
         state["config_info"] = {
             "model": self.cfg["llm"]["model"],
@@ -405,19 +407,19 @@ def make_app() -> FastAPI:
         await state.broadcast()
         return JSONResponse({"ok": True, "enabled_channels": state.safety.enabled})
 
-    @app.post("/api/device/channels/scale")
-    async def api_device_channel_scale(body: dict) -> JSONResponse:
-        """强度修正倍率（只作用于 AI 的强度）：{channel:"A", scale:0.7|1.0|1.3}。"""
-        ch = str(body.get("channel") or "").strip().upper()
-        if ch not in ("A", "B"):
-            return JSONResponse({"error": "channel 只能是 A 或 B"}, status_code=400)
+    @app.post("/api/layout")
+    async def api_layout(body: dict) -> JSONResponse:
+        """前端上报三栏布局（调试/监测用）：{sidebar_w, control_w, inner_width, zoom}。"""
         try:
-            scale = float(body.get("scale", 1.0))
+            state.layout = {
+                "sidebar_w": float(body.get("sidebar_w", 0)),
+                "control_w": float(body.get("control_w", 0)),
+                "inner_width": float(body.get("inner_width", 0)),
+                "zoom": float(body.get("zoom", 1.0)),
+            }
         except (TypeError, ValueError):
-            return JSONResponse({"error": "scale 必须是数字"}, status_code=400)
-        state.safety.set_strength_scale(ch, scale)
-        await state.broadcast()
-        return JSONResponse({"ok": True, "strength_scale": state.safety.scale})
+            return JSONResponse({"error": "数值格式错误"}, status_code=400)
+        return JSONResponse({"ok": True, "layout": state.layout})
 
     @app.post("/api/character/profile")
     async def api_character_profile(body: dict) -> JSONResponse:

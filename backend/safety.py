@@ -44,7 +44,6 @@ class SafetyManager:
         self.pulse_until = {"A": 0.0, "B": 0.0}  # 波形播放结束时刻（monotonic）
         self.overheat = {"A": False, "B": False}
         self.enabled = {"A": True, "B": True}    # 通道开关（页面可手动开闭）
-        self.scale = {"A": 1.0, "B": 1.0}        # 强度修正倍率（低/中/高=0.7/1.0/1.3，只乘 AI 强度）
         # 从 device_channels 配置读通道开关
         for ch in ("A", "B"):
             d = cfg.get("device_channels", {}).get(ch) or {}
@@ -109,11 +108,6 @@ class SafetyManager:
             self.current[ch] = 0
             self.pulse_until[ch] = 0.0
             self.requested[ch] = None
-
-    def set_strength_scale(self, ch: str, scale: float) -> None:
-        """设置强度修正倍率（0.1~3.0）。"""
-        ch = self.norm_channel(ch)
-        self.scale[ch] = max(0.1, min(3.0, float(scale)))
 
     def _check_enabled(self, ch: str) -> str | None:
         if not self.enabled.get(ch, True):
@@ -317,7 +311,6 @@ class SafetyManager:
             "requested": dict(self.requested),
             "pulse_active": self.pulse_active(),
             "enabled_channels": dict(self.enabled),
-            "strength_scale": dict(self.scale),
             "overheat": dict(self.overheat),
             "max_pulse_s": self.max_pulse_s,
             "max_temp_s": self.max_temp_s,

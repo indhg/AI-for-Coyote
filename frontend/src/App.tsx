@@ -17,17 +17,35 @@ const ESTOP_HOLD_MS = 1000;
 export default function App() {
   const [view, setView] = useState<ViewName>("control");
   const sidebarW = useLayout((s) => s.sidebarW);
-  const chatW = useLayout((s) => s.chatW);
+  const controlW = useLayout((s) => s.controlW);
+  const updateLayout = useLayout((s) => s.updateLayout);
   // 全局缩放：按窗口宽度缩放整页布局（0.8 ~ 1.3 倍）
   const [zoom, setZoom] = useState(1);
   useEffect(() => {
     const calc = () => {
       setZoom(Math.min(1.3, Math.max(0.8, window.innerWidth / 1600)));
+      updateLayout(); // 三栏按固定比例随窗口宽度重算
     };
     calc();
     window.addEventListener("resize", calc);
     return () => window.removeEventListener("resize", calc);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 上报三栏布局给后端（调试/监测用，300ms 节流）
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      api
+        .reportLayout({
+          sidebar_w: sidebarW,
+          control_w: controlW,
+          inner_width: window.innerWidth,
+          zoom,
+        })
+        .catch(() => {});
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [sidebarW, controlW, zoom]);
 
   // 空格长按急停的进行中状态与计时器
   const [holding, setHolding] = useState(false);
@@ -105,16 +123,14 @@ export default function App() {
       <TopBar view={view} onView={setView} />
       <div
         className="grid min-h-0 flex-1"
-        style={{ gridTemplateColumns: `${sidebarW}px 4px ${chatW}px 4px 1fr` }}
+        style={{ gridTemplateColumns: `${sidebarW}px 1fr ${controlW}px` }}
       >
         <Sidebar view={view} onView={setView} />
-        <Resizer side="left" />
         <ChatPanel />
-        <Resizer side="right" />
         <main className="min-h-0 overflow-y-auto border-l border-line px-4 pb-14 pt-3">
           {view === "control" && (
-            <div className="flex h-full min-h-0 flex-col gap-2.5">
-              <div className="min-h-0 flex-1">
+            <div className="flex h-full min-h-0 flex-col gap-2">
+              <div className="min-h-0 flex-none">
                 <DeviceStatus />
               </div>
               <ChannelControl />
@@ -146,36 +162,5 @@ export default function App() {
         </div>
       )}
     </div>
-  );
-}
-
-/** 拖拽调节三栏宽度（左=侧边栏，右=聊天面板），宽度持久化 */
-function Resizer({ side }: { side: "left" | "right" }) {
-  const setSidebarW = useLayout((s) => s.setSidebarW);
-  const setChatW = useLayout((s) => s.setChatW);
-
-  const onDown = (e: React.PointerEvent) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startW = side === "left" ? useLayout.getState().sidebarW : useLayout.getState().chatW;
-    const move = (ev: PointerEvent) => {
-      const dx = ev.clientX - startX;
-      if (side === "left") setSidebarW(Math.min(360, Math.max(160, startW + dx)));
-      else setChatW(Math.min(800, Math.max(300, startW - dx)));
-    };
-    const up = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-  };
-
-  return (
-    <div
-      onPointerDown={onDown}
-      title="拖拽调节宽度"
-      className="w-full cursor-col-resize bg-transparent transition-colors hover:bg-accent/40 active:bg-accent/60"
-    />
   );
 }

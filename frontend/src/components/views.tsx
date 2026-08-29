@@ -50,8 +50,8 @@ export function SettingsView() {
   const rows: [string, string][] = [
     ["版本", ci?.version ?? "dev"],
     ["AI 模型", ci?.model ?? "—"],
-    ["角色", s?.character ?? "—"],
-    ["角色设定文件", ci?.character_file ?? "—"],
+    ["主题", s?.character ?? "—"],
+    ["主题设定文件", ci?.character_file ?? "—"],
     ["波形配置", ci?.waveforms_file ?? "—"],
   ];
   return (
@@ -65,7 +65,7 @@ export function SettingsView() {
           </div>
         ))}
         <p className="mt-3 text-[11px] leading-relaxed text-faint">
-          修改 config\character.yaml（角色/示例）保存后下一条消息即生效；
+          修改 config\character.yaml（主题/示例）保存后下一条消息即生效；
           <br />
           AI 模型配置在下方填写、保存即生效；其余 config.yaml / config\waveforms.yaml 修改后需重启程序。
         </p>

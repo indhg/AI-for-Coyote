@@ -153,7 +153,7 @@ class GameLoop:
                     line = f"（模型调用失败：{exc}。请检查 API 配置与网络。）"
                 actions = []
             self.turn_count += 1
-            executed, dropped = await self.execute_actions(actions, apply_scale=True)
+            executed, dropped = await self.execute_actions(actions)
             await self._apply_channel_floor()
         finally:
             self.turn_busy = False
@@ -198,7 +198,7 @@ class GameLoop:
                 line = f"（开场调用失败：{exc}）"
                 actions = []
             self.turn_count += 1
-            executed, dropped = await self.execute_actions(actions, apply_scale=True)
+            executed, dropped = await self.execute_actions(actions)
             await self._apply_channel_floor()
         finally:
             self.turn_busy = False
@@ -278,7 +278,7 @@ class GameLoop:
                 logger.exception("自动观察模型调用失败")
                 return None
             self.turn_count += 1
-            executed, dropped = await self.execute_actions(actions, apply_scale=True)
+            executed, dropped = await self.execute_actions(actions)
             await self._apply_channel_floor()
         finally:
             self.turn_busy = False
@@ -348,7 +348,7 @@ class GameLoop:
                 logger.exception("自动回合模型调用失败: %s", exc)
                 return None
             self.turn_count += 1
-            executed, dropped = await self.execute_actions(actions, apply_scale=True)
+            executed, dropped = await self.execute_actions(actions)
             await self._apply_channel_floor()
         finally:
             self.turn_busy = False
@@ -363,21 +363,6 @@ class GameLoop:
         return result
 
     # ---------- 动作执行（AI 与手动共用） ----------
-    def _scale_cmd(self, cmd: dict) -> None:
-        """按该通道的低/中/高倍率修正强度动作（最终强度 = 设定值 × 倍率）。"""
-        ch = cmd.get("channel")
-        if ch not in ("A", "B") or cmd["kind"] not in ("hold", "add", "temp"):
-            return
-        scale = self.safety.scale.get(ch, 1.0)
-        if scale == 1.0:
-            return
-        cap = self.safety.cap_for(ch)
-        if cmd["kind"] == "add":
-            cmd["delta"] = round(cmd["delta"] * scale)
-            cmd["value"] = max(0, min(cap, self.safety.current[ch] + cmd["delta"]))
-        else:
-            cmd["value"] = max(0, min(cap, round(cmd["value"] * scale)))
-
     async def _ensure_default_wave(
         self, ch_name: str, client_id: str | None, slot_id: str | None,
         ready: bool, dry_run: bool,
@@ -447,12 +432,8 @@ class GameLoop:
             if fixed:
                 logger.info("通道保底：%s 通道强度/波形已自动补齐（第 %d 轮）", ch, self.turn_count)
 
-    async def execute_actions(self, actions: list, apply_scale: bool = False) -> tuple[list, list]:
-        """校验并执行动作列表，返回 (已执行说明列表, 被拒绝说明列表)。
-
-        apply_scale=True 时（AI 回合），强度动作按玩家的低/中/高倍率修正；
-        手动操作保持原值。
-        """
+    async def execute_actions(self, actions: list) -> tuple[list, list]:
+        """校验并执行动作列表，返回 (已执行说明列表, 被拒绝说明列表)。"""
         executed, dropped = [], []
         if not isinstance(actions, list):
             return executed, dropped
@@ -475,9 +456,6 @@ class GameLoop:
             if not ready and not dry_run:
                 dropped.append({"action": action, "reason": "设备未连接（无 clientId/slotId）"})
                 continue
-
-            if apply_scale:
-                self._scale_cmd(cmd)
 
             # 记录每通道最近一次强度/波形调整轮次（保底规则用）
             if cmd["kind"] in ("hold", "add", "temp") and cmd.get("channel") in ("A", "B"):

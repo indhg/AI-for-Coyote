@@ -43,39 +43,34 @@ export const useChat = create<ChatStore>((set) => ({
   setBusy: (b) => set({ busy: b }),
 }));
 
-// ---------- 布局（三栏宽度，可拖拽调节，持久化） ----------
-function readW(key: string, fallback: number): number {
+// ---------- 布局（三栏固定比例，随窗口宽度计算，不可拖拽） ----------
+function calcSidebarW(): number {
   try {
-    const v = Number(localStorage.getItem(key));
-    if (Number.isFinite(v) && v > 0) return v;
+    const w = window.innerWidth;
+    if (Number.isFinite(w) && w > 0) return Math.min(360, Math.max(160, Math.round(w * 0.158)));
   } catch {
     /* ignore */
   }
-  return fallback;
+  return 268;
 }
+
+function calcControlW(): number {
+  try {
+    const w = window.innerWidth;
+    if (Number.isFinite(w) && w > 0) return Math.min(900, Math.max(300, Math.round(w * 0.322)));
+  } catch {
+    /* ignore */
+  }
+  return 548;
+}
+
 interface LayoutStore {
   sidebarW: number;
-  chatW: number;
-  setSidebarW: (w: number) => void;
-  setChatW: (w: number) => void;
+  controlW: number;
+  updateLayout: () => void;
 }
 export const useLayout = create<LayoutStore>((set) => ({
-  sidebarW: readW("layout.sidebarW", 260),
-  chatW: readW("layout.chatW", 560),
-  setSidebarW: (w) => {
-    try {
-      localStorage.setItem("layout.sidebarW", String(w));
-    } catch {
-      /* ignore */
-    }
-    set({ sidebarW: w });
-  },
-  setChatW: (w) => {
-    try {
-      localStorage.setItem("layout.chatW", String(w));
-    } catch {
-      /* ignore */
-    }
-    set({ chatW: w });
-  },
+  sidebarW: calcSidebarW(),
+  controlW: calcControlW(),
+  updateLayout: () => set({ sidebarW: calcSidebarW(), controlW: calcControlW() }),
 }));

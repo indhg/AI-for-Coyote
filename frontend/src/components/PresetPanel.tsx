@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { run, targets } from "../commands";
-import { useApp } from "../store";
+import { useApp, useLayout } from "../store";
 import type { PresetInfo } from "../types";
 
 export default function PresetPanel() {
@@ -8,9 +8,9 @@ export default function PresetPanel() {
   const focusCh = useApp((st) => st.focusCh);
   const lastPreset = useApp((st) => st.lastPreset);
   const setLastPreset = useApp((st) => st.setLastPreset);
+  const controlW = useLayout((st) => st.controlW);
 
   const presets = s?.presets ?? [];
-  const paired = s?.relay_status === "paired";
   const estop = !!s?.estop;
   const cats: string[] = [];
   for (const p of presets) if (!cats.includes(p.category)) cats.push(p.category);
@@ -32,11 +32,6 @@ export default function PresetPanel() {
           急停中：所有设备动作被拒绝。点「解除急停」恢复（焦点不在输入框时长按空格 1 秒触发急停）。
         </p>
       )}
-      {!paired && !estop && (
-        <p className="mb-2 flex-none rounded-lg border border-line bg-ink3 px-2 py-1.5 text-[11px] leading-relaxed text-muted">
-          郊狼未配对：强度/波形暂不生效。用 DG-LAB App 扫右侧二维码重新配对。
-        </p>
-      )}
       <div className="mb-2 flex flex-none flex-wrap gap-1">
         {cats.map((c) => (
           <button
@@ -50,12 +45,16 @@ export default function PresetPanel() {
           </button>
         ))}
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
+      <div
+        className={`grid min-h-0 flex-1 content-start gap-1 overflow-y-auto pr-1 ${
+          controlW < 400 ? "grid-cols-3" : "grid-cols-6"
+        }`}
+      >
         {shown.map((p) => (
           <PresetCard key={p.name} preset={p} active={lastPreset[focusCh] === p.name} onPick={() => pick(p)} />
         ))}
         {!shown.length && (
-          <p className="text-[11px] text-faint">该分类暂无波形（可在 config\waveforms.yaml 自定义）</p>
+          <p className="col-span-full text-[11px] text-faint">该分类暂无波形（可在 config\waveforms.yaml 自定义）</p>
         )}
       </div>
     </div>
@@ -66,12 +65,12 @@ function PresetCard({ preset, active, onPick }: { preset: PresetInfo; active: bo
   return (
     <div
       onClick={onPick}
-      className={`flex cursor-pointer items-center gap-2.5 rounded-[10px] border px-3 py-1.5 transition-colors ${
+      className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-[8px] border px-0.5 text-center transition-colors ${
         active ? "border-accent bg-accent" : "border-line bg-panel2 hover:border-line2"
       }`}
     >
       <div
-        className={`flex-1 truncate font-semibold leading-tight text-[13px] ${
+        className={`line-clamp-2 w-full break-all text-[13px] font-semibold leading-tight ${
           active ? "text-ink" : "text-text"
         }`}
         title={preset.name}

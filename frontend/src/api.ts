@@ -39,8 +39,8 @@ export const api = {
   ) => j<{ ok: boolean }>("/api/device/channels", json(channels)),
   setChannelEnabled: (channel: "A" | "B", enabled: boolean) =>
     j<{ ok: boolean }>("/api/device/channels/enabled", json({ channel, enabled })),
-  setChannelScale: (channel: "A" | "B", scale: number) =>
-    j<{ ok: boolean }>("/api/device/channels/scale", json({ channel, scale })),
+  reportLayout: (body: { sidebar_w: number; control_w: number; inner_width: number; zoom: number }) =>
+    j<{ ok: boolean; layout?: Record<string, number> }>("/api/layout", json(body)),
   setProfile: (role: string, profile: string) =>
     j<{ ok: boolean; role?: string; profile?: string }>(
       "/api/character/profile",

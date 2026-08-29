@@ -6,12 +6,12 @@ export default function BottomBar() {
   const s = useApp((st) => st.state);
   const estop = !!s?.estop;
   const sidebarW = useLayout((st) => st.sidebarW);
-  const chatW = useLayout((st) => st.chatW);
+  const controlW = useLayout((st) => st.controlW);
 
   return (
     <div
       className="fixed bottom-0 z-10 flex h-14 items-center gap-4 border-t border-line bg-ink2 px-5"
-      style={{ left: sidebarW + 4, right: chatW + 4 }}
+      style={{ left: sidebarW, right: controlW }}
     >
       <button
         className="rounded-[10px] border border-line bg-panel2 px-3.5 py-1.5 text-[13px] hover:border-line2"
