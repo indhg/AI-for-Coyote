@@ -76,8 +76,8 @@ export default function CharacterConfig() {
       setMsg(
         `已导入 ${r.files?.length ?? 0} 个文件到 content\\pack\\${r.dir}${r.profile ? "，已自动启用「" + r.profile + "」" : ""}`,
       );
-      if (r.profile && r.profile !== profile) {
-        await api.setProfile(role, r.profile).catch(() => undefined);
+      if (r.role && r.profile && (r.role !== role || r.profile !== profile)) {
+        await api.setProfile(r.role, r.profile).catch(() => undefined);
       }
     } catch (e) {
       setErr(`导入失败：${(e as Error).message}`);

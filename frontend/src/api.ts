@@ -51,10 +51,13 @@ export const api = {
   importDlc: (file: File) => {
     const fd = new FormData();
     fd.append("file", file);
-    return j<{ ok: boolean; dir?: string; files?: string[]; profile?: string | null }>(
-      "/api/dlc/import",
-      { method: "POST", body: fd },
-    );
+    return j<{
+      ok: boolean;
+      dir?: string;
+      files?: string[];
+      role?: string | null;
+      profile?: string | null;
+    }>("/api/dlc/import", { method: "POST", body: fd });
   },
   setAutopilot: (enabled: boolean) =>
     j<{ ok: boolean }>("/api/autopilot", json({ enabled })),

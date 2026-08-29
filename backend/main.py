@@ -10,6 +10,7 @@ import asyncio
 import contextlib
 import io
 import os
+import re
 import socket
 import sys
 import urllib.parse
@@ -26,6 +27,7 @@ from .audio import AudioManager
 from .camera import Camera
 from .config import (
     load_config,
+    patch_character_add_role,
     patch_character_prompt_file,
     reload_character,
     save_character_runtime,
@@ -502,28 +504,56 @@ def make_app() -> FastAPI:
         for bn, content in mds.items():
             (dlc_dir / bn).write_bytes(content)
 
-        # 自动接通：按文件名找「角色提示词」md，写入对应 profile 的 prompt_file 并热加载
+        # 自动接通：按 DLC 目录名解析「角色-风格」（DLC<序号>-<角色>-<风格>），
+        # 角色已存在则接通其风格档；新角色自动注册角色块；旧式单 md 按当前角色匹配
         prompt_md = next((b for b in mds if "角色提示词" in b), None) or next(
             (b for b in mds if "提示词" in b), None
         )
         patched_profile = None
+        patched_role = None
         if prompt_md:
             reload_character(cfg)
-            avail = cfg["character"].get("profile_available") or {}
-            profiles = list(cfg["character"].get("profiles") or [])
-            target = next((p for p in profiles if p and p in prompt_md), None)
-            if target is None:
-                target = next((p for p in profiles if p != "纯爱" and not avail.get(p, True)), None)
-            if target is None and "调教" in profiles:
-                target = "调教"
-            if target:
-                char_path = Path(cfg["character_file"])
-                if not char_path.is_absolute():
-                    char_path = PROJECT_ROOT / char_path
-                rel = f"content/pack/{dlc_folder}/{prompt_md}"
-                if patch_character_prompt_file(char_path, target, rel, role=str(cfg["character"].get("role") or "")):
+            char_path = Path(cfg["character_file"])
+            if not char_path.is_absolute():
+                char_path = PROJECT_ROOT / char_path
+            rel = f"content/pack/{dlc_folder}/{prompt_md}"
+
+            m = re.match(r"^DLC\d+-(.+?)-(.+)$", dlc_folder)
+            dlc_role = (m.group(1) if m else "").strip()
+            dlc_style = (m.group(2) if m else "").strip()
+            roles_map = {r["name"]: r for r in (cfg["character"].get("roles") or [])}
+
+            if dlc_role and dlc_role in roles_map:
+                # 已知角色：接通其下匹配的风格档
+                profiles_of = [p["name"] for p in roles_map[dlc_role]["profiles"]]
+                target = next((p for p in profiles_of if p and p in prompt_md), None)
+                if target is None:
+                    target = profiles_of[0] if profiles_of else None
+                if target and patch_character_prompt_file(char_path, target, rel, role=dlc_role):
                     patched_profile = target
-                    reload_character(cfg)
+                    patched_role = dlc_role
+            elif dlc_role:
+                # 新角色：自动注册角色块（傻瓜式，无需手改配置）
+                level = "重" if dlc_style and "调教" in dlc_style and dlc_role != "触手" else "中"
+                narrative = "触手" if dlc_role == "触手" else "装置"
+                style = dlc_style or "调教"
+                if patch_character_add_role(char_path, dlc_role, dlc_role, style, level, rel, narrative):
+                    patched_profile = style
+                    patched_role = dlc_role
+            else:
+                # 旧式（单 md / 无 DLC 目录名）：当前角色内匹配
+                avail = cfg["character"].get("profile_available") or {}
+                profiles = list(cfg["character"].get("profiles") or [])
+                cur_role = str(cfg["character"].get("role") or "")
+                target = next((p for p in profiles if p and p in prompt_md), None)
+                if target is None:
+                    target = next((p for p in profiles if p != "纯爱" and not avail.get(p, True)), None)
+                if target is None and "调教" in profiles:
+                    target = "调教"
+                if target and patch_character_prompt_file(char_path, target, rel, role=cur_role):
+                    patched_profile = target
+                    patched_role = cur_role
+            reload_character(cfg)
 
         await state.broadcast()
         return JSONResponse(
@@ -531,6 +561,7 @@ def make_app() -> FastAPI:
                 "ok": True,
                 "dir": dlc_folder,
                 "files": sorted(mds),
+                "role": patched_role,
                 "profile": patched_profile,
             }
         )

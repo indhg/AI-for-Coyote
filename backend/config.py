@@ -584,3 +584,53 @@ def patch_character_prompt_file(character_path: Path, profile: str, prompt_rel: 
     character_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     logger.info("character.yaml 已更新：%s.%s.prompt_file = %s", role or "-", profile, prompt_rel)
     return True
+
+
+def patch_character_add_role(
+    character_path: Path,
+    role: str,
+    label: str,
+    profile: str,
+    level: str,
+    prompt_rel: str,
+    narrative: str = "装置",
+) -> bool:
+    """新角色自动注册：在 character.yaml 的 roles 段追加一个角色块（角色已存在则拒绝）。
+
+    供「导入 DLC」傻瓜式接入新角色使用；块插在顶层 prompt: 之前（roles 是它前面的顶层键）。
+    """
+    if not character_path.exists():
+        example = character_path.parent / "character.example.yaml"
+        if not example.exists():
+            return False
+        shutil.copy2(example, character_path)
+
+    text = character_path.read_text(encoding="utf-8")
+    if re.search(r"^\s*" + re.escape(role) + r"\s*:\s*$", text, flags=re.M):
+        logger.warning("角色 %s 已在 character.yaml 中存在，跳过注册", role)
+        return False
+
+    block = [
+        f"  {role}:",
+        f"    name: {label}",
+        "    title: 主人",
+        f"    device_narrative: {narrative}",
+        "    profiles:",
+        f"      {profile}:",
+        f"        level: {level}",
+        f"        prompt_file: {prompt_rel}",
+        "        examples: []",
+    ]
+    lines = text.splitlines()
+    insert_at = None
+    for i, ln in enumerate(lines):
+        if re.match(r"^\s*prompt\s*:", ln):
+            insert_at = i
+            break
+    if insert_at is not None:
+        lines[insert_at:insert_at] = block
+    else:
+        lines += [""] + block
+    character_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    logger.info("character.yaml 已注册新角色：%s（%s·%s）", role, profile, level)
+    return True
