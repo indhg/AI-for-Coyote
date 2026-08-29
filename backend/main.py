@@ -408,27 +408,35 @@ def make_app() -> FastAPI:
 
     @app.post("/api/character/profile")
     async def api_character_profile(body: dict) -> JSONResponse:
-        """切换风格版本：{profile: "纯爱"|"调教"}，保存并热加载；目标版本 DLC 未安装时拒绝。"""
+        """切换角色/风格：{role: "触手", profile: "调教"}，保存并热加载；目标 DLC 未安装时拒绝。"""
+        role = str(body.get("role") or "").strip()
         profile = str(body.get("profile") or "").strip()
         # 以文件当前状态为准：先热加载再校验，避免陈旧内存配置放行未安装的 DLC
         reload_character(cfg)
-        available = list(cfg["character"].get("profiles") or [])
-        if profile not in available:
-            return JSONResponse({"error": f"未知版本，可用：{available}"}, status_code=400)
-        if not cfg["character"].get("profile_available", {}).get(profile, True):
+        roles = {r["name"]: r for r in (cfg["character"].get("roles") or [])}
+        if not role:
+            role = str(cfg["character"].get("role") or "")
+        if role not in roles:
+            return JSONResponse({"error": f"未知角色，可用：{list(roles)}"}, status_code=400)
+        rmeta = roles[role]
+        avail = {p["name"]: p["available"] for p in rmeta["profiles"]}
+        if not profile:
+            profile = avail and next(iter(avail))
+        if profile not in avail:
+            return JSONResponse({"error": f"未知风格版本，可用：{list(avail)}"}, status_code=400)
+        if not avail.get(profile, True):
             return JSONResponse(
                 {
-                    "error": (
-                        f"「{profile}」版的 DLC 未安装：请把对应 DLC 目录放入 content\\pack\\，"
-                        "并在 config\\character.yaml 中启用该版本的 prompt_file 后重启程序。"
-                    ),
+                    "error": f"「{rmeta['label']}·{profile}」的 DLC 未安装：请先在「角色设置」导入对应 DLC 包。",
                     "detail": "dlc_missing",
                 },
                 status_code=400,
             )
-        save_character_runtime(cfg, profile=profile)
+        save_character_runtime(cfg, role=role, profile=profile)
         await state.broadcast()
-        return JSONResponse({"ok": True, "profile": cfg["character"]["profile"]})
+        return JSONResponse(
+            {"ok": True, "role": cfg["character"]["role"], "profile": cfg["character"]["profile"]}
+        )
 
     @app.post("/api/character/nick")
     async def api_character_nick(body: dict) -> JSONResponse:
@@ -513,7 +521,7 @@ def make_app() -> FastAPI:
                 if not char_path.is_absolute():
                     char_path = PROJECT_ROOT / char_path
                 rel = f"content/pack/{dlc_folder}/{prompt_md}"
-                if patch_character_prompt_file(char_path, target, rel):
+                if patch_character_prompt_file(char_path, target, rel, role=str(cfg["character"].get("role") or "")):
                     patched_profile = target
                     reload_character(cfg)
 

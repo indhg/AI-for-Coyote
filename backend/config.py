@@ -350,71 +350,138 @@ def _parse_examples(data: dict | None) -> list:
     return examples
 
 
+def _prompt_exists(pf) -> bool:
+    if not pf:
+        return False
+    pp = Path(str(pf))
+    if not pp.is_absolute():
+        pp = PROJECT_ROOT / pp
+    return pp.exists()
+
+
+def _prompt_read(pf) -> str:
+    if not pf:
+        return ""
+    pp = Path(str(pf))
+    if not pp.is_absolute():
+        pp = PROJECT_ROOT / pp
+    if pp.exists():
+        return pp.read_text(encoding="utf-8").strip()
+    logger.warning("角色提示词文件不存在: %s", pp)
+    return ""
+
+
 def _load_character(path: Path) -> dict:
     if not path.exists():
         return {
             "name": "默认角色",
+            "role": "默认角色",
+            "role_title": "主人",
+            "device_narrative": "触手",
+            "roles": [],
             "prompt": "你是一个有趣的互动角色。",
             "player_nick": "小柳",
-            "profile": "调教",
-            "profiles": ["调教"],
+            "profile": "默认",
+            "profiles": ["默认"],
+            "profile_available": {},
             "prompt_file": None,
             "examples": [],
         }
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     runtime = _load_character_runtime()
 
-    # 风格版本：运行时覆盖 > 配置文件 profile > 默认「纯爱」
-    profiles = data.get("profiles") if isinstance(data.get("profiles"), dict) else {}
-    available = list(profiles.keys()) or ["纯爱"]
-    profile_name = str(runtime.get("profile") or data.get("profile") or "纯爱").strip()
-    if profile_name not in available:
-        profile_name = available[0]
-    profile = profiles.get(profile_name) or {}
+    # 新格式：roles.<角色>.profiles.<风格>；旧格式（平铺 profiles）包装成单角色「触手」
+    roles_raw = data.get("roles")
+    if isinstance(roles_raw, dict) and roles_raw:
+        role_meta: dict[str, dict] = {}
+        for rname, rbody in roles_raw.items():
+            if not isinstance(rbody, dict):
+                continue
+            rprofiles = rbody.get("profiles") if isinstance(rbody.get("profiles"), dict) else {}
+            role_meta[rname] = {
+                "name": str(rbody.get("name") or rname),
+                "title": str(rbody.get("title") or "主人"),
+                "device_narrative": str(rbody.get("device_narrative") or "触手"),
+                "profiles": rprofiles,
+            }
+        role_names = list(role_meta)
+        role_name = str(runtime.get("role") or data.get("role") or role_names[0]).strip()
+        if role_name not in role_meta:
+            role_name = role_names[0]
+    else:
+        role_meta = {
+            "触手": {
+                "name": str(data.get("name") or "触手"),
+                "title": "主人",
+                "device_narrative": "触手",
+                "profiles": (
+                    data.get("profiles") if isinstance(data.get("profiles"), dict) else {}
+                ),
+            }
+        }
+        role_name = "触手"
 
-    # 各版本 DLC 可用性：该版本的 prompt_file 存在才算已安装（未安装则切换被拦）
-    profile_available: dict[str, bool] = {}
-    for nm in available:
-        pf = profiles.get(nm, {}).get("prompt_file") or data.get("prompt_file")
-        if pf:
-            pp = Path(str(pf))
-            if not pp.is_absolute():
-                pp = PROJECT_ROOT / pp
-            profile_available[nm] = pp.exists()
-        else:
-            profile_available[nm] = False
+    meta = role_meta[role_name]
+    profiles_map = meta["profiles"] or {}
+    available_profiles = list(profiles_map) or ["默认"]
+    profile_name = str(runtime.get("profile") or data.get("profile") or available_profiles[0]).strip()
+    if profile_name not in available_profiles:
+        profile_name = available_profiles[0]
+    profile = profiles_map.get(profile_name) or {}
+    top_prompt_file = data.get("prompt_file")
 
-    # 提示词：版本内 prompt_file 优先，其次顶层
-    prompt = ""
-    prompt_file = profile.get("prompt_file") or data.get("prompt_file")
-    if prompt_file:
-        # 系统提示词从外部文件加载（如 D:\CoyoteWithAI\角色提示词-调教.md），可配置、不硬编码
-        p = Path(str(prompt_file))
-        if not p.is_absolute():
-            p = PROJECT_ROOT / p
-        if p.exists():
-            prompt = p.read_text(encoding="utf-8").strip()
-        else:
-            logger.warning("角色提示词文件不存在: %s", p)
+    # 各角色 × 各风格的可用性清单（前端两级选择用）
+    roles_out: list[dict] = []
+    for rname, rmeta in role_meta.items():
+        profs_out: list[dict] = []
+        for pname, pbody in rmeta["profiles"].items():
+            pf = pbody.get("prompt_file") or top_prompt_file
+            profs_out.append(
+                {
+                    "name": pname,
+                    "level": str(pbody.get("level") or "中"),
+                    "note": str(pbody.get("note") or "").strip(),
+                    "available": _prompt_exists(pf),
+                }
+            )
+        roles_out.append(
+            {
+                "name": rname,
+                "label": rmeta["name"],
+                "title": rmeta["title"],
+                "device_narrative": rmeta["device_narrative"],
+                "profiles": profs_out,
+            }
+        )
+
+    current_profs = next((r["profiles"] for r in roles_out if r["name"] == role_name), [])
+    profile_available = {p["name"]: p["available"] for p in current_profs}
+
+    prompt_file = profile.get("prompt_file") or top_prompt_file
+    prompt = _prompt_read(prompt_file)
     if not prompt:
         prompt = str(data.get("prompt", "")).strip()
 
-    # 示例：版本内 examples 优先，其次顶层
     examples = _parse_examples(
         profile.get("examples") if profile.get("examples") is not None else data.get("examples")
     )
 
-    # 昵称：运行时覆盖 > 配置文件 > 默认
     nick = str(
         runtime.get("player_nick") or data.get("player_nick") or "小柳"
     ).strip() or "小柳"
 
     return {
-        "name": str(data.get("name", "默认角色")),
+        "name": meta["name"],
+        "role": role_name,
+        "role_title": meta["title"],
+        "device_narrative": meta["device_narrative"],
+        "roles": roles_out,
         "prompt": prompt,
         "player_nick": nick,
         "profile": profile_name,
-        "profiles": available,
+        "profiles": [p["name"] for p in current_profs],
+        "profile_level": next((p["level"] for p in current_profs if p["name"] == profile_name), "中"),
+        "profile_note": next((p["note"] for p in current_profs if p["name"] == profile_name), ""),
         "profile_available": profile_available,
         "prompt_file": prompt_file,
         "examples": examples,
@@ -428,7 +495,7 @@ def save_character_runtime(cfg: Config, **fields) -> None:
     """
     runtime = _load_character_runtime()
     for key, value in fields.items():
-        if key not in ("profile", "player_nick"):
+        if key not in ("role", "profile", "player_nick"):
             continue
         if value is None:
             continue
@@ -441,11 +508,11 @@ def save_character_runtime(cfg: Config, **fields) -> None:
     logger.info("角色运行时覆盖已保存：%s", runtime)
 
 
-def patch_character_prompt_file(character_path: Path, profile: str, prompt_rel: str) -> bool:
-    """把 character.yaml 里指定 profile 的 prompt_file 设为 prompt_rel（相对项目根的 posix 路径）。
+def patch_character_prompt_file(character_path: Path, profile: str, prompt_rel: str, role: str = "") -> bool:
+    """把 character.yaml 里指定角色/风格的 prompt_file 设为 prompt_rel（相对项目根的 posix 路径）。
 
-    文件不存在时先从 character.example.yaml 复制；找不到该 profile 键返回 False。
-    供「导入 DLC」自动接通使用，避免用户手改配置。
+    新格式按 role 定位角色块，旧格式直接找 profile 键；文件不存在时先从
+    character.example.yaml 复制；找不到对应键返回 False。供「导入 DLC」自动接通使用。
     """
     if not character_path.exists():
         example = character_path.parent / "character.example.yaml"
@@ -456,17 +523,45 @@ def patch_character_prompt_file(character_path: Path, profile: str, prompt_rel: 
     text = character_path.read_text(encoding="utf-8")
     lines = text.splitlines()
 
-    key_re = re.compile(r"^(\s*)" + re.escape(profile) + r"\s*:")
     idx: int | None = None
     indent = 0
-    for i, ln in enumerate(lines):
-        m = key_re.match(ln)
-        if m:
-            idx = i
-            indent = len(m.group(1))
-            break
-    if idx is None:
-        return False
+    if role:
+        # 先定位角色块，再在块内找 profile 键
+        role_re = re.compile(r"^(\s*)" + re.escape(role) + r"\s*:")
+        r_idx: int | None = None
+        role_indent = 0
+        for i, ln in enumerate(lines):
+            m = role_re.match(ln)
+            if m:
+                r_idx = i
+                role_indent = len(m.group(1))
+                break
+        if r_idx is None:
+            return False
+        for j in range(r_idx + 1, len(lines)):
+            ln = lines[j]
+            if not ln.strip():
+                continue
+            cur_indent = len(ln) - len(ln.lstrip(" "))
+            if cur_indent <= role_indent:
+                break
+            m = re.match(r"^\s*" + re.escape(profile) + r"\s*:", ln)
+            if m:
+                idx = j
+                indent = cur_indent
+                break
+        if idx is None:
+            return False
+    else:
+        key_re = re.compile(r"^(\s*)" + re.escape(profile) + r"\s*:")
+        for i, ln in enumerate(lines):
+            m = key_re.match(ln)
+            if m:
+                idx = i
+                indent = len(m.group(1))
+                break
+        if idx is None:
+            return False
 
     pline: int | None = None
     for j in range(idx + 1, len(lines)):
@@ -487,5 +582,5 @@ def patch_character_prompt_file(character_path: Path, profile: str, prompt_rel: 
         lines.insert(idx + 1, new_line)
 
     character_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    logger.info("character.yaml 已更新：%s.prompt_file = %s", profile, prompt_rel)
+    logger.info("character.yaml 已更新：%s.%s.prompt_file = %s", role or "-", profile, prompt_rel)
     return True

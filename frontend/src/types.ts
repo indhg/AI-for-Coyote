@@ -31,6 +31,19 @@ export interface ChannelDevice {
   name: string;
   location: string;
 }
+export interface RoleProfile {
+  name: string;
+  level: string;
+  note: string;
+  available: boolean;
+}
+export interface RoleInfo {
+  name: string;
+  label: string;
+  title: string;
+  device_narrative: string;
+  profiles: RoleProfile[];
+}
 export interface FullState {
   estop: boolean;
   caps: Record<"A" | "B", number>;
@@ -46,9 +59,13 @@ export interface FullState {
   strength_scale: Record<"A" | "B", number>;
   baseline_strength: Record<"A" | "B", number>;
   patterns: Record<"A" | "B", string | null>;
+  role: string;
+  role_title: string;
+  roles: RoleInfo[];
   profile: string;
   profiles: string[];
   profile_available: Record<string, boolean>;
+  profile_level: string;
   autopilot: boolean;
   autopilot_interval_s: number;
   sensors_on: boolean;

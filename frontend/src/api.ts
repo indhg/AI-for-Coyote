@@ -41,8 +41,11 @@ export const api = {
     j<{ ok: boolean }>("/api/device/channels/enabled", json({ channel, enabled })),
   setChannelScale: (channel: "A" | "B", scale: number) =>
     j<{ ok: boolean }>("/api/device/channels/scale", json({ channel, scale })),
-  setProfile: (profile: string) =>
-    j<{ ok: boolean }>("/api/character/profile", json({ profile })),
+  setProfile: (role: string, profile: string) =>
+    j<{ ok: boolean; role?: string; profile?: string }>(
+      "/api/character/profile",
+      json({ role, profile }),
+    ),
   setNick: (nick: string) =>
     j<{ ok: boolean }>("/api/character/nick", json({ nick })),
   importDlc: (file: File) => {

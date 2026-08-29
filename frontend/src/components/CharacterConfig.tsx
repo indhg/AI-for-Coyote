@@ -1,19 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useApp } from "../store";
+import type { RoleInfo } from "../types";
 
 const STYLE_LABELS: Record<string, string> = {
   纯爱: "纯爱版",
   调教: "调教版",
 };
 
+const LEVEL_BADGE: Record<string, string> = {
+  轻: "轻",
+  中: "中",
+  重: "重",
+};
+
 // zustand selector 必须返回稳定引用，不能内联新数组（否则无限重渲染）
-const DEFAULT_PROFILES: string[] = ["纯爱", "调教"];
+const DEFAULT_ROLES: RoleInfo[] = [];
 
 export default function CharacterConfig() {
+  const role = useApp((st) => st.state?.role ?? "触手");
+  const roles = useApp((st) => st.state?.roles ?? DEFAULT_ROLES);
   const profile = useApp((st) => st.state?.profile ?? "纯爱");
-  const profiles = useApp((st) => st.state?.profiles ?? DEFAULT_PROFILES);
-  const avail = useApp((st) => st.state?.profile_available);
   const nick = useApp((st) => st.state?.config_info?.player_nick ?? "小柳");
   const [draft, setDraft] = useState(nick);
   const [err, setErr] = useState("");
@@ -22,11 +29,37 @@ export default function CharacterConfig() {
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => setDraft(nick), [nick]);
 
+  const currentRole =
+    roles.find((r) => r.name === role) ?? {
+      name: role,
+      label: role,
+      title: "主人",
+      device_narrative: "触手",
+      profiles: [],
+    };
+  const roleProfiles = currentRole.profiles ?? [];
+
+  const switchRole = async (r: string) => {
+    if (r === role) return;
+    setErr("");
+    const rInfo = roles.find((x) => x.name === r);
+    const first = rInfo?.profiles?.find((p) => p.available) ?? rInfo?.profiles?.[0];
+    if (!first) {
+      setErr(`「${rInfo?.label ?? r}」未安装：先点下方「导入 DLC」安装内容包。`);
+      return;
+    }
+    try {
+      await api.setProfile(r, first.name);
+    } catch (e) {
+      setErr(`切换失败：${(e as Error).message}`);
+    }
+  };
+
   const switchProfile = async (p: string) => {
     if (p === profile) return;
     setErr("");
     try {
-      await api.setProfile(p);
+      await api.setProfile(role, p);
     } catch (e) {
       setErr(
         `「${STYLE_LABELS[p] ?? p}」未安装：点下方「导入 DLC」选择 .zip 或 .md 即可，导入后自动生效。${(e as Error).message ? `（${(e as Error).message}）` : ""}`,
@@ -40,9 +73,11 @@ export default function CharacterConfig() {
     setMsg("");
     try {
       const r = await api.importDlc(f);
-      setMsg(`已导入 ${r.files?.length ?? 0} 个文件到 content\\pack\\${r.dir}${r.profile ? "，已自动启用「" + r.profile + "」" : ""}`);
+      setMsg(
+        `已导入 ${r.files?.length ?? 0} 个文件到 content\\pack\\${r.dir}${r.profile ? "，已自动启用「" + r.profile + "」" : ""}`,
+      );
       if (r.profile && r.profile !== profile) {
-        await api.setProfile(r.profile).catch(() => undefined);
+        await api.setProfile(role, r.profile).catch(() => undefined);
       }
     } catch (e) {
       setErr(`导入失败：${(e as Error).message}`);
@@ -69,32 +104,66 @@ export default function CharacterConfig() {
     <div className="mt-3 rounded-[14px] border border-line bg-panel p-3.5">
       <div className="mb-2 text-[12px] font-semibold tracking-[1.5px] text-muted">角色设置</div>
 
-      <div className="mb-2 text-[11px] text-muted">对话风格</div>
+      <div className="mb-2 text-[11px] text-muted">角色</div>
       <div className="flex gap-1.5">
-        {profiles.map((p) => {
-          const ok = avail?.[p] ?? true;
+        {roles.map((r) => {
+          const usable = (r.profiles ?? []).some((p) => p.available);
           return (
             <button
-              key={p}
-              disabled={!ok}
-              title={ok ? undefined : `${STYLE_LABELS[p] ?? p}需要安装对应 DLC（content\\pack\\）`}
-              onClick={() => void switchProfile(p)}
+              key={r.name}
+              disabled={!usable}
+              title={usable ? undefined : `${r.label}需要安装对应 DLC（content\\pack\\）`}
+              onClick={() => void switchRole(r.name)}
               className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] transition-colors ${
-                p === profile
+                r.name === role
+                  ? "border-accent bg-accent font-semibold text-ink"
+                  : usable
+                    ? "border-line bg-panel2 text-muted hover:border-line2"
+                    : "cursor-not-allowed border-line bg-panel2 text-faint opacity-60"
+              }`}
+            >
+              {r.label}
+              {!usable && <span className="ml-1 text-[10px]">未装</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mb-2 mt-3 text-[11px] text-muted">风格档</div>
+      <div className="flex gap-1.5">
+        {roleProfiles.map((p) => {
+          const ok = p.available;
+          return (
+            <button
+              key={p.name}
+              disabled={!ok}
+              title={ok ? undefined : `${STYLE_LABELS[p.name] ?? p.name}需要安装对应 DLC（content\\pack\\）`}
+              onClick={() => void switchProfile(p.name)}
+              className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] transition-colors ${
+                p.name === profile
                   ? "border-accent bg-accent font-semibold text-ink"
                   : ok
                     ? "border-line bg-panel2 text-muted hover:border-line2"
                     : "cursor-not-allowed border-line bg-panel2 text-faint opacity-60"
               }`}
             >
-              {STYLE_LABELS[p] ?? p}
+              {STYLE_LABELS[p.name] ?? p.name}
+              {LEVEL_BADGE[p.level] && (
+                <span className="ml-1 text-[10px] opacity-80">{LEVEL_BADGE[p.level]}</span>
+              )}
               {!ok && <span className="ml-1 text-[10px]">未装DLC</span>}
             </button>
           );
         })}
       </div>
       <p className="mt-1 text-[10px] text-faint">
-        {profile === "纯爱" ? "温柔驯服·依赖顺从" : "黑暗调教·支配胁迫（DLC1）"}
+        {profile === "纯爱" && role === "触手"
+          ? "温柔驯服·依赖顺从"
+          : profile === "调教" && role === "触手"
+            ? "黑暗调教·支配胁迫（DLC1）"
+            : role === "品评会"
+              ? "公开审评·装置支配（DLC2，重口）"
+              : ""}
       </p>
       {err && <p className="mt-1.5 text-[10px] leading-relaxed text-red-400">{err}</p>}
       {msg && <p className="mt-1.5 text-[10px] leading-relaxed text-emerald-400">{msg}</p>}

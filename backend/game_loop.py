@@ -112,10 +112,14 @@ class GameLoop:
             state["baseline_strength"][ch] = max(0, min(100, value))
         state["rage_rounds"] = self.rage_rounds
         state["rage_triggered"] = self.rage_triggered
-        # 风格版本（纯爱版 / 调教版）与可用版本列表（页面切换用）
+        # 角色与风格版本（多角色两级：角色 → 风格档），页面切换用
+        state["role"] = str(self.cfg["character"].get("role") or "触手")
+        state["role_title"] = str(self.cfg["character"].get("role_title") or "主人")
+        state["roles"] = list(self.cfg["character"].get("roles") or [])
         state["profile"] = str(self.cfg["character"].get("profile") or "纯爱")
         state["profiles"] = list(self.cfg["character"].get("profiles") or ["纯爱"])
         state["profile_available"] = dict(self.cfg["character"].get("profile_available") or {})
+        state["profile_level"] = str(self.cfg["character"].get("profile_level") or "中")
         state["autopilot"] = bool(self.autopilot)
         state["autopilot_interval_s"] = self.autopilot_interval
         return state
