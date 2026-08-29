@@ -142,6 +142,7 @@ function ChannelCard({
           >
             {cap}
           </button>
+          <span className="ml-1 align-middle text-[10px] font-normal text-faint">上限可调</span>
           {req !== null && req !== undefined && req !== cur && (
             <small className="text-[11px] font-normal text-warn"> 设定{req}</small>
           )}

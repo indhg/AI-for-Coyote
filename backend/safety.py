@@ -29,7 +29,8 @@ class SafetyManager:
             "A": int(s["channels"]["A"]["max_strength"]),
             "B": int(s["channels"]["B"]["max_strength"]),
         }
-        self.user_caps = dict(self.caps)  # 运行时强度上限（页面可调，1~硬上限；不持久化）
+        # 运行时强度上限（页面可调 1~硬上限；不持久化；默认 100，用户可在界面往上调到 200）
+        self.user_caps = {ch: min(100, self.caps[ch]) for ch in ("A", "B")}
         self.max_pulse_s = float(p["max_duration_s"])
         self.min_pulse_s = float(p["min_duration_s"])
         self.max_temp_s = float(s["max_temp_duration_s"])
