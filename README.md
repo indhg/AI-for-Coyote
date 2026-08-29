@@ -58,11 +58,11 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 
 - 本仓库整体以 **GPL-3.0** 发布（见 [LICENSE](LICENSE)）。
 - `relay/` 目录源自 [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0），保留其原始许可证。
-- **本体与 DLC**：「触手」是当前唯一角色，其「纯爱版」为轻口味内容随本体发布（`content/pure/`）；「调教版」提示词与 NSFW 语料作为 DLC1 存放在 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（成人内容，18+）。未来新角色/新风格照同一 DLC 机制接入。具体清单见下节「项目内容」。
+- **本体与 DLC**：多角色体系——每个角色自带若干风格档（轻/中/重）。「触手」角色随本体发布（纯爱版=轻，`content/pure/`）；其「调教版」（中）作为 DLC1、「品评会」角色（调教·重）作为 DLC2 存放在 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（成人内容，18+）。未来新角色照同一 DLC 机制接入。具体清单见下节「项目内容」。
 
-## 项目内容（触手）
+## 项目内容
 
-### 纯爱版（本体）
+### 触手 · 纯爱版（本体，轻）
 
 `content/pure/` 里是默认启用的「纯爱版」角色内容：
 
@@ -72,7 +72,7 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 | `触手-语料库-纯爱.md` | 纯爱向描写语料 |
 | `触手-漫画设定-纯爱.md` | 角色与世界观设定 |
 
-### DLC1：调教版
+### DLC1：触手 · 调教版（中）
 
 存放于 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（18+）。**推荐在程序内导入**：窗口左侧「角色设置」→「导入 DLC」→ 选择下载好的 `Coyote-in-Cradle-DLC1.zip`（或单个 .md），自动拷贝进 `content/pack/` 并启用，无需重启。
 
@@ -82,7 +82,17 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 | `触手-语料库-调教.md` | 调教向描写语料 |
 | `触手-漫画设定-调教.md` | 角色与世界观设定 |
 
-手动方式：把 `DLC1-触手-调教版` 目录放进 `content/pack/`，再在 `config/character.yaml` 的「调教」段启用其 `prompt_file`。新角色/新风格照 `content/pack/DLC<序号>-<角色>-<风格>/` 建目录，文件名沿用「角色名-」前缀；在 `config/character.yaml` 里加对应 profile 并指向其提示词文件。没装好的 DLC 会显示「未装DLC」并被切换拦截。
+### DLC2：品评会 · 调教版（重）
+
+存放于 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（18+，重口）。导入方式同上（选择 `Coyote-in-Cradle-DLC2.zip` 或单个 .md）——导入后「角色设置」里出现「品评会」角色卡片，切过去即用。
+
+| 文件 | 说明 |
+|---|---|
+| `品评会-角色提示词-调教.md` | 主评身份：公开审评、装置支配、围观施压 |
+| `品评会-语料库-调教.md` | 羞辱/支配/装置向描写语料 |
+| `品评会-漫画设定-调教.md` | 贵族品评会世界观设定 |
+
+手动方式：把对应 DLC 目录放进 `content/pack/`，再在 `config/character.yaml` 的 `roles.<角色>.profiles` 里启用其 `prompt_file`（参考 `config/character.example.yaml`）。新角色照 `content/pack/DLC<序号>-<角色>-<风格>/` 建目录，文件名沿用「角色名-」前缀。没装好的角色/风格档会显示「未装DLC」并被切换拦截。
 
 ## 快速开始
 
