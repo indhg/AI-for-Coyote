@@ -134,12 +134,13 @@ function ChannelCard({
       <div className="flex items-baseline justify-between">
         <div ref={capRef} className={`relative text-[20px] font-bold leading-tight ${pulsing ? "text-accent" : ""}`}>
           {cur}
+          /
           <button
             onClick={() => setCapOpen((v) => !v)}
             title="调整该通道强度上限"
-            className="text-[11px] font-normal text-muted hover:text-accent"
+            className="hover:text-accent"
           >
-            <small> / {cap}</small>
+            {cap}
           </button>
           {req !== null && req !== undefined && req !== cur && (
             <small className="text-[11px] font-normal text-warn"> 设定{req}</small>

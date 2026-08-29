@@ -51,7 +51,7 @@ DEFAULTS = {
     },
     "character_file": "config/character.yaml",
     "safety": {
-        "channels": {"A": {"max_strength": 100}, "B": {"max_strength": 100}},
+        "channels": {"A": {"max_strength": 200}, "B": {"max_strength": 200}},
         "max_temp_duration_s": 10,
         "max_strength_step": 40,
         "auto_clear_on_disconnect": True,

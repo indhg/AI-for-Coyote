@@ -32,9 +32,9 @@ character_file: config/character.yaml    # 角色设定文件（自己写，可�
 safety:
   channels:
     A:
-      max_strength: 100   # A 通道强度上限（按配件自行调低）
+      max_strength: 200   # A 通道硬钳制上限（郊狼上限 200，按配件自行调低）
     B:
-      max_strength: 100   # B 通道强度上限
+      max_strength: 200   # B 通道硬钳制上限（郊狼上限 200）
   max_temp_duration_s: 10       # 「爆发」最长秒数
   max_strength_step: 40         # 单条指令允许的最大强度变化量（防跳变）
   auto_clear_on_disconnect: true  # 中继/App 断开时自动清零
