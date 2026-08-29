@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link2, Minus, Pause, Play, Plus, Square } from "lucide-react";
 import { run, targets } from "../commands";
 import { api } from "../api";
@@ -68,6 +68,31 @@ function ChannelCard({
   const pattern = s?.patterns?.[ch] ?? null;
   const [slide, setSlide] = useState(cur);
   useEffect(() => setSlide(cur), [cur]);
+  // 上限浮窗：点「/ 上限」弹出滑杆（1~硬上限）
+  const hardCap = s?.caps?.[ch] ?? 100;
+  const [capOpen, setCapOpen] = useState(false);
+  const [capDraft, setCapDraft] = useState(cap);
+  const capRef = useRef<HTMLDivElement>(null);
+  useEffect(() => setCapDraft(cap), [cap]);
+  useEffect(() => {
+    if (!capOpen) return;
+    const onDown = (ev: MouseEvent) => {
+      if (capRef.current && !capRef.current.contains(ev.target as Node)) setCapOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [capOpen]);
+
+  const commitCap = async () => {
+    const v = Math.max(1, Math.min(hardCap, Math.round(capDraft)));
+    setCapDraft(v);
+    if (v === cap) return;
+    try {
+      await api.setChannelCap(ch, v);
+    } catch {
+      /* 状态由 ws 推送刷新 */
+    }
+  };
 
   const commit = () => run("hold_strength", { value: slide }, targets(ch));
 
@@ -107,11 +132,34 @@ function ChannelCard({
         </button>
       </div>
       <div className="flex items-baseline justify-between">
-        <div className={`text-[20px] font-bold leading-tight ${pulsing ? "text-accent" : ""}`}>
+        <div ref={capRef} className={`relative text-[20px] font-bold leading-tight ${pulsing ? "text-accent" : ""}`}>
           {cur}
-          <small className="text-[11px] font-normal text-muted"> / {cap}</small>
+          <button
+            onClick={() => setCapOpen((v) => !v)}
+            title="调整该通道强度上限"
+            className="text-[11px] font-normal text-muted hover:text-accent"
+          >
+            <small> / {cap}</small>
+          </button>
           {req !== null && req !== undefined && req !== cur && (
             <small className="text-[11px] font-normal text-warn"> 设定{req}</small>
+          )}
+          {capOpen && (
+            <div className="absolute left-0 top-full z-40 mt-1 flex w-40 flex-col gap-1 rounded-[8px] border border-line bg-panel p-2 shadow-xl shadow-black/60">
+              <span className="text-[10px] text-muted">强度上限（1~{hardCap}）</span>
+              <input
+                type="range"
+                min={1}
+                max={hardCap}
+                step={1}
+                value={capDraft}
+                onChange={(e) => setCapDraft(Number(e.target.value))}
+                onPointerUp={() => void commitCap()}
+                onKeyUp={() => void commitCap()}
+                className="w-full"
+              />
+              <span className="text-right text-[11px] font-semibold tabular-nums text-accent">{capDraft}</span>
+            </div>
           )}
         </div>
         <span className="text-[10px] text-muted">

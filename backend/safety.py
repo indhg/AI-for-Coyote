@@ -29,6 +29,7 @@ class SafetyManager:
             "A": int(s["channels"]["A"]["max_strength"]),
             "B": int(s["channels"]["B"]["max_strength"]),
         }
+        self.user_caps = dict(self.caps)  # 运行时强度上限（页面可调，1~硬上限；不持久化）
         self.max_pulse_s = float(p["max_duration_s"])
         self.min_pulse_s = float(p["min_duration_s"])
         self.max_temp_s = float(s["max_temp_duration_s"])
@@ -62,9 +63,21 @@ class SafetyManager:
         raise SafetyError(f"非法通道: {value!r}（只允许 A/B）")
 
     def cap_for(self, ch: str) -> int:
+        cap = min(self.caps[ch], self.user_caps.get(ch, self.caps[ch]))
         if self.overheat[ch]:
-            return min(self.caps[ch], self.overheat_reduce_to)
-        return self.caps[ch]
+            return min(cap, self.overheat_reduce_to)
+        return cap
+
+    def set_user_cap(self, ch: str, value: int) -> int:
+        """设置通道运行时强度上限（1~硬上限），并就地钳制当前/请求值。返回生效值。"""
+        ch = self.norm_channel(ch)
+        v = max(1, min(self.caps[ch], int(value)))
+        self.user_caps[ch] = v
+        if self.current[ch] > v:
+            self.current[ch] = v
+        if self.requested[ch] is not None and self.requested[ch] > v:
+            self.requested[ch] = v
+        return v
 
     # ---------- 校验入口 ----------
     def validate(self, action) -> tuple[bool, str, dict | None]:
@@ -305,6 +318,7 @@ class SafetyManager:
         return {
             "estop": self.estop_active,
             "caps": dict(self.caps),
+            "user_caps": dict(self.user_caps),
             "effective_caps": {ch: self.cap_for(ch) for ch in ("A", "B")},
             "app_caps": dict(self.app_caps),
             "current": dict(self.current),

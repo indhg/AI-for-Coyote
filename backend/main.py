@@ -474,6 +474,31 @@ def make_app() -> FastAPI:
             return JSONResponse({"error": "数值格式错误"}, status_code=400)
         return JSONResponse({"ok": True, "layout": state.layout})
 
+    @app.post("/api/device/channels/cap")
+    async def api_device_channel_cap(body: dict) -> JSONResponse:
+        """调通道运行时强度上限（1~硬上限，不持久化）：{channel:"A", value:60}。"""
+        ch = str(body.get("channel") or "").strip().upper()
+        if ch not in ("A", "B"):
+            return JSONResponse({"error": "channel 只能是 A 或 B"}, status_code=400)
+        try:
+            value = int(body.get("value", 100))
+        except (TypeError, ValueError):
+            return JSONResponse({"error": "value 必须是整数"}, status_code=400)
+        v = state.safety.set_user_cap(ch, value)
+        # 上限低于当前强度时，立即把设备强度降下来
+        if state.safety.current[ch] > v:
+            await state.loop.execute_actions(
+                [{"op": "hold_strength", "channel": ch, "value": v}]
+            )
+        await state.broadcast()
+        return JSONResponse(
+            {
+                "ok": True,
+                "user_caps": state.safety.user_caps,
+                "effective_caps": {c: state.safety.cap_for(c) for c in ("A", "B")},
+            }
+        )
+
     @app.post("/api/character/profile")
     async def api_character_profile(body: dict) -> JSONResponse:
         """切换角色/风格：{role: "触手", profile: "调教"}，保存并热加载；目标 DLC 未安装时拒绝。"""

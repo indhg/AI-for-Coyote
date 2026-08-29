@@ -47,6 +47,7 @@ export interface RoleInfo {
 export interface FullState {
   estop: boolean;
   caps: Record<"A" | "B", number>;
+  user_caps: Record<"A" | "B", number>;
   effective_caps: Record<"A" | "B", number>;
   app_caps: Record<"A" | "B", number | null>;
   current: Record<"A" | "B", number>;

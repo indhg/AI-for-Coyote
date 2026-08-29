@@ -39,6 +39,11 @@ export const api = {
   ) => j<{ ok: boolean }>("/api/device/channels", json(channels)),
   setChannelEnabled: (channel: "A" | "B", enabled: boolean) =>
     j<{ ok: boolean }>("/api/device/channels/enabled", json({ channel, enabled })),
+  setChannelCap: (channel: "A" | "B", value: number) =>
+    j<{ ok: boolean; user_caps?: Record<string, number> }>(
+      "/api/device/channels/cap",
+      json({ channel, value }),
+    ),
   reportLayout: (body: { sidebar_w: number; control_w: number; inner_width: number; zoom: number }) =>
     j<{ ok: boolean; layout?: Record<string, number> }>("/api/layout", json(body)),
   setSensor: (key: "camera" | "audio", enabled: boolean) =>

@@ -17,7 +17,6 @@ export default function TopBar({ view, onView }: Props) {
 
   const nav: { key: ViewName; label: string }[] = [
     { key: "control", label: "控制台" },
-    { key: "pair", label: "配对" },
     { key: "settings", label: "设置" },
   ];
 
