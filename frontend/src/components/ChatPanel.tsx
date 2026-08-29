@@ -15,6 +15,15 @@ export default function ChatPanel() {
   const role = useApp((st) => st.state?.role ?? "触手");
   const profile = useApp((st) => st.state?.profile ?? "纯爱");
   const level = useApp((st) => st.state?.profile_level ?? "中");
+  const camOn = useApp((st) => st.state?.sensors?.camera ?? false);
+  const micOn = useApp((st) => st.state?.sensors?.audio ?? false);
+  const sensorText = !autopilot
+    ? "自动运行已停止，AI 暂停行动（摄像头/麦克风已关闭）"
+    : sensorsOn
+      ? camOn && micOn
+        ? `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头/麦克风运行中）`
+        : `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头${camOn ? "开" : "关"} · 麦克风${micOn ? "开" : "关"}）`
+      : `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头/麦克风已关闭）`;
   const [pairUrl, setPairUrl] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -129,13 +138,7 @@ export default function ChatPanel() {
       <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-[13px] font-semibold">自动运行</span>
-          <span className="truncate text-[11px] text-muted">
-            {autopilot
-              ? sensorsOn
-                ? `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头/麦克风运行中）`
-                : `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头/麦克风已关闭）`
-              : "自动运行已停止，AI 暂停行动（摄像头/麦克风已关闭）"}
-          </span>
+          <span className="truncate text-[11px] text-muted">{sensorText}</span>
         </div>
         <button
           onClick={() => void toggle()}

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { api } from "../api";
 import { useApp } from "../store";
 
@@ -18,7 +19,9 @@ export default function AccessoryConfig() {
         <ChannelAccessory ch="B" />
       </div>
       <p className="mt-2 text-[11px] leading-relaxed text-faint">
-        AI 台词里的电刺激只会出现在对应配件的位置；未工作的通道不会被描写。
+        改动称谓的时候记得敲回车（Enter）
+        <br />
+        未工作的通道不会被描写。
       </p>
     </div>
   );
@@ -29,10 +32,22 @@ function ChannelAccessory({ ch }: { ch: "A" | "B" }) {
   // 本地乐观状态：点选立即生效（避免等服务器回包时闪回旧值/待适配）
   const [name, setName] = useState(dev?.name ?? "贴片");
   const [loc, setLoc] = useState(dev?.location ?? "");
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (dev?.name) setName(dev.name);
   }, [dev?.name]);
   useEffect(() => setLoc(dev?.location ?? ""), [dev?.location]);
+
+  // 点浮窗外部收起
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (ev: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(ev.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
 
   const save = async (next: { name?: string; location?: string; baseline?: number }) => {
     const payload: Record<string, { name?: string; location?: string; baseline?: number }> = {
@@ -49,25 +64,46 @@ function ChannelAccessory({ ch }: { ch: "A" | "B" }) {
     }
   };
 
+  const pick = (p: (typeof PRESETS)[number]) => {
+    setName(p.name);
+    setLoc(p.location);
+    setOpen(false);
+    void save({ name: p.name, location: p.location, baseline: p.baseline });
+  };
+
   return (
-    <div className="flex items-center gap-1.5">
+    <div ref={rootRef} className="relative flex items-center gap-1.5">
       <span className="w-4 flex-none text-[12px] font-bold text-muted">{ch}</span>
-      <select
-        value={PRESETS.some((p) => p.name === name) ? name : "待适配"}
-        onChange={(e) => {
-          const p = PRESETS.find((x) => x.name === e.target.value) ?? PRESETS[2];
-          setName(p.name);
-          setLoc(p.location);
-          void save({ name: p.name, location: p.location, baseline: p.baseline });
-        }}
-        className="w-[86px] flex-none rounded-[8px] border border-line bg-panel2 px-1.5 py-1 text-[12px] outline-none"
-      >
-        {PRESETS.map((p) => (
-          <option key={p.name} value={p.name}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+      <span className="relative flex-none">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          title="更换配件"
+          className="flex w-[86px] items-center justify-between rounded-[8px] border border-line bg-panel2 px-1.5 py-1 text-[12px] transition-colors hover:border-line2"
+        >
+          <span className="truncate">{name}</span>
+          {open ? (
+            <ChevronUp size={12} className="flex-none text-faint" />
+          ) : (
+            <ChevronDown size={12} className="flex-none text-faint" />
+          )}
+        </button>
+        {open && (
+          <div className="absolute left-1/2 top-full z-40 mt-1 flex w-24 -translate-x-1/2 flex-col gap-0.5 rounded-[8px] border border-line bg-panel p-1 shadow-xl shadow-black/60">
+            {PRESETS.map((p) => (
+              <button
+                key={p.name}
+                onClick={() => pick(p)}
+                className={`flex items-center justify-center gap-1 rounded-[6px] px-2 py-1.5 text-[12px] transition-colors ${
+                  p.name === name ? "bg-accent/15 text-text" : "text-muted hover:bg-panel2"
+                }`}
+              >
+                <span>{p.name}</span>
+                {p.name === name && <Check size={12} className="flex-none text-accent" />}
+              </button>
+            ))}
+          </div>
+        )}
+      </span>
       <input
         value={loc}
         placeholder="位置（如 大腿根内侧）"

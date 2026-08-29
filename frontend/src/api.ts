@@ -41,6 +41,11 @@ export const api = {
     j<{ ok: boolean }>("/api/device/channels/enabled", json({ channel, enabled })),
   reportLayout: (body: { sidebar_w: number; control_w: number; inner_width: number; zoom: number }) =>
     j<{ ok: boolean; layout?: Record<string, number> }>("/api/layout", json(body)),
+  setSensor: (key: "camera" | "audio", enabled: boolean) =>
+    j<{ ok: boolean; sensors?: { camera: boolean; audio: boolean } }>(
+      "/api/sensors",
+      json({ [key]: enabled }),
+    ),
   setProfile: (role: string, profile: string) =>
     j<{ ok: boolean; role?: string; profile?: string }>(
       "/api/character/profile",

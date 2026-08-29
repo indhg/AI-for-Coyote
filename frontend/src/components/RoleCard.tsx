@@ -152,16 +152,16 @@ export default function RoleCard() {
         <div className="absolute left-0 right-0 top-full z-30 mt-2 rounded-[12px] border border-line bg-panel shadow-xl shadow-black/50">
           <div className="flex flex-col gap-2 p-3">
             <div className="relative flex flex-col gap-0.5">
-              <span className="px-1 text-[10px] tracking-wide text-faint">主题</span>
+              <span className="px-1 text-[10px] font-medium tracking-wide text-muted">主题</span>
               <button
                 ref={rowRef}
                 onClick={() => setRoleStep((v) => !v)}
-                className="flex items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] text-muted transition-colors hover:bg-panel2"
+                className="flex items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] transition-colors hover:bg-panel2"
                 title="展开主题列表"
               >
                 <span className="flex-1 text-text">
                   {current?.label ?? role}
-                  <span className="ml-1 text-[10px] text-faint">（点击换主题）</span>
+                  <span className="ml-1 text-[10px] text-muted">（点击换主题）</span>
                 </span>
                 {roleStep ? (
                   <ChevronUp size={12} className="flex-none text-faint" />
@@ -184,9 +184,9 @@ export default function RoleCard() {
                         onClick={() => void switchRole(r.name)}
                         className={`flex items-center gap-2 rounded-[6px] border px-2 py-1.5 text-left text-[12px] transition-all ${
                           r.name === role
-                            ? `${ROLE_RING_ACTIVE_CLS[r.name] ?? "border-line2 bg-accent/15"} text-text scale-[1.03]`
+                            ? `${ROLE_RING_ACTIVE_CLS[r.name] ?? "border-line2 bg-accent/15"} font-medium text-text scale-[1.03]`
                             : usable
-                              ? `border-transparent text-muted hover:bg-panel2 hover:scale-[1.03] ${ROLE_RING_CLS[r.name] ?? ""}`
+                              ? `border-transparent font-medium text-text hover:bg-panel2 hover:scale-[1.03] ${ROLE_RING_CLS[r.name] ?? ""}`
                               : "cursor-not-allowed border-transparent text-faint opacity-60"
                         }`}
                       >
@@ -208,7 +208,7 @@ export default function RoleCard() {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <span className="px-1 text-[10px] tracking-wide text-faint">风格</span>
+              <span className="px-1 text-[10px] font-medium tracking-wide text-muted">风格</span>
               <div className="grid grid-cols-3 gap-1">
                 {LEVELS.map((lv) => {
                   const p = profileOfLevel(current, lv);
@@ -224,7 +224,7 @@ export default function RoleCard() {
                         selected
                           ? "border-accent bg-accent font-semibold text-ink"
                           : lit
-                            ? "border-line bg-panel2 text-muted hover:border-line2"
+                            ? "border-line bg-panel2 font-medium text-text hover:border-line2"
                             : "cursor-not-allowed border-line bg-panel2 text-faint opacity-40"
                       }`}
                     >

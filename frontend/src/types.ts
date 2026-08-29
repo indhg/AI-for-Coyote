@@ -68,6 +68,7 @@ export interface FullState {
   autopilot: boolean;
   autopilot_interval_s: number;
   sensors_on: boolean;
+  sensors: { camera: boolean; audio: boolean };
   max_pulse_s: number;
   max_temp_s: number;
   max_step: number;

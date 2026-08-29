@@ -118,6 +118,11 @@ class AppState:
         self.sensors_on = False
         self.sensor_watch_task: asyncio.Task | None = None
         self.layout: dict = {}  # 前端上报的三栏布局（监测/调试用）
+        # 传感器运行时开关（不持久化；初始跟随 config.enabled）
+        self.sensor_switches: dict[str, bool] = {
+            "camera": bool(self.cfg["camera"].get("enabled", False)),
+            "audio": bool(self.cfg["audio"].get("enabled", False)),
+        }
 
     # ---------- 麦克风转写回调 ----------
     async def on_audio_text(self, text: str) -> None:
@@ -196,6 +201,7 @@ class AppState:
     def build_state(self) -> dict:
         state = self.loop.build_state()
         state["sensors_on"] = self.sensors_on
+        state["sensors"] = dict(self.sensor_switches)
         state["relay"] = self.relay.to_state()
         state["audio"] = self.audio.to_state()
         state["layout"] = dict(self.layout)
@@ -213,11 +219,17 @@ class AppState:
 
     # ---------- 传感器开关（跟随自动运行；浏览器断开超时自动关） ----------
     async def set_sensors(self, on: bool) -> None:
-        """自动运行开启时启动摄像头/麦克风，关闭时停止（config.enabled 为前置许可）。"""
+        """自动运行开启时启动「开关为开」的传感器，关闭时全部停止（config.enabled 为初始默认）。"""
         self.sensors_on = bool(on)
         if on:
-            await self.camera.start()
-            await self.audio.start()
+            if self.sensor_switches.get("camera"):
+                await self.camera.start()
+            else:
+                await self.camera.stop()
+            if self.sensor_switches.get("audio"):
+                await self.audio.start()
+            else:
+                await self.audio.stop()
         else:
             await self.camera.stop()
             await self.audio.stop()
@@ -406,6 +418,22 @@ def make_app() -> FastAPI:
             return JSONResponse({"error": str(exc)}, status_code=400)
         await state.broadcast()
         return JSONResponse({"ok": True, "enabled_channels": state.safety.enabled})
+
+    @app.post("/api/sensors")
+    async def api_sensors(body: dict) -> JSONResponse:
+        """运行时单独开关摄像头/麦克风：{camera: bool, audio: bool}（可只传一项；不持久化）。"""
+        changed = False
+        for key in ("camera", "audio"):
+            if key in body and isinstance(body[key], bool):
+                if state.sensor_switches.get(key) != body[key]:
+                    state.sensor_switches[key] = body[key]
+                    changed = True
+        if changed:
+            # 传感器正在运行时按最新开关重新对齐（关掉的立即停）
+            if state.sensors_on:
+                await state.set_sensors(True)
+            await state.broadcast()
+        return JSONResponse({"ok": True, "sensors": state.sensor_switches})
 
     @app.post("/api/layout")
     async def api_layout(body: dict) -> JSONResponse:
