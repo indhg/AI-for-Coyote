@@ -45,21 +45,36 @@ class Camera:
             self.error = f"缺少 opencv-python：{exc}"
             logger.error("摄像头不可用：%s", self.error)
             return
-        try:
-            self.cap = cv2.VideoCapture(self.index)
-            if not self.cap.isOpened():
-                self.error = f"无法打开摄像头 index={self.index}"
-                logger.error(self.error)
+        last_exc: Exception | None = None
+        for attempt in range(3):
+            try:
+                self.cap = cv2.VideoCapture(self.index)
+                if not self.cap.isOpened():
+                    raise RuntimeError(f"无法打开摄像头 index={self.index}")
+                self.error = ""
+                self._task = asyncio.create_task(self._capture_loop())
+                logger.info("摄像头已启动：index=%s 间隔=%ss", self.index, self.interval_s)
                 return
-            self._task = asyncio.create_task(self._capture_loop())
-            logger.info("摄像头已启动：index=%s 间隔=%ss", self.index, self.interval_s)
-        except Exception as exc:  # noqa: BLE001
-            self.error = str(exc)
-            logger.exception("摄像头启动失败")
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                if self.cap is not None:
+                    try:
+                        self.cap.release()
+                    except Exception:  # noqa: BLE001
+                        pass
+                    self.cap = None
+                logger.warning("摄像头打开失败（第 %d 次重试）：%s", attempt + 1, exc)
+                await asyncio.sleep(0.5)
+        self.error = str(last_exc or "未知错误")
+        logger.error("摄像头启动失败：%s", self.error)
 
     async def stop(self) -> None:
         if self._task:
             self._task.cancel()
+            try:
+                await self._task  # 等采集循环真正退出再释放，避免立刻重开冲突
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass
             self._task = None
         if self.cap is not None:
             self.cap.release()

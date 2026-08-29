@@ -83,9 +83,9 @@ export default function DeviceStatus() {
     <div className="flex min-h-0 flex-none flex-col rounded-[14px] border border-line bg-panel p-3">
       <h3 className="mb-2 flex-none text-[12px] font-semibold tracking-[1.5px] text-muted">设备状态</h3>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-        {/* 第一行：连接 + 麦克风（音量条常驻，未开启时显示空条） */}
-        <div className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border border-line bg-panel2 px-4 py-2">
-          <span className="flex w-fit items-center gap-1.5">
+        {/* 第一行：连接 + 传感器开关（左侧）；麦克风音量条（右侧，放不下自动换行） */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-line bg-panel2 px-4 py-2">
+          <span className="flex items-center gap-1.5">
             <span
               className={`flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[12px] font-bold ${
                 paired
@@ -103,9 +103,9 @@ export default function DeviceStatus() {
             {sensorBtn(camOn, <Video size={12} />, "摄像头", "camera", camErr)}
             {sensorBtn(micOn, <Mic size={12} />, "麦克风", "audio", micErr)}
           </span>
-          <span className="flex items-center gap-2">
+          <span className="ml-auto flex items-center gap-2">
             <span className="flex-none text-[11px] text-muted">麦克风</span>
-            <div className="h-[8px] w-24 flex-none overflow-hidden rounded-full bg-ink3">
+            <div className="h-[8px] w-16 flex-none overflow-hidden rounded-full bg-ink3">
               <div
                 className="h-full rounded-full bg-accent transition-all"
                 style={{ width: `${audioPct}%` }}
@@ -114,7 +114,7 @@ export default function DeviceStatus() {
             <span className="w-6 flex-none text-right text-[12px] font-semibold tabular-nums">
               {audioPct}
             </span>
-            <span className="w-24 flex-none truncate text-[11px] text-faint">
+            <span className="w-16 flex-none truncate text-[11px] text-faint">
               {s?.audio?.running ? s.audio.last_text || "监听中…" : "未开启"}
             </span>
           </span>

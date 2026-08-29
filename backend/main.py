@@ -256,9 +256,34 @@ class AppState:
             await self.set_sensors(False)
             await self.broadcast()
 
+    async def _sensor_watchdog(self) -> None:
+        """看门狗：开关开着但传感器没在跑且有错误时，每 15s 自动重试启动（拔插设备自恢复）。"""
+        while True:
+            await asyncio.sleep(15)
+            try:
+                if not self.sensors_on:
+                    continue
+                cam_bad = (
+                    self.sensor_switches.get("camera")
+                    and not self.camera.has_frame()
+                    and bool(self.camera.error)
+                )
+                mic_bad = (
+                    self.sensor_switches.get("audio")
+                    and not self.audio.to_state().get("running")
+                    and bool(self.audio.error)
+                )
+                if cam_bad or mic_bad:
+                    self.logger.info("传感器看门狗重试启动（摄像头=%s 麦克风=%s）", cam_bad, mic_bad)
+                    await self.set_sensors(True)
+                    await self.broadcast()
+            except Exception:  # noqa: BLE001
+                self.logger.exception("传感器看门狗异常")
+
     # ---------- 生命周期 ----------
     async def start_background(self) -> None:
         self.tasks.append(asyncio.create_task(self.relay.run()))
+        self.tasks.append(asyncio.create_task(self._sensor_watchdog()))
         # 配置里自动运行开着时，启动真正的循环任务（此前只置状态、不启动任务，
         # 导致重启后「假开真停」：AI 一直不说话）
         if self.loop.autopilot:
