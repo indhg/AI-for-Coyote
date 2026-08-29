@@ -1,4 +1,4 @@
-import { Mic, Video } from "lucide-react";
+import { AlertTriangle, Mic, Video } from "lucide-react";
 import { api } from "../api";
 import { useApp } from "../store";
 
@@ -45,6 +45,9 @@ export default function DeviceStatus() {
 
   const camOn = s?.sensors?.camera ?? false;
   const micOn = s?.sensors?.audio ?? false;
+  // 开关为开但实际没跑起来且有后端错误 → 警示（显示具体原因）
+  const camErr = camOn && !(s?.camera?.has_frame ?? false) && !!s?.camera?.error ? s.camera.error : "";
+  const micErr = micOn && !(s?.audio?.running ?? false) && !!s?.audio?.error ? s.audio.error : "";
   const toggleSensor = async (key: "camera" | "audio") => {
     try {
       await api.setSensor(key, key === "camera" ? !camOn : !micOn);
@@ -52,18 +55,27 @@ export default function DeviceStatus() {
       /* 状态由 ws 推送刷新 */
     }
   };
-  const sensorBtn = (on: boolean, icon: React.ReactNode, label: string, key: "camera" | "audio") => (
+  const sensorBtn = (
+    on: boolean,
+    icon: React.ReactNode,
+    label: string,
+    key: "camera" | "audio",
+    errText: string,
+  ) => (
     <button
       onClick={() => void toggleSensor(key)}
-      title={`${on ? "关闭" : "开启"}${label}`}
+      title={errText || `${on ? "关闭" : "开启"}${label}`}
       className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold transition-colors ${
-        on
-          ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
-          : "border-line bg-ink3 text-faint hover:text-muted"
+        errText
+          ? "border-warn/60 bg-warn/15 text-warn"
+          : on
+            ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
+            : "border-line bg-ink3 text-faint hover:text-muted"
       }`}
     >
       {icon}
       {label}
+      {errText && <AlertTriangle size={11} className="flex-none" />}
     </button>
   );
 
@@ -88,8 +100,8 @@ export default function DeviceStatus() {
               />
               {paired ? "已连接" : "未连接"}
             </span>
-            {sensorBtn(camOn, <Video size={12} />, "摄像头", "camera")}
-            {sensorBtn(micOn, <Mic size={12} />, "麦克风", "audio")}
+            {sensorBtn(camOn, <Video size={12} />, "摄像头", "camera", camErr)}
+            {sensorBtn(micOn, <Mic size={12} />, "麦克风", "audio", micErr)}
           </span>
           <span className="flex items-center gap-2">
             <span className="flex-none text-[11px] text-muted">麦克风</span>

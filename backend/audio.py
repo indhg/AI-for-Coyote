@@ -77,6 +77,10 @@ class AudioManager:
         self._stop.set()
         if self._task:
             self._task.cancel()
+            try:
+                await self._task  # 等流真正关闭再返回，避免立刻重开时 PortAudio 设备冲突
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass
             self._task = None
 
     # ---------- 监听循环 ----------
@@ -92,25 +96,35 @@ class AudioManager:
             buffer.append(indata.copy())
 
         try:
-            with sd.InputStream(
-                samplerate=sr, channels=1, dtype="float32",
-                callback=callback, device=self.device,
-            ):
-                while not self._stop.is_set():
-                    try:
-                        await asyncio.wait_for(self._stop.wait(), timeout=chunk_s)
-                        break
-                    except asyncio.TimeoutError:
-                        pass
-                    if not buffer:
-                        continue
-                    audio = np.concatenate(buffer)
-                    buffer.clear()
-                    self.level = float(np.sqrt(np.mean(audio ** 2)))
-                    if self.level >= self.threshold:
-                        self.last_sound_ts = time.time()
-                        # 只测音量分级，不转写内容（玩家语音内容不被引用）
-                        self._report_moan(self.level)
+            self.error = ""
+            last_exc: Exception | None = None
+            for attempt in range(3):
+                try:
+                    with sd.InputStream(
+                        samplerate=sr, channels=1, dtype="float32",
+                        callback=callback, device=self.device,
+                    ):
+                        while not self._stop.is_set():
+                            try:
+                                await asyncio.wait_for(self._stop.wait(), timeout=chunk_s)
+                                break
+                            except asyncio.TimeoutError:
+                                pass
+                            if not buffer:
+                                continue
+                            audio = np.concatenate(buffer)
+                            buffer.clear()
+                            self.level = float(np.sqrt(np.mean(audio ** 2)))
+                            if self.level >= self.threshold:
+                                self.last_sound_ts = time.time()
+                                # 只测音量分级，不转写内容（玩家语音内容不被引用）
+                                self._report_moan(self.level)
+                        return  # 正常停止，不重试
+                except Exception as exc:  # noqa: BLE001
+                    last_exc = exc
+                    logger.warning("麦克风流打开失败（第 %d 次重试）：%s", attempt + 1, exc)
+                    await asyncio.sleep(0.5)
+            self.error = str(last_exc or "未知错误")
         except Exception as exc:  # noqa: BLE001
             self.error = str(exc)
             logger.exception("麦克风监听异常")

@@ -87,7 +87,16 @@ export interface FullState {
   connected: boolean;
   notes: string[];
   camera_enabled: boolean;
-  camera: Record<string, unknown>;
+  camera: {
+    enabled: boolean;
+    has_frame: boolean;
+    last_ts: number;
+    interval_s: number;
+    mean_brightness: number;
+    dark: boolean;
+    dark_threshold: number;
+    error: string;
+  };
   audio: {
     enabled: boolean;
     running: boolean;
