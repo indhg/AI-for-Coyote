@@ -4,6 +4,7 @@ import { useApp } from "../store";
 import type { ViewName } from "./TopBar";
 import AccessoryConfig from "./AccessoryConfig";
 import CharacterConfig from "./CharacterConfig";
+import RoleCard from "./RoleCard";
 
 interface Props {
   view: ViewName;
@@ -44,6 +45,8 @@ export default function Sidebar({ view, onView }: Props) {
           </div>
         )}
       </div>
+
+      <RoleCard />
 
       <div className="flex flex-col gap-1">
         <SideBtn icon={<SlidersHorizontal size={16} />} label="控制台" active={view === "control"} onClick={() => onView("control")} />

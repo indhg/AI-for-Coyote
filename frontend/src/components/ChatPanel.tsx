@@ -1,17 +1,35 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useApp, useChat } from "../store";
+import { LEVEL_BADGE_CLS, LEVEL_LABELS, STYLE_LABELS } from "../roleTheme";
 
 export default function ChatPanel() {
   const messages = useChat((st) => st.messages);
+  const pushMsg = useChat((st) => st.push);
   const autopilot = useApp((st) => st.state?.autopilot ?? false);
   const sensorsOn = useApp((st) => st.state?.sensors_on ?? false);
   const interval = useApp((st) => st.state?.autopilot_interval_s ?? 12);
   const relay = useApp((st) => st.state?.relay);
   const paired = relay?.status === "paired";
   const enabled = useApp((st) => st.state?.enabled_channels);
+  const role = useApp((st) => st.state?.role ?? "触手");
+  const profile = useApp((st) => st.state?.profile ?? "纯爱");
+  const level = useApp((st) => st.state?.profile_level ?? "中");
   const [pairUrl, setPairUrl] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
+
+  // 切换角色/风格档时插一条系统分隔消息，防上下文串戏
+  const roleKeyRef = useRef(`${role}·${profile}`);
+  useEffect(() => {
+    const key = `${role}·${profile}`;
+    if (roleKeyRef.current !== key) {
+      roleKeyRef.current = key;
+      pushMsg({
+        role: "sys",
+        text: `—— 已切换至 ${role} · ${STYLE_LABELS[profile] ?? profile}（${LEVEL_LABELS[level] ?? level}）——`,
+      });
+    }
+  }, [role, profile, level, pushMsg]);
 
   useEffect(() => {
     boxRef.current?.scrollTo({ top: boxRef.current.scrollHeight });
@@ -35,6 +53,15 @@ export default function ChatPanel() {
 
   return (
     <aside className="flex min-h-0 flex-col border-l border-line bg-ink2">
+      <div className="flex flex-none items-center gap-2 border-b border-line px-4 py-2">
+        <span className="text-[11px] text-faint">当前角色</span>
+        <span className="text-[12px] font-semibold text-text">{role}</span>
+        <span
+          className={`rounded-md border px-1.5 py-px text-[10px] ${LEVEL_BADGE_CLS[level] ?? LEVEL_BADGE_CLS["中"]}`}
+        >
+          {STYLE_LABELS[profile] ?? profile} · {LEVEL_LABELS[level] ?? level}
+        </span>
+      </div>
       {!paired ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 py-6 text-center">
           <img
