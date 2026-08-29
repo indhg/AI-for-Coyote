@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useApp } from "../store";
 
@@ -17,6 +17,9 @@ export default function CharacterConfig() {
   const nick = useApp((st) => st.state?.config_info?.player_nick ?? "小柳");
   const [draft, setDraft] = useState(nick);
   const [err, setErr] = useState("");
+  const [msg, setMsg] = useState("");
+  const [importing, setImporting] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => setDraft(nick), [nick]);
 
   const switchProfile = async (p: string) => {
@@ -24,8 +27,28 @@ export default function CharacterConfig() {
     setErr("");
     try {
       await api.setProfile(p);
-    } catch {
-      setErr(`「${STYLE_LABELS[p] ?? p}」未安装 DLC：请把对应 DLC 目录放入 content\\pack\\ 并在 config\\character.yaml 启用其 prompt_file，重启后即可切换。`);
+    } catch (e) {
+      setErr(
+        `「${STYLE_LABELS[p] ?? p}」未安装：点下方「导入 DLC」选择 .zip 或 .md 即可，导入后自动生效。${(e as Error).message ? `（${(e as Error).message}）` : ""}`,
+      );
+    }
+  };
+
+  const importDlc = async (f: File) => {
+    setImporting(true);
+    setErr("");
+    setMsg("");
+    try {
+      const r = await api.importDlc(f);
+      setMsg(`已导入 ${r.files?.length ?? 0} 个文件到 content\\pack\\${r.dir}${r.profile ? "，已自动启用「" + r.profile + "」" : ""}`);
+      if (r.profile && r.profile !== profile) {
+        await api.setProfile(r.profile).catch(() => undefined);
+      }
+    } catch (e) {
+      setErr(`导入失败：${(e as Error).message}`);
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
@@ -74,6 +97,25 @@ export default function CharacterConfig() {
         {profile === "纯爱" ? "温柔驯服·依赖顺从" : "黑暗调教·支配胁迫（DLC1）"}
       </p>
       {err && <p className="mt-1.5 text-[10px] leading-relaxed text-red-400">{err}</p>}
+      {msg && <p className="mt-1.5 text-[10px] leading-relaxed text-emerald-400">{msg}</p>}
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".zip,.md"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void importDlc(f);
+        }}
+      />
+      <button
+        disabled={importing}
+        onClick={() => fileRef.current?.click()}
+        className="mt-2 w-full rounded-[8px] border border-dashed border-line px-2 py-1.5 text-[12px] text-muted transition-colors hover:border-line2 disabled:opacity-60"
+      >
+        {importing ? "导入中…" : "导入 DLC（选择 .zip 或 .md，自动装进 content\\pack）"}
+      </button>
 
       <div className="mb-2 mt-3 text-[11px] text-muted">称谓（AI 怎么叫你）</div>
       <input

@@ -13,17 +13,24 @@ import os
 import socket
 import sys
 import urllib.parse
+import zipfile
 from pathlib import Path
 
 import httpx
 import qrcode
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .audio import AudioManager
 from .camera import Camera
-from .config import load_config, reload_character, save_character_runtime, save_device_channels
+from .config import (
+    load_config,
+    patch_character_prompt_file,
+    reload_character,
+    save_character_runtime,
+    save_device_channels,
+)
 from .game_loop import GameLoop
 from .llm import LLM
 from .logging_utils import setup_logging
@@ -432,6 +439,93 @@ def make_app() -> FastAPI:
         save_character_runtime(cfg, player_nick=nick)
         await state.broadcast()
         return JSONResponse({"ok": True, "player_nick": cfg["character"]["player_nick"]})
+
+    @app.post("/api/dlc/import")
+    async def api_dlc_import(file: UploadFile = File(...)) -> JSONResponse:
+        """导入 DLC：上传 .zip（解出全部 .md）或单个 .md → 拷进 content\\pack\\ 并自动接通 character.yaml。
+
+        不用重启：改完即热加载，前端可立即切换该风格。
+        """
+        name = file.filename or ""
+        low = name.lower()
+        if not (low.endswith(".zip") or low.endswith(".md")):
+            return JSONResponse({"error": "只支持 .zip 或 .md 文件"}, status_code=400)
+        data = await file.read()
+        if not data:
+            return JSONResponse({"error": "文件为空"}, status_code=400)
+        if len(data) > 50 * 1024 * 1024:
+            return JSONResponse({"error": "文件过大（上限 50MB）"}, status_code=400)
+
+        pack_dir = PROJECT_ROOT / "content" / "pack"
+        pack_dir.mkdir(parents=True, exist_ok=True)
+
+        mds: dict[str, bytes] = {}
+        dlc_folder = ""
+        if low.endswith(".zip"):
+            try:
+                zf = zipfile.ZipFile(io.BytesIO(data))
+            except zipfile.BadZipFile:
+                return JSONResponse({"error": "zip 包损坏或格式不对"}, status_code=400)
+            with zf:
+                for n in zf.namelist():
+                    # Windows 压缩工具不写 UTF-8 标志，先按 cp437 还原原始字节再按 UTF-8 解码中文名
+                    fixed = n
+                    try:
+                        fixed = n.encode("cp437").decode("utf-8")
+                    except (UnicodeEncodeError, UnicodeDecodeError):
+                        pass
+                    bn = Path(fixed).name
+                    if not bn.lower().endswith(".md") or bn.startswith("."):
+                        continue
+                    if not dlc_folder:
+                        parts = [p for p in Path(fixed).parts if p not in ("", ".", "..")]
+                        if len(parts) > 1:
+                            dlc_folder = parts[0]
+                    mds[bn] = zf.read(n)
+            if not mds:
+                return JSONResponse({"error": "zip 里没有 .md 文件"}, status_code=400)
+        else:
+            mds[name] = data
+
+        if not dlc_folder:
+            dlc_folder = Path(name).stem or "DLC导入"
+        dlc_dir = pack_dir / dlc_folder
+        dlc_dir.mkdir(parents=True, exist_ok=True)
+        for bn, content in mds.items():
+            (dlc_dir / bn).write_bytes(content)
+
+        # 自动接通：按文件名找「角色提示词」md，写入对应 profile 的 prompt_file 并热加载
+        prompt_md = next((b for b in mds if "角色提示词" in b), None) or next(
+            (b for b in mds if "提示词" in b), None
+        )
+        patched_profile = None
+        if prompt_md:
+            reload_character(cfg)
+            avail = cfg["character"].get("profile_available") or {}
+            profiles = list(cfg["character"].get("profiles") or [])
+            target = next((p for p in profiles if p and p in prompt_md), None)
+            if target is None:
+                target = next((p for p in profiles if p != "纯爱" and not avail.get(p, True)), None)
+            if target is None and "调教" in profiles:
+                target = "调教"
+            if target:
+                char_path = Path(cfg["character_file"])
+                if not char_path.is_absolute():
+                    char_path = PROJECT_ROOT / char_path
+                rel = f"content/pack/{dlc_folder}/{prompt_md}"
+                if patch_character_prompt_file(char_path, target, rel):
+                    patched_profile = target
+                    reload_character(cfg)
+
+        await state.broadcast()
+        return JSONResponse(
+            {
+                "ok": True,
+                "dir": dlc_folder,
+                "files": sorted(mds),
+                "profile": patched_profile,
+            }
+        )
 
     @app.post("/api/autopilot")
     async def api_autopilot(body: dict) -> JSONResponse:

@@ -74,7 +74,7 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 
 ### DLC1：调教版
 
-存放于 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（18+），下载后放进 `content/pack/`：
+存放于 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（18+）。**推荐在程序内导入**：窗口左侧「角色设置」→「导入 DLC」→ 选择下载好的 `Coyote-in-Cradle-DLC1.zip`（或单个 .md），自动拷贝进 `content/pack/` 并启用，无需重启。
 
 | 文件 | 说明 |
 |---|---|
@@ -82,7 +82,7 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 | `触手-语料库-调教.md` | 调教向描写语料 |
 | `触手-漫画设定-调教.md` | 角色与世界观设定 |
 
-新角色/新风格照 `content/pack/DLC<序号>-<角色>-<风格>/` 建目录，文件名沿用「角色名-」前缀；在 `config/character.yaml` 里加对应 profile 并指向其提示词文件，重启后侧边栏即可切换。没装好的 DLC 会显示「未装DLC」并被切换拦截。
+手动方式：把 `DLC1-触手-调教版` 目录放进 `content/pack/`，再在 `config/character.yaml` 的「调教」段启用其 `prompt_file`。新角色/新风格照 `content/pack/DLC<序号>-<角色>-<风格>/` 建目录，文件名沿用「角色名-」前缀；在 `config/character.yaml` 里加对应 profile 并指向其提示词文件。没装好的 DLC 会显示「未装DLC」并被切换拦截。
 
 ## 快速开始
 

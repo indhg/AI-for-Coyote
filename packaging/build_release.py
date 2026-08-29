@@ -93,8 +93,9 @@ README_TXT = """Coyote in Cradle v{version}（绿色免装版）
 页面大红按钮，或页面不在输入框时长按空格 1 秒（松手取消）。
 
 【风格版本】
-默认纯爱版。调教版（DLC1）等额外内容另发：放入 content\\pack\\ 后，
-按 config\\character.example.yaml 里「调教」段注释启用即可切换。
+默认纯爱版。调教版（DLC1）等额外内容：窗口左侧「角色设置」点
+「导入 DLC」选择 .zip 或 .md 即可——自动拷贝进 content\\pack\\
+并自动启用，无需重启、无需手改配置。
 
 【许可】
 GPL-3.0。源码：https://github.com/indhg/AI-for-Coyote
@@ -168,6 +169,8 @@ def main() -> None:
             "--hidden-import", "uvicorn.protocols.http.auto",
             "--hidden-import", "uvicorn.protocols.websockets.auto",
             "--hidden-import", "uvicorn.lifespan.on",
+            "--hidden-import", "multipart",
+            "--hidden-import", "multipart.multipart",
             str(ROOT / "run_app.py"),
         ]
     )

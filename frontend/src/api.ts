@@ -7,7 +7,16 @@ import type {
 
 async function j<T>(path: string, init?: RequestInit): Promise<T> {
   const resp = await fetch(path, init);
-  if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+  if (!resp.ok) {
+    let msg = `${resp.status} ${resp.statusText}`;
+    try {
+      const data = (await resp.json()) as { error?: string };
+      if (data?.error) msg = data.error;
+    } catch {
+      /* 无 JSON 错误体时用状态码提示 */
+    }
+    throw new Error(msg);
+  }
   return (await resp.json()) as T;
 }
 
@@ -36,6 +45,14 @@ export const api = {
     j<{ ok: boolean }>("/api/character/profile", json({ profile })),
   setNick: (nick: string) =>
     j<{ ok: boolean }>("/api/character/nick", json({ nick })),
+  importDlc: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return j<{ ok: boolean; dir?: string; files?: string[]; profile?: string | null }>(
+      "/api/dlc/import",
+      { method: "POST", body: fd },
+    );
+  },
   setAutopilot: (enabled: boolean) =>
     j<{ ok: boolean }>("/api/autopilot", json({ enabled })),
   getLlm: () =>
