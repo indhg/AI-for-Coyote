@@ -470,6 +470,7 @@ def _load_character(path: Path) -> dict:
         runtime.get("player_nick") or data.get("player_nick") or "小柳"
     ).strip() or "小柳"
 
+    sel_level = next((p["level"] for p in current_profs if p["name"] == profile_name), "中")
     return {
         "name": meta["name"],
         "role": role_name,
@@ -480,8 +481,10 @@ def _load_character(path: Path) -> dict:
         "player_nick": nick,
         "profile": profile_name,
         "profiles": [p["name"] for p in current_profs],
-        "profile_level": next((p["level"] for p in current_profs if p["name"] == profile_name), "中"),
+        "profile_level": sel_level,
         "profile_note": next((p["note"] for p in current_profs if p["name"] == profile_name), ""),
+        # 基准怒气按档位固定（用户定）：纯爱 0 / 调教 1 / 凌辱 2
+        "rage_baseline": {"轻": 0, "中": 1, "重": 2}.get(sel_level, 0),
         "profile_available": profile_available,
         "prompt_file": prompt_file,
         "examples": examples,

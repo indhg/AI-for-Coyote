@@ -209,6 +209,12 @@ def build_system_prompt(character: dict, state: dict) -> str:
             "【不耐烦】画面黑暗或麦克风持续无声：你开始不耐烦，用催促、质疑逼玩家回应；"
             "他若继续沉默，接下来几轮内你会升级为愤怒、乃至暴怒。"
         )
+    # 连续自动回合时防复读：每轮必须换说法，禁止重复上一轮的台词与措辞
+    lines.append(
+        "【避免重复】连续多轮自动发言时，每轮台词都要有新内容、新措辞："
+        "催促/挑逗/威胁轮着换花样（威吓→诱惑→冷落→换话题→描述现场），"
+        "严禁连续两轮说同一句或近义句（如一直喊「别走神」）。"
+    )
     for note in state.get("notes") or []:
         lines.append(f"【玩家反馈】{note}")
     return "\n".join(lines)

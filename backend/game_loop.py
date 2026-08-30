@@ -110,7 +110,7 @@ class GameLoop:
             except (TypeError, ValueError):
                 value = 15 if ch == "A" else 5
             state["baseline_strength"][ch] = max(0, min(100, value))
-        state["rage_rounds"] = self.rage_rounds
+        state["rage_rounds"] = self.rage_rounds + int(self.cfg["character"].get("rage_baseline") or 0)
         state["rage_triggered"] = self.rage_triggered
         # 角色与风格版本（多角色两级：角色 → 风格档），页面切换用
         state["role"] = str(self.cfg["character"].get("role") or "触手")

@@ -51,7 +51,7 @@ def _app_version() -> str:
     """版本号：打包时写入 version.txt；源码运行时显示 dev。"""
     f = PROJECT_ROOT / "version.txt"
     if f.exists():
-        v = f.read_text(encoding="utf-8").strip()
+        v = f.read_text(encoding="utf-8").strip().lstrip("\ufeff")
         if v:
             return v
     return "dev"

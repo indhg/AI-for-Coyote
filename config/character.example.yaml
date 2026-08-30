@@ -47,9 +47,10 @@ roles:
   #   device_narrative: 装置
   #   profiles:
   #     调教:
-  #       level: 重
-  #       note: 调教版（重口·品评会）：公开审评、装置支配、围观施压；以羞辱与驯化为核心。
+  #       level: 中
+  #       note: 调教版（品评会）：公开审评、装置支配、围观施压；以羞辱与驯化为核心。
   #       prompt_file: content/pack/DLC2-品评会-调教/品评会-角色提示词-调教.md
+  #       基准怒气按档位固定（无需配置）：纯爱 0 / 调教 1 / 凌辱 2
   #       examples:
   #         - user: 我进来了。
   #           assistant:

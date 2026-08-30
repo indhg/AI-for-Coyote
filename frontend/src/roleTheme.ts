@@ -49,7 +49,7 @@ export const STYLE_LABELS: Record<string, string> = {
 export const STYLE_DESCS: Record<string, string> = {
   "触手·纯爱": "温柔驯服·依赖顺从",
   "触手·调教": "黑暗调教·支配胁迫（DLC1）",
-  "品评会·调教": "公开审评·装置支配（DLC2，重口）",
+  "品评会·调教": "公开审评·装置支配（DLC2）",
 };
 
 export function styleDesc(role: string, profile: string): string {
