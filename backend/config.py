@@ -511,11 +511,17 @@ def save_character_runtime(cfg: Config, **fields) -> None:
     logger.info("角色运行时覆盖已保存：%s", runtime)
 
 
-def patch_character_prompt_file(character_path: Path, profile: str, prompt_rel: str, role: str = "") -> bool:
+def patch_character_prompt_file(
+    character_path: Path,
+    profile: str,
+    prompt_rel: str,
+    role: str = "",
+    level: str | None = None,
+) -> bool:
     """把 character.yaml 里指定角色/风格的 prompt_file 设为 prompt_rel（相对项目根的 posix 路径）。
 
-    新格式按 role 定位角色块，旧格式直接找 profile 键；文件不存在时先从
-    character.example.yaml 复制；找不到对应键返回 False。供「导入 DLC」自动接通使用。
+    新格式按 role 定位角色块，旧格式直接找 profile 键；level 给定时一并修正该风格的档位；
+    文件不存在时先从 character.example.yaml 复制；找不到对应键返回 False。供「导入 DLC」自动接通使用。
     """
     if not character_path.exists():
         example = character_path.parent / "character.example.yaml"
@@ -567,6 +573,7 @@ def patch_character_prompt_file(character_path: Path, profile: str, prompt_rel: 
             return False
 
     pline: int | None = None
+    lline: int | None = None
     for j in range(idx + 1, len(lines)):
         ln = lines[j]
         if not ln.strip():
@@ -576,13 +583,21 @@ def patch_character_prompt_file(character_path: Path, profile: str, prompt_rel: 
             break
         if re.match(r"^\s*#?\s*prompt_file\s*:", ln):
             pline = j
-            break
+        elif level is not None and re.match(r"^\s*#?\s*level\s*:", ln):
+            lline = j
 
     new_line = " " * (indent + 2) + f"prompt_file: {prompt_rel}"
     if pline is not None:
         lines[pline] = new_line
     else:
         lines.insert(idx + 1, new_line)
+
+    if level is not None:
+        lv_line = " " * (indent + 2) + f"level: {level}"
+        if lline is not None:
+            lines[lline] = lv_line
+        else:
+            lines.insert(idx + 1, lv_line)
 
     character_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     logger.info("character.yaml 已更新：%s.%s.prompt_file = %s", role or "-", profile, prompt_rel)

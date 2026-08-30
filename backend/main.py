@@ -636,20 +636,19 @@ def make_app() -> FastAPI:
             roles_map = {r["name"]: r for r in (cfg["character"].get("roles") or [])}
 
             if dlc_role and dlc_role in roles_map:
-                # 已知角色：接通其下匹配的风格档
+                # 已知角色：接通其下匹配的风格档；档位统一修正为「中」（品评会已从凌辱降级为调教）
                 profiles_of = [p["name"] for p in roles_map[dlc_role]["profiles"]]
                 target = next((p for p in profiles_of if p and p in prompt_md), None)
                 if target is None:
                     target = profiles_of[0] if profiles_of else None
-                if target and patch_character_prompt_file(char_path, target, rel, role=dlc_role):
+                if target and patch_character_prompt_file(char_path, target, rel, role=dlc_role, level="中"):
                     patched_profile = target
                     patched_role = dlc_role
             elif dlc_role:
-                # 新角色：自动注册角色块（傻瓜式，无需手改配置）
-                level = "重" if dlc_style and "调教" in dlc_style and dlc_role != "触手" else "中"
-                narrative = "触手" if dlc_role == "触手" else "装置"
+                # 新角色：自动注册角色块（傻瓜式，无需手改配置）；默认调教档（中）
                 style = dlc_style or "调教"
-                if patch_character_add_role(char_path, dlc_role, dlc_role, style, level, rel, narrative):
+                narrative = "触手" if dlc_role == "触手" else "装置"
+                if patch_character_add_role(char_path, dlc_role, dlc_role, style, "中", rel, narrative):
                     patched_profile = style
                     patched_role = dlc_role
             else:
