@@ -460,6 +460,12 @@ def make_app() -> FastAPI:
             await state.broadcast()
         return JSONResponse({"ok": True, "sensors": state.sensor_switches})
 
+    @app.post("/api/history/clear")
+    async def api_history_clear(body: dict) -> JSONResponse:
+        """清空对话历史（模型上下文 + 页面记录由前端同步清）。"""
+        state.loop.clear_history()
+        return JSONResponse({"ok": True})
+
     @app.post("/api/layout")
     async def api_layout(body: dict) -> JSONResponse:
         """前端上报三栏布局（调试/监测用）：{sidebar_w, control_w, inner_width, zoom}。"""

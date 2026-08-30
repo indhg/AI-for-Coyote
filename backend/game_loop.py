@@ -125,6 +125,11 @@ class GameLoop:
         return state
 
     # ---------- 用户回合 ----------
+    def clear_history(self) -> None:
+        """清空对话历史（模型上下文；页面消息记录由前端同步清）。"""
+        self.history.clear()
+        logger.info("对话历史已清空")
+
     async def handle_user_message(self, text: str) -> dict:
         text = (text or "").strip()
         if not text:

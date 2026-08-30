@@ -53,7 +53,7 @@ roles:
   #       examples:
   #         - user: 我进来了。
   #           assistant:
-  #             line: 第 302 号，抬头。让大家看看你的脸——从今天起，你就是这里的新藏品。
+  #             line: 第 325 号，抬头。让大家看看你的脸——从今天起，你就是这里的新藏品。
   #             actions:
   #               - { op: hold_strength, channel: A, value: 15 }
 

@@ -6,6 +6,7 @@ import { LEVEL_BADGE_CLS, LEVEL_LABELS } from "../roleTheme";
 export default function ChatPanel() {
   const messages = useChat((st) => st.messages);
   const pushMsg = useChat((st) => st.push);
+  const clearChat = useChat((st) => st.clear);
   const autopilot = useApp((st) => st.state?.autopilot ?? false);
   const sensorsOn = useApp((st) => st.state?.sensors_on ?? false);
   const interval = useApp((st) => st.state?.autopilot_interval_s ?? 12);
@@ -72,6 +73,21 @@ export default function ChatPanel() {
             {LEVEL_LABELS[level] ?? level}
           </span>
         </div>
+        <button
+          onClick={() => {
+            if (!window.confirm("清空对话历史？将清空聊天记录与 AI 的记忆上下文，设备强度不受影响。")) return;
+            api
+              .clearHistory()
+              .then(() => {
+                clearChat();
+                pushMsg({ role: "sys", text: "—— 对话历史已清空 ——" });
+              })
+              .catch(() => {});
+          }}
+          className="ml-auto rounded-md border border-line bg-panel2 px-2 py-1 text-[11px] text-muted transition-colors hover:border-line2 hover:text-text"
+        >
+          清空
+        </button>
       </div>
       {!paired ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 py-6 text-center">

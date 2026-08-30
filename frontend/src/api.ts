@@ -33,6 +33,7 @@ export const api = {
     j<ManualResult>("/api/manual", json(action)),
   estop: () => j<ManualResult>("/api/estop", json({})),
   resume: () => j<ManualResult>("/api/resume", json({})),
+  clearHistory: () => j<{ ok: boolean }>("/api/history/clear", json({})),
   network: () => j<NetworkInfo>("/api/network"),
   deviceChannels: (
     channels: Record<string, { name?: string; location?: string; baseline?: number }>,

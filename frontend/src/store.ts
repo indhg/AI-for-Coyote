@@ -35,12 +35,14 @@ interface ChatStore {
   busy: boolean;
   push: (m: ChatMsg) => void;
   setBusy: (b: boolean) => void;
+  clear: () => void;
 }
 export const useChat = create<ChatStore>((set) => ({
   messages: [],
   busy: false,
   push: (m) => set((st) => ({ messages: [...st.messages, m] })),
   setBusy: (b) => set({ busy: b }),
+  clear: () => set({ messages: [] }),
 }));
 
 // ---------- 布局（三栏固定比例，随窗口宽度计算，不可拖拽） ----------
