@@ -8,23 +8,12 @@ export default function ChatPanel() {
   const pushMsg = useChat((st) => st.push);
   const clearChat = useChat((st) => st.clear);
   const autopilot = useApp((st) => st.state?.autopilot ?? false);
-  const sensorsOn = useApp((st) => st.state?.sensors_on ?? false);
-  const interval = useApp((st) => st.state?.autopilot_interval_s ?? 12);
   const relay = useApp((st) => st.state?.relay);
   const paired = relay?.status === "paired";
   const enabled = useApp((st) => st.state?.enabled_channels);
   const role = useApp((st) => st.state?.role ?? "触手");
   const profile = useApp((st) => st.state?.profile ?? "纯爱");
   const level = useApp((st) => st.state?.profile_level ?? "中");
-  const camOn = useApp((st) => st.state?.sensors?.camera ?? false);
-  const micOn = useApp((st) => st.state?.sensors?.audio ?? false);
-  const sensorText = !autopilot
-    ? "自动运行已停止，AI 暂停行动（摄像头/麦克风已关闭）"
-    : sensorsOn
-      ? camOn && micOn
-        ? `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头/麦克风运行中）`
-        : `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头${camOn ? "开" : "关"} · 麦克风${micOn ? "开" : "关"}）`
-      : `AI 每 ${interval} 秒自主观察、调整设备并发言（摄像头/麦克风已关闭）`;
   const [pairUrl, setPairUrl] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -73,21 +62,37 @@ export default function ChatPanel() {
             {LEVEL_LABELS[level] ?? level}
           </span>
         </div>
-        <button
-          onClick={() => {
-            if (!window.confirm("清空对话历史？将清空聊天记录与 AI 的记忆上下文，设备强度不受影响。")) return;
-            api
-              .clearHistory()
-              .then(() => {
-                clearChat();
-                pushMsg({ role: "sys", text: "—— 对话历史已清空 ——" });
-              })
-              .catch(() => {});
-          }}
-          className="ml-auto rounded-md border border-line bg-panel2 px-2 py-1 text-[11px] text-muted transition-colors hover:border-line2 hover:text-text"
-        >
-          清空
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[11px] text-muted">自动运行</span>
+          <button
+            onClick={() => void toggle()}
+            title={autopilot ? "停止自动运行" : "开始自动运行（AI 自主回合，摄像头/麦克风跟随启停）"}
+            className={`relative h-5 w-9 flex-none rounded-full transition-colors ${
+              autopilot ? "bg-accent" : "bg-ink3 border border-line"
+            }`}
+          >
+            <span
+              className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full transition-all ${
+                autopilot ? "left-[18px] bg-ink" : "left-[2px] bg-muted"
+              }`}
+            />
+          </button>
+          <button
+            onClick={() => {
+              if (!window.confirm("清空对话历史？将清空聊天记录与 AI 的记忆上下文，设备强度不受影响。")) return;
+              api
+                .clearHistory()
+                .then(() => {
+                  clearChat();
+                  pushMsg({ role: "sys", text: "—— 对话历史已清空 ——" });
+                })
+                .catch(() => {});
+            }}
+            className="rounded-md border border-line bg-panel2 px-2 py-1 text-[11px] text-muted transition-colors hover:border-line2 hover:text-text"
+          >
+            清空
+          </button>
+        </div>
       </div>
       {!paired ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 py-6 text-center">
@@ -151,25 +156,6 @@ export default function ChatPanel() {
           ))}
         </div>
       )}
-      <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[13px] font-semibold">自动运行</span>
-          <span className="truncate text-[11px] text-muted">{sensorText}</span>
-        </div>
-        <button
-          onClick={() => void toggle()}
-          title={autopilot ? "停止自动运行" : "开始自动运行（AI 自主回合）"}
-          className={`relative h-6 w-11 flex-none rounded-full transition-colors ${
-            autopilot ? "bg-accent" : "bg-ink3 border border-line"
-          }`}
-        >
-          <span
-            className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-all ${
-              autopilot ? "left-[22px] bg-ink" : "left-[2px] bg-muted"
-            }`}
-          />
-        </button>
-      </div>
     </aside>
   );
 }

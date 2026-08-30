@@ -78,7 +78,7 @@ export default function DeviceStatus() {
       (visual === "on"
         ? `点击关闭${label}`
         : on && !sensorsOn
-          ? `自动运行未开启，${label}不会启动（开启自动运行后生效）`
+          ? `自动运行未开启，${label}不会启动——请打开聊天栏顶部「清空」旁边的「自动运行」开关`
           : visual === "warn"
             ? `${label}启动中…`
             : `点击开启${label}`);
