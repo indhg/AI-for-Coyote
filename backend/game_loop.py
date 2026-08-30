@@ -68,7 +68,9 @@ class GameLoop:
             dark = bool(cs.get("has_frame")) and bool(cs.get("dark"))
         silent = False
         if self.audio and self.audio.enabled:
-            silent = bool(self.audio.to_state().get("silent"))
+            ast = self.audio.to_state()
+            # 麦克风开关关闭（未在监听）时不计无声，避免用户主动关麦却触发怒气
+            silent = bool(ast.get("running")) and bool(ast.get("silent"))
         return dark or silent
 
     def _note_rage(self) -> None:
