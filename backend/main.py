@@ -574,27 +574,42 @@ def make_app() -> FastAPI:
             except zipfile.BadZipFile:
                 return JSONResponse({"error": "zip 包损坏或格式不对"}, status_code=400)
             with zf:
-                for n in zf.namelist():
+                raw_names = zf.namelist()
+                fixed_names: list[str] = []
+                for n in raw_names:
                     # Windows 压缩工具不写 UTF-8 标志，先按 cp437 还原原始字节再按 UTF-8 解码中文名
                     fixed = n
                     try:
                         fixed = n.encode("cp437").decode("utf-8")
                     except (UnicodeEncodeError, UnicodeDecodeError):
                         pass
+                    fixed_names.append(fixed)
+                # 定位 DLC 目录：任何层级中形如 DLC<序号>-<角色>-<风格> 的组件优先；
+                # 否则取首个顶层目录（GitHub 仓库 zip 的单层包装目录自动跳过）
+                for fixed in fixed_names:
+                    for part in Path(fixed).parts:
+                        if re.match(r"^DLC\d+-.+?-.+$", part):
+                            dlc_folder = part
+                            break
+                    if dlc_folder:
+                        break
+                if not dlc_folder and fixed_names:
+                    parts = [p for p in Path(fixed_names[0]).parts if p not in ("", ".", "..")]
+                    if len(parts) >= 3 and not re.match(r"^DLC\d+", parts[0]):
+                        dlc_folder = parts[1]
+                    elif parts:
+                        dlc_folder = parts[0]
+                for n, fixed in zip(raw_names, fixed_names):
                     bn = Path(fixed).name
                     if not bn.lower().endswith(".md") or bn.startswith("."):
                         continue
-                    if not dlc_folder:
-                        parts = [p for p in Path(fixed).parts if p not in ("", ".", "..")]
-                        if len(parts) > 1:
-                            dlc_folder = parts[0]
                     mds[bn] = zf.read(n)
             if not mds:
                 return JSONResponse({"error": "zip 里没有 .md 文件"}, status_code=400)
         else:
             mds[name] = data
 
-        if not dlc_folder:
+        if not dlc_folder or dlc_folder in (".", "..") or ".." in Path(dlc_folder).parts:
             dlc_folder = Path(name).stem or "DLC导入"
         dlc_dir = pack_dir / dlc_folder
         dlc_dir.mkdir(parents=True, exist_ok=True)
