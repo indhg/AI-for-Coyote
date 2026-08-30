@@ -45,9 +45,12 @@ export default function DeviceStatus() {
 
   const camOn = s?.sensors?.camera ?? false;
   const micOn = s?.sensors?.audio ?? false;
-  // 开关为开但实际没跑起来且有后端错误 → 警示（显示具体原因）
-  const camErr = camOn && !(s?.camera?.has_frame ?? false) && !!s?.camera?.error ? s.camera.error : "";
-  const micErr = micOn && !(s?.audio?.running ?? false) && !!s?.audio?.error ? s.audio.error : "";
+  const sensorsOn = s?.sensors_on ?? false;
+  const camRunning = s?.camera?.has_frame ?? false;
+  const micRunning = s?.audio?.running ?? false;
+  // 警示：开关开 + 总闸开 + 实际没跑且有错误 → 显示具体原因
+  const camErr = camOn && !camRunning && !!s?.camera?.error ? s.camera.error : "";
+  const micErr = micOn && !micRunning && !!s?.audio?.error ? s.audio.error : "";
   const toggleSensor = async (key: "camera" | "audio") => {
     try {
       await api.setSensor(key, key === "camera" ? !camOn : !micOn);
@@ -55,29 +58,48 @@ export default function DeviceStatus() {
       /* 状态由 ws 推送刷新 */
     }
   };
+  // B 方案：按钮颜色反映真实运行状态——灰=关（或自动运行未开）/ 绿=开且在跑 / 橙=开但没跑（警示）
+  type SensorVisual = "off" | "on" | "warn";
+  const visualOf = (on: boolean, running: boolean): SensorVisual => {
+    if (!on || !sensorsOn) return "off";
+    return running ? "on" : "warn";
+  };
   const sensorBtn = (
     on: boolean,
     icon: React.ReactNode,
     label: string,
     key: "camera" | "audio",
+    running: boolean,
     errText: string,
-  ) => (
-    <button
-      onClick={() => void toggleSensor(key)}
-      title={errText || `${on ? "关闭" : "开启"}${label}`}
-      className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold transition-colors ${
-        errText
+  ) => {
+    const visual = visualOf(on, running);
+    const title =
+      errText ||
+      (visual === "on"
+        ? `点击关闭${label}`
+        : on && !sensorsOn
+          ? `自动运行未开启，${label}不会启动（开启自动运行后生效）`
+          : visual === "warn"
+            ? `${label}启动中…`
+            : `点击开启${label}`);
+    const cls =
+      visual === "on"
+        ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
+        : visual === "warn"
           ? "border-warn/60 bg-warn/15 text-warn"
-          : on
-            ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
-            : "border-line bg-ink3 text-faint hover:text-muted"
-      }`}
-    >
-      {icon}
-      {label}
-      {errText && <AlertTriangle size={11} className="flex-none" />}
-    </button>
-  );
+          : "border-line bg-ink3 text-faint hover:text-muted";
+    return (
+      <button
+        onClick={() => void toggleSensor(key)}
+        title={title}
+        className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold transition-colors ${cls}`}
+      >
+        {icon}
+        {label}
+        {visual === "warn" && <AlertTriangle size={11} className="flex-none" />}
+      </button>
+    );
+  };
 
   return (
     <div className="flex min-h-0 flex-none flex-col rounded-[14px] border border-line bg-panel p-3">
@@ -100,8 +122,8 @@ export default function DeviceStatus() {
               />
               {paired ? "已连接" : "未连接"}
             </span>
-            {sensorBtn(camOn, <Video size={12} />, "摄像头", "camera", camErr)}
-            {sensorBtn(micOn, <Mic size={12} />, "麦克风", "audio", micErr)}
+            {sensorBtn(camOn, <Video size={12} />, "摄像头", "camera", camRunning, camErr)}
+            {sensorBtn(micOn, <Mic size={12} />, "麦克风", "audio", micRunning, micErr)}
           </span>
           <span className="ml-auto flex items-center gap-2">
             <span className="flex-none text-[11px] text-muted">麦克风</span>
@@ -114,8 +136,17 @@ export default function DeviceStatus() {
             <span className="w-6 flex-none text-right text-[12px] font-semibold tabular-nums">
               {audioPct}
             </span>
-            <span className="w-16 flex-none truncate text-[11px] text-faint">
-              {s?.audio?.running ? s.audio.last_text || "监听中…" : "未开启"}
+            <span
+              className="w-16 flex-none truncate text-[11px] text-faint"
+              title={!micRunning && micOn && !sensorsOn ? "自动运行未开启，麦克风未启动" : undefined}
+            >
+              {micRunning
+                ? s?.audio?.last_text || "监听中…"
+                : micOn && !sensorsOn
+                  ? "未运行"
+                  : micOn && sensorsOn && !micErr
+                    ? "启动中…"
+                    : "未开启"}
             </span>
           </span>
         </div>
