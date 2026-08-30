@@ -333,6 +333,14 @@ class LLM:
 
             parsed = parse_llm_json(content)
             if parsed:
+                # content 只有动作没有台词时，尝试从 reasoning_content 合并台词（推理型模型常见）
+                if not str(parsed.get("line") or "").strip():
+                    reasoning = str(message.get("reasoning_content") or "").strip()
+                    rparsed = parse_llm_json(reasoning)
+                    if rparsed and str(rparsed.get("line") or "").strip():
+                        parsed["line"] = rparsed["line"]
+                        if isinstance(rparsed.get("actions"), list):
+                            parsed["actions"] = rparsed["actions"]
                 break
             if not self.json_mode:
                 parsed = {"line": content}
@@ -367,8 +375,29 @@ class LLM:
         actions = parsed.get("actions")
         if not isinstance(actions, list):
             actions = []
+        if not line and self.json_mode:
+            # 空台词硬保护：注入铁律重试一次，仍空则给兜底台词（保证玩家永远看到文字）
+            payload["messages"][0]["content"] += (
+                "\n【铁律】输出 JSON 的 line 字段永远不能为空，必须写一句角色台词。"
+            )
+            resp = await self.client.post(self.url, headers=headers, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            message = data["choices"][0]["message"]
+            retry_content = (
+                str(message.get("content") or "").strip()
+                or str(message.get("reasoning_content") or "").strip()
+            )
+            rparsed = parse_llm_json(retry_content)
+            if rparsed:
+                line = str(rparsed.get("line") or "").strip()
+                ractions = rparsed.get("actions")
+                if isinstance(ractions, list):
+                    actions = ractions
         if not line:
             logger.warning("模型输出 line 为空，原始返回前 200 字: %s", content[:200])
+            if self.json_mode:
+                line = "（模型这次没有说话，只动了设备。再说一句吧？）"
         return line, actions
 
     async def describe_image(

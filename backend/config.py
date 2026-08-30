@@ -471,6 +471,11 @@ def _load_character(path: Path) -> dict:
     prompt = _prompt_read(prompt_file)
     if not prompt:
         prompt = str(data.get("prompt", "")).strip()
+        if prompt_file:
+            # 文件缺失/为空时视为无外部提示词：build_system_prompt 会改走内置完整 JSON/op 规范
+            # （否则输出格式约束丢失，模型可能只回动作不回台词）
+            logger.warning("提示词文件缺失，改用内置输出格式规范: %s", prompt_file)
+            prompt_file = None
 
     examples = _parse_examples(
         profile.get("examples") if profile.get("examples") is not None else data.get("examples")

@@ -223,6 +223,13 @@ def main() -> None:
     for name in ("config.example.yaml", "character.example.yaml", "waveforms.yaml"):
         shutil.copy2(ROOT / "config" / name, PKG / "config" / name)
     shutil.copytree(ROOT / "content" / "pure", PKG / "content" / "pure")
+    # DLC 本体（本地仓库形态为嵌套 git 仓库；CI 干净检出时不存在则跳过）
+    pack = ROOT / "content" / "pack"
+    if pack.exists():
+        shutil.copytree(
+            pack, PKG / "content" / "pack",
+            ignore=shutil.ignore_patterns(".git"),
+        )
     shutil.copytree(ROOT / "frontend" / "dist", PKG / "frontend" / "dist")
     shutil.copy2(ROOT / "LICENSE", PKG / "LICENSE")
     (PKG / "start.bat").write_text(START_BAT.format(version=VERSION), encoding="utf-8")
