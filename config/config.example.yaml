@@ -15,7 +15,7 @@ relay:
 
 llm:
   base_url: https://api.deepseek.com   # OpenAI 兼容接口地址（通义/豆包/GLM 等填对应地址）
-  api_key: "你的密钥，或用环境变量 DGLAB_LLM_API_KEY"                            # 你的密钥；也可用环境变量 DGLAB_LLM_API_KEY
+  api_key: ""                          # 你的密钥；也可用环境变量 DGLAB_LLM_API_KEY（占位留空，勿填中文）
   model: deepseek-v4-flash-vision-exp                       # 模型名
   temperature: 1.0
   max_tokens: 1500
@@ -23,7 +23,7 @@ llm:
   json_mode: true                        # 是否请求 JSON 输出模式；模型不支持就改 false（程序有兜底解析）
   vision:                                # 视觉任务独立端点；留空 = 与主模型相同（实测 DS Vision 对漫画提炼效果更好，暂用 DS）
     base_url: ""                         # 备用本地模型：http://127.0.0.1:11434/v1 + model: qwen2.5vl:7b
-    api_key: "你的密钥，或用环境变量 DGLAB_LLM_API_KEY"
+    api_key: ""
     model: ""
 
 character_file: config/character.yaml    # 角色设定文件（自己写，可随时改）

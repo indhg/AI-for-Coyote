@@ -147,6 +147,16 @@ def load_config(path: Path | None = None) -> Config:
     if env_key:
         cfg["llm"]["api_key"] = env_key
 
+    # 示例配置里的中文占位密钥一律按未配置处理（否则会作为 Authorization 头导致编码崩溃、无文字输出）
+    for sec in ("llm", "vision"):
+        section = cfg.setdefault(sec, {})
+        k = str(section.get("api_key") or "")
+        try:
+            k.encode("ascii")
+        except UnicodeEncodeError:
+            logger.warning("检测到 %s.api_key 含非 ASCII 字符（疑似示例占位符），已按未配置处理", sec)
+            section["api_key"] = ""
+
     # 角色设定（每次读取最新内容，改完即生效）
     char_path = PROJECT_ROOT / cfg["character_file"]
     if not char_path.exists():

@@ -242,6 +242,16 @@ def parse_llm_json(content: str) -> dict:
     return {}
 
 
+def _require_ascii_key(key: str) -> None:
+    """密钥必须纯 ASCII：示例配置里的中文占位符会作为 Authorization 头把请求整体崩掉。"""
+    try:
+        key.encode("ascii")
+    except UnicodeEncodeError:
+        raise RuntimeError(
+            "API Key 无效：包含中文或特殊字符（疑似示例占位符），请在「设置 → AI 模型配置」填入真实密钥"
+        ) from None
+
+
 class LLM:
     def __init__(self, cfg) -> None:
         llm_cfg = cfg["llm"]
@@ -302,6 +312,7 @@ class LLM:
             payload["response_format"] = {"type": "json_object"}
         headers = {"Content-Type": "application/json"}
         if self.api_key:
+            _require_ascii_key(self.api_key)
             headers["Authorization"] = f"Bearer {self.api_key}"
 
         logger.debug("调用模型 %s", self.model)
@@ -397,6 +408,7 @@ class LLM:
         }
         headers = {"Content-Type": "application/json"}
         if self.vision_api_key:
+            _require_ascii_key(self.vision_api_key)
             headers["Authorization"] = f"Bearer {self.vision_api_key}"
 
         logger.debug("调用视觉端点描述图片: %s", self.vision_model)
