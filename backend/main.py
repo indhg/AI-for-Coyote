@@ -20,7 +20,7 @@ from pathlib import Path
 import httpx
 import qrcode
 from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .audio import AudioManager
@@ -334,6 +334,11 @@ def make_app() -> FastAPI:
             "前端尚未构建：请在 frontend\\ 目录执行 npm install && npm run build",
             media_type="text/plain; charset=utf-8",
         )
+
+    @app.get("/index.html")
+    async def index_html() -> RedirectResponse:
+        """收藏夹/手输带 index.html 的地址时别 404，重定向回首页。"""
+        return RedirectResponse("/")
 
     # React 构建产物的静态资源（存在时才挂载）
     if (FRONTEND_DIST / "assets").exists():
