@@ -551,7 +551,8 @@ def make_app() -> FastAPI:
     async def api_dlc_import(file: UploadFile = File(...)) -> JSONResponse:
         """导入 DLC：上传 .zip（解出全部 .md）或单个 .md → 拷进 content\\pack\\ 并自动接通 character.yaml。
 
-        不用重启：改完即热加载，前端可立即切换该风格。
+        zip 可按 DLC 目录分组（支持仓库 zip 单层包装目录、一个 zip 含多个 DLC）；
+        单个 md 从文件名解析主题（<主题>-角色提示词-<风格>.md）。不用重启：改完即热加载。
         """
         name = file.filename or ""
         low = name.lower()
@@ -566,8 +567,7 @@ def make_app() -> FastAPI:
         pack_dir = PROJECT_ROOT / "content" / "pack"
         pack_dir.mkdir(parents=True, exist_ok=True)
 
-        mds: dict[str, bytes] = {}
-        dlc_folder = ""
+        groups: dict[str, dict[str, bytes]] = {}  # DLC 目录名 -> {文件名: 内容}
         if low.endswith(".zip"):
             try:
                 zf = zipfile.ZipFile(io.BytesIO(data))
@@ -584,46 +584,46 @@ def make_app() -> FastAPI:
                     except (UnicodeEncodeError, UnicodeDecodeError):
                         pass
                     fixed_names.append(fixed)
-                # 定位 DLC 目录：任何层级中形如 DLC<序号>-<角色>-<风格> 的组件优先；
-                # 否则取首个顶层目录（GitHub 仓库 zip 的单层包装目录自动跳过）
-                for fixed in fixed_names:
-                    for part in Path(fixed).parts:
-                        if re.match(r"^DLC\d+-.+?-.+$", part):
-                            dlc_folder = part
-                            break
-                    if dlc_folder:
-                        break
-                if not dlc_folder and fixed_names:
-                    parts = [p for p in Path(fixed_names[0]).parts if p not in ("", ".", "..")]
-                    if len(parts) >= 3 and not re.match(r"^DLC\d+", parts[0]):
-                        dlc_folder = parts[1]
-                    elif parts:
-                        dlc_folder = parts[0]
                 for n, fixed in zip(raw_names, fixed_names):
                     bn = Path(fixed).name
                     if not bn.lower().endswith(".md") or bn.startswith("."):
                         continue
-                    mds[bn] = zf.read(n)
-            if not mds:
+                    parts = [p for p in Path(fixed).parts if p not in ("", ".", "..")]
+                    # 组名：路径中形如 DLC<序号>-<角色>-<风格> 的组件；否则首个顶层目录（跳过单层包装）
+                    grp = next((p for p in parts if re.match(r"^DLC\d+-.+?-.+$", p)), None)
+                    if not grp:
+                        if len(parts) >= 3 and not re.match(r"^DLC\d+", parts[0]):
+                            grp = parts[1]
+                        elif parts:
+                            grp = parts[0]
+                    if not grp:
+                        continue
+                    groups.setdefault(grp, {})[bn] = zf.read(n)
+            if not groups:
                 return JSONResponse({"error": "zip 里没有 .md 文件"}, status_code=400)
         else:
-            mds[name] = data
+            # 单个 md：文件名 <主题>-角色提示词-<风格>.md → 归入「DLC导入-<主题>-<风格>」组
+            m2 = re.match(r"^(.+?)-角色提示词-(.+?)\.md$", name)
+            grp = f"DLC导入-{m2.group(1)}-{m2.group(2)}" if m2 else (Path(name).stem or "DLC导入")
+            groups[grp] = {name: data}
 
-        if not dlc_folder or dlc_folder in (".", "..") or ".." in Path(dlc_folder).parts:
-            dlc_folder = Path(name).stem or "DLC导入"
-        dlc_dir = pack_dir / dlc_folder
-        dlc_dir.mkdir(parents=True, exist_ok=True)
-        for bn, content in mds.items():
-            (dlc_dir / bn).write_bytes(content)
+        # 落盘
+        for grp, mds in groups.items():
+            if grp in (".", "..") or ".." in Path(grp).parts:
+                continue
+            dlc_dir = pack_dir / grp
+            dlc_dir.mkdir(parents=True, exist_ok=True)
+            for bn, content in mds.items():
+                (dlc_dir / bn).write_bytes(content)
 
-        # 自动接通：按 DLC 目录名解析「角色-风格」（DLC<序号>-<角色>-<风格>），
-        # 角色已存在则接通其风格档；新角色自动注册角色块；旧式单 md 按当前角色匹配
-        prompt_md = next((b for b in mds if "角色提示词" in b), None) or next(
-            (b for b in mds if "提示词" in b), None
-        )
-        patched_profile = None
-        patched_role = None
-        if prompt_md:
+        # 自动接通（每个 DLC 目录一组；角色已存在则接通其风格档并修正档位为中，
+        # 新角色自动注册角色块；无法解析主题名时才按当前角色兜底）
+        def wire_group(dlc_folder: str, mds: dict[str, bytes]) -> tuple[str | None, str | None]:
+            prompt_md = next((b for b in mds if "角色提示词" in b), None) or next(
+                (b for b in mds if "提示词" in b), None
+            )
+            if not prompt_md:
+                return None, None
             reload_character(cfg)
             char_path = Path(cfg["character_file"])
             if not char_path.is_absolute():
@@ -633,10 +633,16 @@ def make_app() -> FastAPI:
             m = re.match(r"^DLC\d+-(.+?)-(.+)$", dlc_folder)
             dlc_role = (m.group(1) if m else "").strip()
             dlc_style = (m.group(2) if m else "").strip()
+            if not dlc_role:
+                m2 = re.match(r"^(.+?)-角色提示词", prompt_md)
+                if m2:
+                    dlc_role = m2.group(1).strip()
+                    dlc_style = next((s for s in ("纯爱", "调教", "凌辱") if s in prompt_md), "调教")
             roles_map = {r["name"]: r for r in (cfg["character"].get("roles") or [])}
 
+            patched_role = None
+            patched_profile = None
             if dlc_role and dlc_role in roles_map:
-                # 已知角色：接通其下匹配的风格档；档位统一修正为「中」（品评会已从凌辱降级为调教）
                 profiles_of = [p["name"] for p in roles_map[dlc_role]["profiles"]]
                 target = next((p for p in profiles_of if p and p in prompt_md), None)
                 if target is None:
@@ -645,14 +651,13 @@ def make_app() -> FastAPI:
                     patched_profile = target
                     patched_role = dlc_role
             elif dlc_role:
-                # 新角色：自动注册角色块（傻瓜式，无需手改配置）；默认调教档（中）
                 style = dlc_style or "调教"
                 narrative = "触手" if dlc_role == "触手" else "装置"
                 if patch_character_add_role(char_path, dlc_role, dlc_role, style, "中", rel, narrative):
                     patched_profile = style
                     patched_role = dlc_role
             else:
-                # 旧式（单 md / 无 DLC 目录名）：当前角色内匹配
+                # 无法解析主题名（旧式单 md）：当前角色内匹配
                 avail = cfg["character"].get("profile_available") or {}
                 profiles = list(cfg["character"].get("profiles") or [])
                 cur_role = str(cfg["character"].get("role") or "")
@@ -665,15 +670,28 @@ def make_app() -> FastAPI:
                     patched_profile = target
                     patched_role = cur_role
             reload_character(cfg)
+            return patched_role, patched_profile
+
+        pre_roles = {r["name"] for r in (cfg["character"].get("roles") or [])}
+        results: list[tuple[str, str | None, str | None]] = []
+        for grp, mds in groups.items():
+            r, p = wire_group(grp, mds)
+            results.append((grp, r, p))
+        # 响应里优先展示「新注册的主题」，否则最后一个
+        chosen = next((x for x in results if x[1] and x[1] not in pre_roles), None) or next(
+            (x for x in reversed(results) if x[1]), None
+        )
 
         await state.broadcast()
+        all_files = sorted({bn for _, mds in groups.items() for bn in mds})
         return JSONResponse(
             {
                 "ok": True,
-                "dir": dlc_folder,
-                "files": sorted(mds),
-                "role": patched_role,
-                "profile": patched_profile,
+                "dir": chosen[0] if chosen else (next(iter(groups)) if groups else ""),
+                "dirs": [g for g, _, _ in results],
+                "files": all_files,
+                "role": chosen[1] if chosen else None,
+                "profile": chosen[2] if chosen else None,
             }
         )
 
