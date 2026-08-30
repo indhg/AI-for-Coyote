@@ -79,8 +79,9 @@ export const api = {
       api_key_masked: string;
       has_key: boolean;
       saved: boolean;
+      json_mode: boolean;
     }>("/api/settings/llm"),
-  setLlm: (body: { api_key: string; base_url: string; model: string }) =>
+  setLlm: (body: { api_key: string; base_url: string; model: string; json_mode: boolean }) =>
     j<{ ok: boolean; model?: string }>("/api/settings/llm", json(body)),
   testLlm: (body: { api_key: string; base_url: string; model: string }) =>
     j<{ ok: boolean; error?: string; detail?: string }>(

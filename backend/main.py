@@ -726,10 +726,13 @@ def make_app() -> FastAPI:
                 "api_key_masked": masked,
                 "has_key": bool(key),
                 "saved": (PROJECT_ROOT / "config" / "config.yaml").exists(),
+                "json_mode": bool(llm.get("json_mode", True)),
             }
         )
 
-    def _patch_llm_text(text: str, api_key: str, base_url: str, model: str) -> str:
+    def _patch_llm_text(
+        text: str, api_key: str, base_url: str, model: str, json_mode: bool | None
+    ) -> str:
         """文本级更新 config.yaml 的 llm 小节（仅 2 空格缩进键），保留其余注释与内容。"""
         lines = text.splitlines()
         out: list[str] = []
@@ -750,15 +753,19 @@ def make_app() -> FastAPI:
                 if key == "model":
                     out.append(f"  model: {model}")
                     continue
+                if key == "json_mode" and json_mode is not None:
+                    out.append(f"  json_mode: {str(bool(json_mode)).lower()}")
+                    continue
             out.append(ln)
         return "\n".join(out) + "\n"
 
     @app.post("/api/settings/llm")
     async def api_settings_llm_save(body: dict) -> JSONResponse:
-        """保存 AI 配置并热加载：{api_key, base_url, model}；config.yaml 不存在时自动从示例生成。"""
+        """保存 AI 配置并热加载：{api_key, base_url, model, json_mode?}；config.yaml 不存在时自动从示例生成。"""
         api_key = str(body.get("api_key") or "").strip()
         base_url = str(body.get("base_url") or "").strip()
         model = str(body.get("model") or "").strip()
+        json_mode = body.get("json_mode") if isinstance(body.get("json_mode"), bool) else None
         if not base_url or not model:
             return JSONResponse({"error": "地址与模型名不能为空"}, status_code=400)
         cfg_path = PROJECT_ROOT / "config" / "config.yaml"
@@ -766,7 +773,9 @@ def make_app() -> FastAPI:
         if not cfg_path.exists():
             cfg_path.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
         cfg_path.write_text(
-            _patch_llm_text(cfg_path.read_text(encoding="utf-8"), api_key, base_url, model),
+            _patch_llm_text(
+                cfg_path.read_text(encoding="utf-8"), api_key, base_url, model, json_mode
+            ),
             encoding="utf-8",
         )
         # 同步内存并热加载（key 留空时回退环境变量 DGLAB_LLM_API_KEY）
@@ -774,6 +783,8 @@ def make_app() -> FastAPI:
         llm["api_key"] = api_key or os.environ.get("DGLAB_LLM_API_KEY", "")
         llm["base_url"] = base_url
         llm["model"] = model
+        if json_mode is not None:
+            llm["json_mode"] = json_mode
         old = state.llm
         state.llm = LLM(cfg)
         state.loop.llm = state.llm
@@ -803,6 +814,17 @@ def make_app() -> FastAPI:
                 )
             if r.status_code == 200:
                 return JSONResponse({"ok": True, "detail": "连接成功，模型可用"})
+            if r.status_code == 401:
+                return JSONResponse(
+                    {
+                        "ok": False,
+                        "error": "API Key 无效或未填（官方与中转站的密钥不通用，请确认 Base URL 与密钥配套）",
+                    }
+                )
+            if r.status_code == 400:
+                return JSONResponse(
+                    {"ok": False, "error": "请求参数不被支持（中转站常见）：请核对模型名，或关闭 JSON 模式"}
+                )
             return JSONResponse({"ok": False, "error": f"HTTP {r.status_code}: {r.text[:200]}"})
         except Exception as exc:  # noqa: BLE001
             return JSONResponse({"ok": False, "error": str(exc)[:300]})

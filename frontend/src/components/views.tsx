@@ -83,10 +83,12 @@ function LlmSettings() {
     api_key_masked: string;
     has_key: boolean;
     saved: boolean;
+    json_mode: boolean;
   } | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [model, setModel] = useState("");
+  const [jsonMode, setJsonMode] = useState(true);
   const [status, setStatus] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -97,6 +99,7 @@ function LlmSettings() {
         setInfo(v);
         setBaseUrl(v.base_url);
         setModel(v.model);
+        setJsonMode(v.json_mode ?? true);
       })
       .catch(() => {});
   }, []);
@@ -108,7 +111,7 @@ function LlmSettings() {
     setBusy(true);
     setStatus(null);
     try {
-      const r = await api.setLlm({ api_key: apiKey, base_url: baseUrl, model });
+      const r = await api.setLlm({ api_key: apiKey, base_url: baseUrl, model, json_mode: jsonMode });
       setStatus({ kind: "ok", text: `已保存并生效（模型：${r.model ?? model}）` });
       setApiKey("");
       api.getLlm().then(setInfo).catch(() => {});
@@ -167,6 +170,15 @@ function LlmSettings() {
         <label className="flex items-center gap-3 text-[12px] text-muted">
           <span className="w-16 flex-none">模型名</span>
           <input value={model} onChange={(e) => setModel(e.target.value)} className={inputCls} />
+        </label>
+        <label className="flex items-center gap-2 text-[12px] text-muted">
+          <input
+            type="checkbox"
+            checked={jsonMode}
+            onChange={(e) => setJsonMode(e.target.checked)}
+            className="h-3.5 w-3.5 accent-[#f7d97a]"
+          />
+          JSON 模式（要求模型输出严格 JSON；部分中转站不支持，勾掉后程序自动兜底解析）
         </label>
         <div className="flex flex-wrap items-center gap-2">
           <button

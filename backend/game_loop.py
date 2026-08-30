@@ -17,6 +17,19 @@ from .safety import SafetyManager
 logger = logging.getLogger("ai-for-coyote.game")
 
 
+def _friendly_llm_error(exc: Exception) -> str:
+    """把模型接口错误翻译成人话（中转站/配置常见坑）。"""
+    err = str(exc)
+    if "401" in err:
+        return (
+            "API Key 无效或未填：官方与中转站的密钥不通用，请确认 Base URL 与密钥配套；"
+            "可在设置页点「测试连接」验证。"
+        )
+    if "400" in err:
+        return "模型接口返回 400（参数不被支持，中转站常见）：请核对模型名，或关闭 JSON 模式后重试。"
+    return f"模型调用失败：{err}。请检查 API 配置与网络。"
+
+
 class GameLoop:
     def __init__(self, cfg, llm, safety: SafetyManager, relay, camera=None, audio=None) -> None:
         self.cfg = cfg
@@ -157,7 +170,7 @@ class GameLoop:
                 if "思维链泄漏" in error or "思维链" in error:
                     line = "（模型走神了：连续输出思考过程已被拦截。把刚才的话再发一次就好。）"
                 else:
-                    line = f"（模型调用失败：{exc}。请检查 API 配置与网络。）"
+                    line = f"（{_friendly_llm_error(exc)}）"
                 actions = []
             self.turn_count += 1
             executed, dropped = await self.execute_actions(actions)
@@ -202,7 +215,7 @@ class GameLoop:
             except Exception as exc:  # noqa: BLE001
                 logger.exception("开场模型调用失败")
                 error = str(exc)
-                line = f"（开场调用失败：{exc}）"
+                line = f"（开场调用失败：{_friendly_llm_error(exc)}）"
                 actions = []
             self.turn_count += 1
             executed, dropped = await self.execute_actions(actions)

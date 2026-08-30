@@ -321,6 +321,11 @@ class LLM:
         parsed: dict = {}
         for attempt in range(3):
             resp = await self.client.post(self.url, headers=headers, json=payload)
+            if resp.status_code == 400 and self.json_mode and payload.get("response_format"):
+                # 中转站/部分服务商不支持 json_object：自动去掉 response_format 重试一次
+                logger.warning("模型接口返回 400（疑似不支持 json_object），自动去掉 response_format 重试")
+                payload.pop("response_format", None)
+                resp = await self.client.post(self.url, headers=headers, json=payload)
             resp.raise_for_status()
             data = resp.json()
             message = data["choices"][0]["message"]
