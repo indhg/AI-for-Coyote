@@ -66,6 +66,7 @@ export default function ChatPanel() {
           <span className="text-[11px] text-muted">自动运行</span>
           <button
             onClick={() => void toggle()}
+            data-tour="autopilot"
             title={autopilot ? "停止自动运行" : "开始自动运行（AI 自主回合，摄像头/麦克风跟随启停）"}
             className={`relative h-5 w-9 flex-none rounded-full transition-colors ${
               autopilot ? "bg-accent" : "bg-ink3 border border-line"
@@ -95,7 +96,7 @@ export default function ChatPanel() {
         </div>
       </div>
       {!paired ? (
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 py-6 text-center">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 py-6 text-center" data-tour="pair-qr">
           <img
             src="/api/qrcode.png"
             alt="配对二维码"

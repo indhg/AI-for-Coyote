@@ -7,7 +7,9 @@ import PresetPanel from "./components/PresetPanel";
 import BottomBar from "./components/BottomBar";
 import ChatPanel from "./components/ChatPanel";
 import NoticeToast from "./components/NoticeToast";
-import { PairView, SettingsView } from "./components/views";
+import OnboardingTour from "./components/OnboardingTour";
+import { TOURS } from "./onboarding";
+import { PairView, SettingsView, HelpView } from "./components/views";
 import { api } from "./api";
 import { useApp, useChat, useLayout } from "./store";
 import { doEstop } from "./commands";
@@ -17,6 +19,26 @@ const ESTOP_HOLD_MS = 1000;
 
 export default function App() {
   const [view, setView] = useState<ViewName>("control");
+  // 新手引导：先等公告处理完（或本版公告已看过），再按版本记忆显示引导 1；设置页可重看
+  const [tourIdx, setTourIdx] = useState<number | null>(null);
+  const [noticeHandled, setNoticeHandled] = useState(false);
+  const version = useApp((st) => st.state?.config_info?.version ?? "");
+  useEffect(() => {
+    if (!version) return;
+    // 本版公告已看过 → 公告不会弹，直接放行引导
+    if (localStorage.getItem("notice_dismissed_version") === version) {
+      setNoticeHandled(true);
+    }
+  }, [version]);
+  useEffect(() => {
+    if (!version || !noticeHandled) return;
+    const tour = TOURS[0];
+    if (!localStorage.getItem(`tour_done_${tour.id}_${version}`)) {
+      const t = window.setTimeout(() => setTourIdx(0), 800);
+      return () => window.clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version, noticeHandled]);
   const sidebarW = useLayout((s) => s.sidebarW);
   const controlW = useLayout((s) => s.controlW);
   const updateLayout = useLayout((s) => s.updateLayout);
@@ -140,10 +162,23 @@ export default function App() {
           )}
           {view === "pair" && <PairView />}
           {view === "settings" && <SettingsView />}
+          {view === "help" && <HelpView onReplayTour={() => setTourIdx(0)} />}
         </main>
       </div>
       <BottomBar />
-      <NoticeToast />
+      <NoticeToast onDismissed={() => setNoticeHandled(true)} />
+      {tourIdx !== null && TOURS[tourIdx] && (
+        <OnboardingTour
+          tour={TOURS[tourIdx]}
+          view={view}
+          onView={setView}
+          onFinish={() => {
+            const tour = TOURS[tourIdx];
+            if (tour) localStorage.setItem(`tour_done_${tour.id}_${version}`, "1");
+            setTourIdx(null);
+          }}
+        />
+      )}
       {holding && (
         <div className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center">
           <div className="w-64 rounded-[10px] border border-line bg-panel2 px-4 py-3 shadow-lg">

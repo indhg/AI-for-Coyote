@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useApp } from "../store";
+import { TOURS } from "../onboarding";
 import type { NetworkInfo } from "../types";
 
 export function PairView() {
@@ -86,6 +87,43 @@ export function SettingsView() {
   );
 }
 
+/** 帮助视图：点顶栏「帮助」时右侧显示（目前只放新手引导 + 更新状态；后续扩充进阶指引/FAQ 等）。 */
+export function HelpView({ onReplayTour }: { onReplayTour: () => void }) {
+  const s = useApp((st) => st.state);
+  const ci = s?.config_info;
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="rounded-[14px] border border-line bg-panel p-5">
+        <h3 className="mb-3 text-[13px] font-semibold tracking-[1.5px] text-muted">帮助</h3>
+        <div className="flex flex-col gap-2.5">
+          <button
+            onClick={() => {
+              localStorage.removeItem(`tour_done_${TOURS[0].id}_${ci?.version ?? ""}`);
+              onReplayTour();
+            }}
+            className="w-fit rounded-lg border border-accent/60 bg-accent/15 px-3.5 py-1.5 text-[12px] font-semibold text-accent transition-colors hover:bg-accent/25"
+          >
+            新手引导
+          </button>
+          {s?.update?.available && s.update.url ? (
+            <a
+              href={s.update.url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[12px] font-semibold text-bad transition-colors hover:underline"
+            >
+              亟待更新：{s.update.latest}，点击下载 →
+            </a>
+          ) : (
+            <span className="text-[11px] text-faint">已是最新版本</span>
+          )}
+          <span className="mt-1 text-[11px] text-faint">更多帮助内容（进阶指引、FAQ）即将上线。</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** AI 模型配置：设置页填写 API Key / Base URL / 模型名，保存即生效（后端热加载） */
 function LlmSettings() {
   const [info, setInfo] = useState<{
@@ -166,6 +204,7 @@ function LlmSettings() {
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
+            data-tour="api-key"
             placeholder={
               info?.has_key
                 ? `已保存 ${info.api_key_masked}；粘贴新密钥覆盖，留空保存 = 清除`
@@ -176,11 +215,11 @@ function LlmSettings() {
         </label>
         <label className="flex items-center gap-3 text-[12px] text-muted">
           <span className="w-16 flex-none">Base URL</span>
-          <input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} className={inputCls} />
+          <input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} data-tour="base-url" className={inputCls} />
         </label>
         <label className="flex items-center gap-3 text-[12px] text-muted">
           <span className="w-16 flex-none">模型名</span>
-          <input value={model} onChange={(e) => setModel(e.target.value)} className={inputCls} />
+          <input value={model} onChange={(e) => setModel(e.target.value)} data-tour="model" className={inputCls} />
         </label>
         <label className="flex items-center gap-2 text-[12px] text-muted">
           <input
@@ -195,6 +234,7 @@ function LlmSettings() {
           <button
             onClick={() => void test()}
             disabled={busy}
+            data-tour="test-btn"
             className="rounded-lg border border-line bg-panel2 px-3 py-1.5 text-[12px] transition-colors hover:border-line2 disabled:opacity-50"
           >
             测试连接
@@ -202,6 +242,7 @@ function LlmSettings() {
           <button
             onClick={() => void save()}
             disabled={busy}
+            data-tour="save-btn"
             className="rounded-lg bg-accent px-3 py-1.5 text-[12px] font-semibold text-ink transition-opacity disabled:opacity-50"
           >
             保存并生效

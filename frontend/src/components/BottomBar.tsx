@@ -27,6 +27,7 @@ export default function BottomBar() {
       </button>
       <button
         onClick={() => (estop ? doResume() : doEstop())}
+        data-tour="estop"
         title={estop ? "恢复（解除急停）" : "暂停（急停：全部清零并暂停 AI）"}
         className={`absolute left-1/2 top-[-12px] h-[52px] w-[52px] -translate-x-1/2 rounded-full border border-line2 text-[22px] shadow-[0_4px_16px_rgba(247,217,122,0.25)] transition-colors ${
           estop ? "bg-panel2 text-text" : "bg-accent text-ink"

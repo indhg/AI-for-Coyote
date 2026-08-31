@@ -1,7 +1,7 @@
 import { useApp } from "../store";
 import watermarkGold from "../assets/watermark-gold.png";
 
-export type ViewName = "control" | "pair" | "settings";
+export type ViewName = "control" | "pair" | "settings" | "help";
 
 interface Props {
   view: ViewName;
@@ -10,15 +10,11 @@ interface Props {
 
 export default function TopBar({ view, onView }: Props) {
   const s = useApp((st) => st.state);
-  const relay = s?.relay;
-  const st = relay?.status ?? "disconnected";
-  const relayText =
-    { disconnected: "未连接", connecting: "连接中", waiting: "等待 App", paired: "已配对" }[st] ?? st;
-  const clients = relay?.clients?.length ?? 0;
 
   const nav: { key: ViewName; label: string }[] = [
     { key: "control", label: "控制台" },
     { key: "settings", label: "设置" },
+    { key: "help", label: "帮助" },
   ];
 
   return (
@@ -34,9 +30,10 @@ export default function TopBar({ view, onView }: Props) {
         />
       </div>
       <nav className="flex gap-1">
-        {nav.map((n) => (
+        {nav.map((n, i) => (
           <button
-            key={n.key}
+            key={i}
+            data-tour={n.label === "设置" ? "settings-btn" : n.label === "帮助" ? "help-btn" : undefined}
             onClick={() => onView(n.key)}
             className={`rounded-lg px-3.5 py-2 text-sm transition-colors ${
               view === n.key ? "bg-ink3 text-accent" : "text-muted hover:bg-ink3 hover:text-text"
@@ -52,26 +49,12 @@ export default function TopBar({ view, onView }: Props) {
           href={s.update.url}
           target="_blank"
           rel="noreferrer"
-          title={`发现新版本 ${s.update.latest}，点击前往下载`}
-          className="inline-flex items-center gap-1.5 rounded-full border border-accent/60 bg-accent/15 px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:bg-accent/25"
+          title={`新版本 ${s.update.latest}，点击前往下载`}
+          className="inline-flex items-center rounded-full border border-bad/60 bg-bad/15 px-3.5 py-1.5 text-xs font-semibold text-bad transition-colors hover:bg-bad/25"
         >
-          新版本 {s.update.latest} →
+          亟待更新…
         </a>
       ) : null}
-      <Pill cls={st === "paired" ? "ok" : st === "disconnected" ? "off" : "warn"} text={`中继: ${relayText}`} />
-      <Pill cls={clients ? "ok" : "off"} text={`App: ${clients ? clients + " 台在线" : "未接入"}`} />
-      <Pill cls={s?.estop ? "off" : "ok"} text={`急停: ${s?.estop ? "已触发" : "否"}`} />
     </header>
-  );
-}
-
-function Pill({ cls, text }: { cls: "ok" | "off" | "warn"; text: string }) {
-  const color = cls === "ok" ? "text-accent border-line2" : cls === "off" ? "text-bad border-bad/50" : "text-warn border-warn/50";
-  const dot = cls === "ok" ? "bg-accent shadow-[0_0_8px_var(--color-accent)]" : cls === "off" ? "bg-bad" : "bg-warn";
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border border-line bg-ink3 px-3 py-1.5 text-xs ${color}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-      {text}
-    </span>
   );
 }

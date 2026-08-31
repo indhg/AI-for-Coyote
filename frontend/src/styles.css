@@ -79,3 +79,20 @@ input[type="range"]::-moz-range-thumb {
     transform: scaleX(1);
   }
 }
+
+/* ---------- 新手引导高亮（元素自带边框发光，无坐标偏差） ---------- */
+.tour-glow {
+  box-shadow:
+    0 0 0 3px rgba(247, 217, 122, 0.75),
+    0 0 22px rgba(247, 217, 122, 0.55) !important;
+  transition: box-shadow 0.2s ease;
+}
+.tour-raise {
+  position: relative !important;
+  z-index: 70 !important;
+  pointer-events: none !important;
+}
+.tour-raise-z {
+  z-index: 70 !important;
+  pointer-events: none !important;
+}
