@@ -6,6 +6,7 @@ import ChannelControl from "./components/ChannelControl";
 import PresetPanel from "./components/PresetPanel";
 import BottomBar from "./components/BottomBar";
 import ChatPanel from "./components/ChatPanel";
+import NoticeToast from "./components/NoticeToast";
 import { PairView, SettingsView } from "./components/views";
 import { api } from "./api";
 import { useApp, useChat, useLayout } from "./store";
@@ -142,6 +143,7 @@ export default function App() {
         </main>
       </div>
       <BottomBar />
+      <NoticeToast />
       {holding && (
         <div className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center">
           <div className="w-64 rounded-[10px] border border-line bg-panel2 px-4 py-3 shadow-lg">
