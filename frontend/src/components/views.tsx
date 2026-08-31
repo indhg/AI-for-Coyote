@@ -178,7 +178,7 @@ function LlmSettings() {
             onChange={(e) => setJsonMode(e.target.checked)}
             className="h-3.5 w-3.5 accent-[#f7d97a]"
           />
-          JSON 模式（要求模型输出严格 JSON；部分中转站不支持，勾掉后程序自动兜底解析）
+          JSON 模式（部分中转站不兼容，可关闭）
         </label>
         <div className="flex flex-wrap items-center gap-2">
           <button
