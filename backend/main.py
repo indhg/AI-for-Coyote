@@ -19,7 +19,7 @@ from pathlib import Path
 
 import httpx
 import qrcode
-from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -844,6 +844,19 @@ def make_app() -> FastAPI:
         finally:
             state.ws_clients.discard(ws)
             state._on_ws_clients_change()
+
+    # 兜底：任意非 API/静态资源路径都回首页（用户输错地址/旧收藏夹不再 404）。
+    # 必须在所有 /api 路由与 /assets 挂载之后注册，API 优先命中。
+    @app.get("/{full_path:path}")
+    async def spa_fallback(full_path: str) -> Response:
+        if full_path.startswith(("api/", "assets/")):
+            raise HTTPException(status_code=404, detail="Not Found")
+        if (FRONTEND_DIST / "index.html").exists():
+            return FileResponse(FRONTEND_DIST / "index.html")
+        return Response(
+            "前端尚未构建：请在 frontend\\ 目录执行 npm install && npm run build",
+            media_type="text/plain; charset=utf-8",
+        )
 
     return app
 
