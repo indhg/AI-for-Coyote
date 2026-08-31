@@ -88,4 +88,11 @@ export const api = {
       "/api/settings/llm/test",
       json(body),
     ),
+  updateCheck: () =>
+    j<{ enabled: boolean; latest: string; url: string; available: boolean }>("/api/update"),
+  setUpdateCheck: (enabled: boolean) =>
+    j<{ ok: boolean; enabled: boolean; latest: string; url: string; available: boolean }>(
+      "/api/update",
+      json({ enabled }),
+    ),
 };

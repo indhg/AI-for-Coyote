@@ -25,6 +25,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .audio import AudioManager
 from .camera import Camera
+from .update_check import UpdateChecker
 from .config import (
     load_config,
     patch_character_add_role,
@@ -118,6 +119,7 @@ class AppState:
         self.sensors_on = False
         self.sensor_watch_task: asyncio.Task | None = None
         self.layout: dict = {}  # 前端上报的三栏布局（监测/调试用）
+        self.update = UpdateChecker(enabled=bool(self.cfg["app"].get("check_update", True)))
         # 传感器运行时开关（不持久化；初始跟随 config.enabled）
         self.sensor_switches: dict[str, bool] = {
             "camera": bool(self.cfg["camera"].get("enabled", False)),
@@ -205,6 +207,7 @@ class AppState:
         state["relay"] = self.relay.to_state()
         state["audio"] = self.audio.to_state()
         state["layout"] = dict(self.layout)
+        state["update"] = self.update.to_state(_app_version())
         state["character"] = self.cfg["character"]["name"]
         state["config_info"] = {
             "model": self.cfg["llm"]["model"],
@@ -280,10 +283,19 @@ class AppState:
             except Exception:  # noqa: BLE001
                 self.logger.exception("传感器看门狗异常")
 
+    # ---------- 更新检测 ----------
+    async def _update_loop(self) -> None:
+        """启动查一次 + 每 6 小时静默复查；结果写进状态供顶栏徽章展示。"""
+        while True:
+            await self.update.check()
+            await self.broadcast()
+            await asyncio.sleep(6 * 3600)
+
     # ---------- 生命周期 ----------
     async def start_background(self) -> None:
         self.tasks.append(asyncio.create_task(self.relay.run()))
         self.tasks.append(asyncio.create_task(self._sensor_watchdog()))
+        self.tasks.append(asyncio.create_task(self._update_loop()))
         # 配置里自动运行开着时，启动真正的循环任务（此前只置状态、不启动任务，
         # 导致重启后「假开真停」：AI 一直不说话）
         if self.loop.autopilot:
@@ -828,6 +840,56 @@ def make_app() -> FastAPI:
             return JSONResponse({"ok": False, "error": f"HTTP {r.status_code}: {r.text[:200]}"})
         except Exception as exc:  # noqa: BLE001
             return JSONResponse({"ok": False, "error": str(exc)[:300]})
+
+    def _patch_app_text(text: str, check_update: bool) -> str:
+        """文本级更新 config.yaml 的 app 小节（仅 2 空格缩进键），缺失时插入。"""
+        lines = text.splitlines()
+        out: list[str] = []
+        in_app = False
+        patched = False
+        for ln in lines:
+            if ln and not ln.startswith(" "):
+                in_app = ln.startswith("app:")
+                out.append(ln)
+                continue
+            if in_app and ln.startswith("  ") and not ln.startswith("    "):
+                key = ln.lstrip().split(":", 1)[0]
+                if key == "check_update":
+                    out.append(f"  check_update: {str(bool(check_update)).lower()}")
+                    patched = True
+                    continue
+            out.append(ln)
+        if not patched:
+            idx = next((i for i, l in enumerate(out) if l.strip() == "app:"), -1)
+            if idx >= 0:
+                out.insert(idx + 1, f"  check_update: {str(bool(check_update)).lower()}")
+        return "\n".join(out) + "\n"
+
+    # ---------- 更新检测 ----------
+    @app.get("/api/update")
+    async def api_update() -> JSONResponse:
+        await state.update.check()
+        await state.broadcast()
+        return JSONResponse(state.update.to_state(_app_version()))
+
+    @app.post("/api/update")
+    async def api_update_set(body: dict) -> JSONResponse:
+        """开关自动检查更新（持久化到 config.yaml app.check_update）。"""
+        if isinstance(body.get("enabled"), bool):
+            state.update.enabled = body["enabled"]
+            cfg["app"]["check_update"] = state.update.enabled
+            cfg_path = PROJECT_ROOT / "config" / "config.yaml"
+            example = PROJECT_ROOT / "config" / "config.example.yaml"
+            if not cfg_path.exists():
+                cfg_path.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
+            cfg_path.write_text(
+                _patch_app_text(cfg_path.read_text(encoding="utf-8"), state.update.enabled),
+                encoding="utf-8",
+            )
+            if state.update.enabled:
+                await state.update.check()
+            await state.broadcast()
+        return JSONResponse({"ok": True, **state.update.to_state(_app_version())})
 
     # ---------- 实时推送 ----------
     @app.websocket("/ws")

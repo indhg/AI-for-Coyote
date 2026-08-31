@@ -6,6 +6,7 @@ app:
   port: 8000
   title: Coyote in Cradle   # 控制台标题（顶部与浏览器标签页显示）
   dry_run: false          # true = 不发送真实设备命令，只模拟记录（无设备时联调用）；接真机时改为 false
+  check_update: true      # 启动+每 6 小时静默查 GitHub 最新版本（失败静默，不联网可关）
 
 relay:
   url: ws://127.0.0.1:9998   # dglab-websocket-server v4 地址

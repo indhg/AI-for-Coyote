@@ -110,6 +110,12 @@ export interface FullState {
     error: string;
   };
   relay: RelayState;
+  update: {
+    enabled: boolean;
+    latest: string;
+    url: string;
+    available: boolean;
+  };
   character: string;
   config_info: {
     model: string;

@@ -33,6 +33,7 @@ DEFAULTS = {
         "dry_run": True,
         "title": "Coyote in Cradle",
         "sensor_idle_timeout_s": 30,
+        "check_update": True,
     },
     "relay": {"url": "ws://127.0.0.1:9998", "reconnect_delay_s": 3, "lan_ip": "auto", "public_url": ""},
     "llm": {

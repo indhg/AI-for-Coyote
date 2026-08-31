@@ -79,6 +79,7 @@ export function SettingsView() {
             GitHub: github.com/indhg/AI-for-Coyote
           </a>
         </p>
+        <UpdateRow />
       </div>
       <LlmSettings />
     </div>
@@ -212,6 +213,51 @@ function LlmSettings() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** 更新检测行：开关 + 发现新版本时给跳转链接。 */
+function UpdateRow() {
+  const u = useApp((st) => st.state?.update);
+  const [busy, setBusy] = useState(false);
+  const toggle = async () => {
+    if (!u || busy) return;
+    setBusy(true);
+    try {
+      await api.setUpdateCheck(!u.enabled);
+    } catch {
+      /* 状态由 ws 推送刷新 */
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3">
+      <label className="flex items-center gap-2 text-[11px] text-muted">
+        <input
+          type="checkbox"
+          checked={u?.enabled ?? true}
+          onChange={() => void toggle()}
+          disabled={busy}
+          className="h-3.5 w-3.5 accent-[#f7d97a]"
+        />
+        自动检查更新
+      </label>
+      {u?.available && u.url ? (
+        <a
+          href={u.url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[11px] font-semibold text-accent hover:underline"
+        >
+          发现新版本 {u.latest}，点击下载 →
+        </a>
+      ) : (
+        <span className="text-[11px] text-faint">
+          {u?.latest ? `已是最新（${u.latest}）` : "尚未检查到更新"}
+        </span>
+      )}
     </div>
   );
 }

@@ -47,6 +47,17 @@ export default function TopBar({ view, onView }: Props) {
         ))}
       </nav>
       <div className="flex-1" />
+      {s?.update?.available && s.update.url ? (
+        <a
+          href={s.update.url}
+          target="_blank"
+          rel="noreferrer"
+          title={`发现新版本 ${s.update.latest}，点击前往下载`}
+          className="inline-flex items-center gap-1.5 rounded-full border border-accent/60 bg-accent/15 px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:bg-accent/25"
+        >
+          新版本 {s.update.latest} →
+        </a>
+      ) : null}
       <Pill cls={st === "paired" ? "ok" : st === "disconnected" ? "off" : "warn"} text={`中继: ${relayText}`} />
       <Pill cls={clients ? "ok" : "off"} text={`App: ${clients ? clients + " 台在线" : "未接入"}`} />
       <Pill cls={s?.estop ? "off" : "ok"} text={`急停: ${s?.estop ? "已触发" : "否"}`} />
