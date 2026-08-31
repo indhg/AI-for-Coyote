@@ -274,7 +274,6 @@ class AppState:
                 mic_bad = (
                     self.sensor_switches.get("audio")
                     and not self.audio.to_state().get("running")
-                    and bool(self.audio.error)
                 )
                 if cam_bad or mic_bad:
                     self.logger.info("传感器看门狗重试启动（摄像头=%s 麦克风=%s）", cam_bad, mic_bad)

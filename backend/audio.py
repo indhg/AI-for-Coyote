@@ -56,6 +56,9 @@ class AudioManager:
     # ---------- 生命周期 ----------
     async def start(self) -> None:
         if not self.enabled:
+            # 运行时开关开着但配置未启用：明确报错，别让界面永远停在"启动中…"
+            self.error = "配置未启用麦克风（config.yaml 里 audio.enabled=false）"
+            logger.warning(self.error)
             return
         try:
             import sounddevice as sd  # noqa: F401
@@ -85,8 +88,14 @@ class AudioManager:
 
     # ---------- 监听循环 ----------
     async def _listen_loop(self) -> None:
-        import numpy as np
-        import sounddevice as sd
+        # 依赖导入放进 try：numpy/sounddevice 缺失时写 error 而不是让任务无声死亡
+        try:
+            import numpy as np
+            import sounddevice as sd
+        except Exception as exc:  # noqa: BLE001
+            self.error = f"缺少依赖（numpy/sounddevice）：{exc}"
+            logger.error("麦克风监听依赖缺失：%s", exc)
+            return
 
         sr = 16000
         chunk_s = self.interval_s
