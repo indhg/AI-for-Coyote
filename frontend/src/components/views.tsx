@@ -69,6 +69,16 @@ export function SettingsView() {
           <br />
           AI 模型配置在下方填写、保存即生效；其余 config.yaml / config\waveforms.yaml 修改后需重启程序。
         </p>
+        <p className="mt-2 text-[11px] text-faint">
+          <a
+            href="https://github.com/indhg/AI-for-Coyote"
+            target="_blank"
+            rel="noreferrer"
+            className="text-accent/80 transition-colors hover:text-accent"
+          >
+            GitHub: github.com/indhg/AI-for-Coyote
+          </a>
+        </p>
       </div>
       <LlmSettings />
     </div>

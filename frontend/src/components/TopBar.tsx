@@ -1,4 +1,5 @@
 import { useApp } from "../store";
+import watermarkGold from "../assets/watermark-gold.png";
 
 export type ViewName = "control" | "pair" | "settings";
 
@@ -25,6 +26,12 @@ export default function TopBar({ view, onView }: Props) {
       <div className="flex items-center gap-2.5 font-bold tracking-wide">
         <span className="h-2.5 w-2.5 rounded-[3px] bg-accent shadow-[0_0_10px_rgba(247,217,122,0.5)]" />
         {s?.config_info?.title ?? "郊狼 · AI 驯服师"}
+        <img
+          src={watermarkGold}
+          alt="作者水印"
+          title="Coyote in Cradle · github.com/indhg/AI-for-Coyote"
+          className="h-10 w-auto opacity-80"
+        />
       </div>
       <nav className="flex gap-1">
         {nav.map((n) => (
