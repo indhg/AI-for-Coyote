@@ -44,6 +44,7 @@ DEFAULTS = {
         "max_tokens": 1500,
         "timeout_s": 60,
         "json_mode": True,
+        "trust_env": False,
         "vision": {
             "base_url": "",
             "api_key": "",

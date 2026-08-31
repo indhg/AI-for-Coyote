@@ -252,6 +252,8 @@ def _require_ascii_key(key: str) -> None:
         ) from None
 
 
+
+
 class LLM:
     def __init__(self, cfg) -> None:
         llm_cfg = cfg["llm"]
@@ -262,7 +264,10 @@ class LLM:
         self.temperature = float(llm_cfg["temperature"])
         self.max_tokens = int(llm_cfg["max_tokens"])
         self.json_mode = bool(llm_cfg.get("json_mode", True))
-        self.client = httpx.AsyncClient(timeout=float(llm_cfg["timeout_s"]))
+        # 默认绕过系统代理直连（DeepSeek 是国内服务，走代理反而被梯子抽风拖断）；
+        # 中转站在境外、确需代理时配置 llm.trust_env: true 恢复读系统代理
+        self.trust_env = bool(llm_cfg.get("trust_env", False))
+        self.client = httpx.AsyncClient(timeout=float(llm_cfg["timeout_s"]), trust_env=self.trust_env)
 
         # 视觉任务独立端点（如本地 Ollama 的 Qwen2.5-VL）；留空则与主模型相同
         v = llm_cfg.get("vision") or {}

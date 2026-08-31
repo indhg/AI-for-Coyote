@@ -22,6 +22,7 @@ llm:
   max_tokens: 1500
   timeout_s: 60
   json_mode: true                        # 是否请求 JSON 输出模式；模型不支持就改 false（程序有兜底解析）
+  trust_env: false                       # 默认绕过系统代理直连；中转站在境外确需代理时改 true
   vision:                                # 视觉任务独立端点；留空 = 与主模型相同（实测 DS Vision 对漫画提炼效果更好，暂用 DS）
     base_url: ""                         # 备用本地模型：http://127.0.0.1:11434/v1 + model: qwen2.5vl:7b
     api_key: ""

@@ -849,7 +849,9 @@ def make_app() -> FastAPI:
         if not api_key or not base or not model:
             return JSONResponse({"ok": False, "error": "请先填写 API Key、地址与模型名"})
         try:
-            async with httpx.AsyncClient(timeout=20) as client:
+            async with httpx.AsyncClient(
+                timeout=20, trust_env=bool(cfg["llm"].get("trust_env", False))
+            ) as client:
                 r = await client.post(
                     f"{base.rstrip('/')}/chat/completions",
                     headers={"Authorization": f"Bearer {api_key}"},
