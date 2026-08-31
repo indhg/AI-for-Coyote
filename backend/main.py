@@ -585,6 +585,9 @@ def make_app() -> FastAPI:
         pack_dir.mkdir(parents=True, exist_ok=True)
 
         groups: dict[str, dict[str, bytes]] = {}  # DLC 目录名 -> {文件名: 内容}
+        total_unpacked = 0
+        MAX_UNPACKED = 256 * 1024 * 1024   # 解压后总上限（防 zip 炸弹）
+        MAX_ENTRIES = 200                  # 条目数上限
         if low.endswith(".zip"):
             try:
                 zf = zipfile.ZipFile(io.BytesIO(data))
@@ -592,6 +595,8 @@ def make_app() -> FastAPI:
                 return JSONResponse({"error": "zip 包损坏或格式不对"}, status_code=400)
             with zf:
                 raw_names = zf.namelist()
+                if len(raw_names) > MAX_ENTRIES:
+                    return JSONResponse({"error": f"zip 条目过多（上限 {MAX_ENTRIES}）"}, status_code=400)
                 fixed_names: list[str] = []
                 for n in raw_names:
                     # Windows 压缩工具不写 UTF-8 标志，先按 cp437 还原原始字节再按 UTF-8 解码中文名
@@ -602,36 +607,57 @@ def make_app() -> FastAPI:
                         pass
                     fixed_names.append(fixed)
                 for n, fixed in zip(raw_names, fixed_names):
-                    bn = Path(fixed).name
-                    if not bn.lower().endswith(".md") or bn.startswith("."):
+                    # zip slip 防护：拒绝绝对路径/盘符/UNC/路径分隔符
+                    p = Path(fixed)
+                    if p.is_absolute() or p.drive or fixed.startswith(("\\\\", "//")):
                         continue
-                    parts = [p for p in Path(fixed).parts if p not in ("", ".", "..")]
+                    bn = p.name
+                    if not bn.lower().endswith(".md") or bn.startswith(".") or bn in (".", ".."):
+                        continue
+                    if Path(bn).name != bn or "\\" in bn or "/" in bn:
+                        continue
+                    parts = [x for x in p.parts if x not in ("", ".", "..")]
                     # 组名：路径中形如 DLC<序号>-<角色>-<风格> 的组件；否则首个顶层目录（跳过单层包装）
-                    grp = next((p for p in parts if re.match(r"^DLC\d+-.+?-.+$", p)), None)
+                    grp = next((x for x in parts if re.match(r"^DLC\d+-.+?-.+$", x)), None)
                     if not grp:
                         if len(parts) >= 3 and not re.match(r"^DLC\d+", parts[0]):
                             grp = parts[1]
                         elif parts:
                             grp = parts[0]
-                    if not grp:
+                    if not grp or grp in (".", ".."):
                         continue
+                    gp = Path(grp)
+                    if gp.is_absolute() or gp.drive or gp.name != grp:
+                        continue
+                    info = zf.getinfo(n)
+                    total_unpacked += info.file_size
+                    if total_unpacked > MAX_UNPACKED:
+                        return JSONResponse({"error": "zip 解压后过大（上限 256MB）"}, status_code=400)
                     groups.setdefault(grp, {})[bn] = zf.read(n)
             if not groups:
                 return JSONResponse({"error": "zip 里没有 .md 文件"}, status_code=400)
         else:
             # 单个 md：文件名 <主题>-角色提示词-<风格>.md → 归入「DLC导入-<主题>-<风格>」组
-            m2 = re.match(r"^(.+?)-角色提示词-(.+?)\.md$", name)
-            grp = f"DLC导入-{m2.group(1)}-{m2.group(2)}" if m2 else (Path(name).stem or "DLC导入")
-            groups[grp] = {name: data}
+            bn = name.replace("\\", "/").split("/")[-1]  # 只取纯文件名（防路径注入）
+            m2 = re.match(r"^(.+?)-角色提示词-(.+?)\.md$", bn)
+            grp = f"DLC导入-{m2.group(1)}-{m2.group(2)}" if m2 else (Path(bn).stem or "DLC导入")
+            groups[grp] = {bn: data}
 
-        # 落盘
+        # 落盘（最终边界校验：目标必须落在 content/pack 内）
+        pack_resolved = pack_dir.resolve()
         for grp, mds in groups.items():
-            if grp in (".", "..") or ".." in Path(grp).parts:
+            gp = Path(grp)
+            if grp in (".", "..") or ".." in gp.parts or gp.is_absolute() or gp.drive:
                 continue
-            dlc_dir = pack_dir / grp
+            dlc_dir = (pack_dir / grp).resolve()
+            if not dlc_dir.is_relative_to(pack_resolved):
+                continue
             dlc_dir.mkdir(parents=True, exist_ok=True)
             for bn, content in mds.items():
-                (dlc_dir / bn).write_bytes(content)
+                target = (dlc_dir / bn).resolve()
+                if target.parent != dlc_dir or not target.is_relative_to(pack_resolved):
+                    continue
+                target.write_bytes(content)
 
         # 自动接通（每个 DLC 目录一组；角色已存在则接通其风格档并修正档位为中，
         # 新角色自动注册角色块；无法解析主题名时才按当前角色兜底）
@@ -757,13 +783,19 @@ def make_app() -> FastAPI:
             if in_llm and ln.startswith("  ") and not ln.startswith("    "):
                 key = ln.lstrip().split(":", 1)[0]
                 if key == "api_key":
-                    out.append(f'  api_key: "{api_key}"')
+                    esc = (
+                        api_key.replace("\\", "\\\\")
+                        .replace('"', '\\"')
+                        .replace("\n", "\\n")
+                        .replace("\r", "")
+                    )
+                    out.append(f'  api_key: "{esc}"')
                     continue
                 if key == "base_url":
-                    out.append(f"  base_url: {base_url}")
+                    out.append(f'  base_url: "{base_url}"')
                     continue
                 if key == "model":
-                    out.append(f"  model: {model}")
+                    out.append(f'  model: "{model}"')
                     continue
                 if key == "json_mode" and json_mode is not None:
                     out.append(f"  json_mode: {str(bool(json_mode)).lower()}")
@@ -808,9 +840,13 @@ def make_app() -> FastAPI:
     @app.post("/api/settings/llm/test")
     async def api_settings_llm_test(body: dict) -> JSONResponse:
         """测试连接：用表单值发一条最小请求（不保存）。"""
-        api_key = str(body.get("api_key") or "").strip() or os.environ.get("DGLAB_LLM_API_KEY", "")
+        api_key = str(body.get("api_key") or "").strip()
         base = str(body.get("base_url") or "").strip()
         model = str(body.get("model") or "").strip()
+        # 安全：环境变量密钥只允许用于「已保存的 Base URL」（与请求体地址一致时），
+        # 防止调用者指定任意地址让后端把环境密钥外发（SSRF + 凭据外传）
+        if not api_key and base.rstrip("/") == str(cfg["llm"].get("base_url", "")).rstrip("/"):
+            api_key = os.environ.get("DGLAB_LLM_API_KEY", "")
         if not api_key or not base or not model:
             return JSONResponse({"ok": False, "error": "请先填写 API Key、地址与模型名"})
         try:
