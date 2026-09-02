@@ -17,7 +17,30 @@
   --color-ok: #4fc3f7;
   --color-warn: #ffc966;
   --color-bad: #ff5470;
+  --color-arcane: #b98cf2;
+  --color-arcane2: #8a5fd6;
   --font-sans: "Inter", "Noto Sans SC", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+/* 紫金地牢：入口渐变描边（未点击时就有；无外发光，30% 淡色） */
+.dungeon-entry {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(rgba(21, 21, 21, 0.85), rgba(21, 21, 21, 0.85)) padding-box,
+    linear-gradient(135deg, rgba(185, 140, 242, 0.3), rgba(247, 217, 122, 0.3), rgba(185, 140, 242, 0.3)) border-box;
+}
+/* 紫金地牢：激活态（边框稍亮，无外发光） */
+.dungeon-glow {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(rgba(38, 38, 38, 0.95), rgba(38, 38, 38, 0.95)) padding-box,
+    linear-gradient(135deg, rgba(200, 166, 255, 0.55), rgba(255, 229, 154, 0.55), rgba(200, 166, 255, 0.55)) border-box;
+}
+/* 紫金地牢：面板柔和紫金光晕 */
+.dungeon-frame {
+  box-shadow:
+    inset 0 0 0 1px rgba(185, 140, 242, 0.28),
+    0 0 24px rgba(185, 140, 242, 0.16);
 }
 
 html,
@@ -35,7 +58,6 @@ body {
   background: rgba(247, 217, 122, 0.3);
 }
 
-/* ---------- 滑杆 ---------- */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;

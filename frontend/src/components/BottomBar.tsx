@@ -7,11 +7,14 @@ export default function BottomBar() {
   const estop = !!s?.estop;
   const sidebarW = useLayout((st) => st.sidebarW);
   const controlW = useLayout((st) => st.controlW);
+  const mode = useLayout((st) => st.mode);
+  // 宽屏：急停栏只占中间聊天栏宽度；中/窄屏铺满（侧栏/右栏走抽屉）
+  const fullSpan = mode !== "wide";
 
   return (
     <div
       className="fixed bottom-0 z-10 flex h-14 items-center gap-4 border-t border-line bg-ink2 px-5"
-      style={{ left: sidebarW, right: controlW }}
+      style={fullSpan ? { left: 0, right: 0 } : { left: sidebarW, right: controlW }}
     >
       <button
         className="rounded-[10px] border border-line bg-panel2 px-3.5 py-1.5 text-[13px] hover:border-line2"

@@ -7,6 +7,9 @@ import type { NetworkInfo } from "../types";
 export function PairView() {
   const s = useApp((st) => st.state);
   const [net, setNet] = useState<NetworkInfo | null>(null);
+  const [qrErr, setQrErr] = useState(false);
+  const [qrTick, setQrTick] = useState(0); // 重试计数（作 img key 强制重载，避免每次渲染都带 ?t= 新请求）
+  const [qrRetries, setQrRetries] = useState(0); // 自动重试最多 6 次
   const paired = s?.relay?.status === "paired";
   const clients = s?.relay?.clients?.length ?? 0;
 
@@ -23,21 +26,54 @@ export function PairView() {
     return () => clearInterval(timer);
   }, []);
 
+  // 二维码失败或 relay 尚未就绪时低频自动重试，最多 6 次；避免服务异常时无限请求
+  useEffect(() => {
+    if (paired || qrRetries >= 6 || (!qrErr && s?.relay?.controller_id)) return;
+    const timer = window.setTimeout(() => {
+      setQrRetries((n) => n + 1);
+      setQrTick((n) => n + 1);
+    }, 4000);
+    return () => window.clearTimeout(timer);
+  }, [paired, qrErr, qrRetries, s?.relay?.controller_id]);
+
   return (
     <div className="rounded-[14px] border border-line bg-panel p-5">
       <h3 className="mb-4 text-[13px] font-semibold tracking-[1.5px] text-muted">
         App 配对（同一 Wi-Fi，DG-LAB 4.0 扫码）
       </h3>
       {s?.relay?.controller_id ? (
-        <img src={"/api/qrcode.png?t=" + Date.now()} alt="二维码" className="mx-auto mb-3 block h-[200px] w-[200px] rounded-[14px] bg-white" />
+        qrErr ? (
+          <div className="mx-auto mb-3 flex h-[200px] w-[200px] flex-col items-center justify-center gap-1 rounded-[14px] border border-line bg-ink3 px-3 text-center text-sm text-muted">
+            <span>二维码加载失败</span>
+            <button
+              onClick={() => {
+                setQrErr(false);
+                setQrRetries(0);
+                setQrTick((n) => n + 1);
+              }}
+              className="rounded-md border border-line px-2 py-0.5 text-[11px] text-accent/80 hover:border-line2 hover:text-accent"
+            >
+              重试（4 秒后自动）
+            </button>
+          </div>
+        ) : (
+          <img
+            key={qrTick}
+            src="/api/qrcode.png"
+            alt="二维码"
+            className="mx-auto mb-3 block h-[200px] w-[200px] rounded-[14px] bg-white"
+            onLoad={() => setQrErr(false)}
+              onError={() => setQrErr(true)}
+          />
+        )
       ) : (
-        <div className="mx-auto mb-3 flex h-[200px] w-[200px] items-center justify-center rounded-[14px] border border-line bg-ink3 text-sm text-muted">
-          等待中继连接…
-        </div>
+            <div className="mx-auto mb-3 flex h-[200px] w-[200px] flex-col items-center justify-center gap-1 rounded-[14px] border border-line bg-ink3 px-3 text-center text-sm text-muted">
+              <span>{qrRetries >= 6 ? "中继服务仍未就绪" : "等待中继连接…"}</span>
+              <span className="text-[11px] text-faint">{qrRetries >= 6 ? "请确认服务后点击重试" : "二维码会低频自动重试"}</span>
+            </div>
       )}
       <p className="mx-auto max-w-[420px] whitespace-pre-wrap break-all text-center text-xs leading-relaxed text-muted">
-        {paired ? `已在线 ${clients} 台；新设备重扫：\n` : "用 DG-LAB 4.0 App 扫码：\n"}
-        {net?.pair_url ?? ""}
+        {paired ? `已在线 ${clients} 台；新设备请重扫上方二维码` : "用 DG-LAB 4.0 App 扫上方二维码配对（同一 Wi-Fi）"}
         {"\n当前电脑 IP: " + (net?.lan_ip ?? "…")}
         {net && net.all_ips.length > 1 ? "\n其他 IP: " + net.all_ips.join(" / ") : ""}
       </p>
@@ -47,7 +83,21 @@ export function PairView() {
 
 export function SettingsView() {
   const s = useApp((st) => st.state);
+  const [intervalDraft, setIntervalDraft] = useState(12);
+  const [intervalStatus, setIntervalStatus] = useState("");
   const ci = s?.config_info;
+  useEffect(() => {
+    if (typeof s?.autopilot_interval_s === "number") setIntervalDraft(s.autopilot_interval_s);
+  }, [s?.autopilot_interval_s]);
+  const saveInterval = async (value: number) => {
+    setIntervalStatus("保存中…");
+    try {
+      await api.setAutopilotInterval(value);
+      setIntervalStatus("已生效");
+    } catch {
+      setIntervalStatus("保存失败，请重试");
+    }
+  };
   const rows: [string, string][] = [
     ["版本", ci?.version ?? "dev"],
     ["AI 模型", ci?.model ?? "—"],
@@ -65,6 +115,26 @@ export function SettingsView() {
             <span className="max-w-[60%] truncate">{v}</span>
           </div>
         ))}
+        <div className="mt-4 border-t border-line pt-3">
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="text-muted">AI 自动运行间隔</span>
+            <span className="font-semibold text-text">{intervalDraft} 秒/轮</span>
+          </div>
+          <input
+            type="range"
+            min="5"
+            max="30"
+            step="1"
+            value={intervalDraft}
+            onChange={(e) => setIntervalDraft(Number(e.target.value))}
+            onMouseUp={() => void saveInterval(intervalDraft)}
+            onTouchEnd={() => void saveInterval(intervalDraft)}
+            className="mt-2 w-full accent-accent"
+            aria-label="AI 自动运行间隔"
+          />
+          <div className="flex justify-between text-[10px] text-faint"><span>5 秒/轮</span><span>30 秒/轮</span></div>
+          <p className="mt-1 text-[10px] text-faint">{intervalStatus}</p>
+        </div>
         <p className="mt-3 text-[11px] leading-relaxed text-faint">
           修改 config\character.yaml（主题/示例）保存后下一条消息即生效；
           <br />
@@ -72,12 +142,12 @@ export function SettingsView() {
         </p>
         <p className="mt-2 text-[11px] text-faint">
           <a
-            href="https://github.com/indhg/AI-for-Coyote"
+            href="https://x.com/cinnanirch"
             target="_blank"
             rel="noreferrer"
             className="text-accent/80 transition-colors hover:text-accent"
           >
-            GitHub: github.com/indhg/AI-for-Coyote
+            作者主页: x.com/cinnanirch
           </a>
         </p>
         <UpdateRow />
@@ -87,8 +157,14 @@ export function SettingsView() {
   );
 }
 
-/** 帮助视图：点顶栏「帮助」时右侧显示（目前只放新手引导 + 更新状态；后续扩充进阶指引/FAQ 等）。 */
-export function HelpView({ onReplayTour }: { onReplayTour: () => void }) {
+/** 帮助视图：点顶栏「帮助」时右侧显示（公告重看 + 新手引导 + 更新状态；后续扩充进阶指引/FAQ 等）。 */
+export function HelpView({
+  onReplayTour,
+  onShowNotice,
+}: {
+  onReplayTour: () => void;
+  onShowNotice: () => void;
+}) {
   const s = useApp((st) => st.state);
   const ci = s?.config_info;
   return (
@@ -97,8 +173,18 @@ export function HelpView({ onReplayTour }: { onReplayTour: () => void }) {
         <h3 className="mb-3 text-[13px] font-semibold tracking-[1.5px] text-muted">帮助</h3>
         <div className="flex flex-col gap-2.5">
           <button
+            onClick={onShowNotice}
+            className="w-fit rounded-lg border border-accent/60 bg-accent/15 px-3.5 py-1.5 text-[12px] font-semibold text-accent transition-colors hover:bg-accent/25"
+          >
+            公告
+          </button>
+          <button
             onClick={() => {
-              localStorage.removeItem(`tour_done_${TOURS[0].id}_${ci?.version ?? ""}`);
+              try {
+                localStorage.removeItem(`tour_done_${TOURS[0].id}_${ci?.version ?? ""}`);
+              } catch {
+                /* 隐私模式或禁用存储时直接重新打开引导 */
+              }
               onReplayTour();
             }}
             className="w-fit rounded-lg border border-accent/60 bg-accent/15 px-3.5 py-1.5 text-[12px] font-semibold text-accent transition-colors hover:bg-accent/25"
@@ -296,7 +382,11 @@ function UpdateRow() {
         </a>
       ) : (
         <span className="text-[11px] text-faint">
-          {u?.latest ? `已是最新（${u.latest}）` : "尚未检查到更新"}
+          {u?.enabled
+            ? u?.latest
+              ? `已是最新（${u.latest}）`
+              : "尚未检查到更新"
+            : "更新检查已关闭（版本锁定）"}
         </span>
       )}
     </div>

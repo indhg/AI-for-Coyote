@@ -1,23 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useApp, useChat } from "../store";
-import { LEVEL_BADGE_CLS, LEVEL_LABELS } from "../roleTheme";
+import { INTENSITY_BADGE_CLS, entryOf } from "../roleTheme";
 
 export default function ChatPanel() {
   const messages = useChat((st) => st.messages);
   const pushMsg = useChat((st) => st.push);
   const clearChat = useChat((st) => st.clear);
+  const s = useApp((st) => st.state);
   const autopilot = useApp((st) => st.state?.autopilot ?? false);
   const relay = useApp((st) => st.state?.relay);
-  const paired = relay?.status === "paired";
+  const paired = s?.connected === true || relay?.status === "paired" || relay?.status === "ready";
+  const testMode = useApp((st) => st.state?.test_mode ?? false);
+  const estop = useApp((st) => st.state?.estop ?? false);
+  const controllerId = relay?.controller_id;
   const enabled = useApp((st) => st.state?.enabled_channels);
   const role = useApp((st) => st.state?.role ?? "触手");
   const profile = useApp((st) => st.state?.profile ?? "纯爱");
-  const level = useApp((st) => st.state?.profile_level ?? "中");
-  const [pairUrl, setPairUrl] = useState("");
+  const intensity = useApp((st) => st.state?.intensity_level ?? "中");
+  const entry = entryOf(role, profile);
+  const [qrFail, setQrFail] = useState(false);   // 二维码加载失败（后端 503 / relay 未就绪）
+  const [qrTick, setQrTick] = useState(0);       // 重试计数器（作 img key 强制重载）
+  const [qrRetries, setQrRetries] = useState(0); // 自动重试最多 6 次，避免 relay 异常时无限请求
   const boxRef = useRef<HTMLDivElement>(null);
 
-  // 切换角色/风格档时插一条系统分隔消息，防上下文串戏
+  // 切换角色/内容档时插一条系统分隔消息，防上下文串戏
   const roleKeyRef = useRef(`${role}·${profile}`);
   useEffect(() => {
     const key = `${role}·${profile}`;
@@ -25,10 +32,10 @@ export default function ChatPanel() {
       roleKeyRef.current = key;
       pushMsg({
         role: "sys",
-        text: `—— 已切换至 ${role} · ${LEVEL_LABELS[level] ?? level} ——`,
+        text: `—— 已切换至 ${entry?.label ?? `${role}·${profile}`} ——`,
       });
     }
-  }, [role, profile, level, pushMsg]);
+  }, [role, profile, entry, pushMsg]);
 
   useEffect(() => {
     boxRef.current?.scrollTo({ top: boxRef.current.scrollHeight });
@@ -36,11 +43,27 @@ export default function ChatPanel() {
 
   useEffect(() => {
     if (paired) return;
-    api
-      .network()
-      .then((n) => setPairUrl(n.pair_url ?? ""))
-      .catch(() => {});
+    // 配对依赖二维码（/api/qrcode.png），明文配对网址不外露（2026-09-03 用户要求）
   }, [paired]);
+
+  // 二维码重试：加载失败（relay 未就绪 503）时定时重试；relay controller_id 就绪后立即重载
+  useEffect(() => {
+    if (paired) return;
+    const controllerId = relay?.controller_id;
+    if (!qrFail && controllerId) {
+      setQrFail(false);
+      setQrTick((t) => t + 1); // controller_id 出现 → 强制重新挂载图片
+      return;
+    }
+    if (!qrFail) return;
+    if (qrRetries >= 6) return;
+    const timer = window.setTimeout(() => {
+      setQrRetries((n) => n + 1);
+      setQrTick((t) => t + 1);
+    }, 4000); // 限频：失败后每 4s 重试，最多 6 次
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paired, qrFail, qrRetries, relay?.controller_id]);
 
   const toggle = async () => {
     try {
@@ -51,15 +74,16 @@ export default function ChatPanel() {
   };
 
   return (
-    <aside className="flex min-h-0 flex-col border-l border-line bg-ink2">
+    <aside className="flex h-full min-h-0 flex-col border-l border-line bg-ink2">
       <div className="flex flex-none items-center border-b border-line px-4 py-2">
         <div className="flex items-center gap-2 rounded-lg border border-line bg-panel2 px-2.5 py-1">
-          <span className="text-[11px] text-faint">当前主题</span>
-          <span className="text-[12px] font-semibold text-text">{role}</span>
+          <span className="text-[11px] text-faint">当前入口</span>
+          <span className="text-[12px] font-semibold text-text">{entry?.label ?? role}</span>
           <span
-            className={`rounded-md border px-1.5 py-px text-[10px] ${LEVEL_BADGE_CLS[level] ?? LEVEL_BADGE_CLS["中"]}`}
+            className={`rounded-md border px-1.5 py-px text-[10px] ${INTENSITY_BADGE_CLS[intensity] ?? INTENSITY_BADGE_CLS["中"]}`}
+            title="当前电击强度档（轻/中/重 = ×0.7/×1.0/×1.3，与对话无关）"
           >
-            {LEVEL_LABELS[level] ?? level}
+            强度 {intensity}
           </span>
         </div>
         <div className="ml-auto flex items-center gap-2">
@@ -78,6 +102,15 @@ export default function ChatPanel() {
               }`}
             />
           </button>
+          {testMode && (
+            <button
+              onClick={() => void api.testMode(false)}
+              title="退出测试模式，恢复扫码配对"
+              className="rounded-md border border-line bg-warn/10 px-2 py-1 text-[11px] text-warn transition-colors hover:border-line2 hover:text-text"
+            >
+              测试 ✕
+            </button>
+          )}
           <button
             onClick={() => {
               if (!window.confirm("清空对话历史？将清空聊天记录与 AI 的记忆上下文，设备强度不受影响。")) return;
@@ -95,27 +128,61 @@ export default function ChatPanel() {
           </button>
         </div>
       </div>
+      {estop && (
+        <div className="flex-none border-b border-bad/60 bg-bad/15 px-3 py-1.5 text-center text-[11px] font-semibold text-bad">
+          ⛔ 已急停：设备已清零、AI 已暂停——到底部按「解除」恢复
+        </div>
+      )}
       {!paired ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 py-6 text-center" data-tour="pair-qr">
-          <img
-            src="/api/qrcode.png"
-            alt="配对二维码"
-            className="w-64 rounded-lg border border-line bg-white p-2"
-            onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
-          />
+          {qrFail ? (
+            <div className="flex h-64 w-64 flex-col items-center justify-center gap-1 rounded-lg border border-line bg-panel2 p-2">
+              <span className="text-[13px] text-muted">
+                {controllerId ? "二维码加载失败" : "等待中继就绪，正在生成二维码…"}
+              </span>
+              <span className="text-[10px] text-faint">
+                {qrRetries >= 6 ? "自动重试已暂停，请确认中继服务后点击重试" : controllerId ? "会自动重试，或点下方手动重试" : "二维码会自动重试，稍候即可"}
+              </span>
+              <button
+                onClick={() => {
+                  setQrFail(false);
+                  setQrRetries(0);
+                  setQrTick((t) => t + 1);
+                }}
+                className="mt-1 rounded-md border border-line px-3 py-1 text-[11px] text-accent/80 hover:border-line2 hover:text-accent"
+              >
+                重试
+              </button>
+            </div>
+          ) : (
+            <img
+              key={qrTick}
+              src="/api/qrcode.png"
+              alt="配对二维码"
+              className="w-64 rounded-lg border border-line bg-white p-2"
+              onLoad={() => {
+                setQrFail(false);
+                setQrRetries(0);
+              }}
+              onError={() => setQrFail(true)}
+            />
+          )}
           <div className="mt-2 text-[13px] font-semibold text-muted">手机打开 DG-LAB 4.0 App 扫码配对</div>
           <div className="mt-1 text-[11px] text-warn">⚠️ 配对后请在 App 里打开「输出」开关（解除屏蔽），否则设备不会有感觉</div>
-          {pairUrl && (
-            <a
-              href={pairUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-0.5 block max-w-full break-all text-[10px] text-accent/80 hover:text-accent"
-            >
-              {pairUrl}
-            </a>
-          )}
-          <div className="mt-1.5 text-[10px] text-faint">连接成功后 3 秒，AI 会主动开场</div>
+          <div className="mt-3 flex w-full items-center gap-2 text-[10px] text-faint">
+            <span className="h-px flex-1 bg-line" />
+            没有郊狼？
+            <span className="h-px flex-1 bg-line" />
+          </div>
+          <button
+            onClick={() => {
+              void api.testMode(true).catch(() => {});
+            }}
+            title="不连接设备，用模拟设备试跑聊天 / 地牢 / AI 全流程（不会真正电击）"
+            className="mt-1 rounded-lg border border-line2 bg-panel2 px-5 py-1.5 text-[12px] font-medium text-accent transition-colors hover:border-accent/60 hover:text-accent"
+          >
+            点击进入测试（模拟设备）
+          </button>
         </div>
       ) : (
         <div ref={boxRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3.5">
@@ -137,22 +204,37 @@ export default function ChatPanel() {
               >
                 {m.text}
               </div>
-              {m.actions && (
-                <div
-                  className={`mt-1 flex max-w-[90%] flex-wrap gap-1 border-t border-dashed border-line pt-1 ${
-                    m.role === "user" ? "self-end" : "self-start"
-                  }`}
-                >
-                  {m.actions.split("\n").filter(Boolean).map((a, j) => (
-                    <span
-                      key={j}
-                      className="rounded-md border border-line bg-panel2 px-1.5 py-0.5 text-[10px] text-accent2"
-                    >
-                      {a}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {m.actions && (() => {
+                const lines = m.actions.split("\n").filter(Boolean);
+                const done = lines.filter((l) => l.startsWith("▶"));
+                const skipped = lines.filter((l) => l.startsWith("✖") || l.startsWith("×"));
+                if (done.length === 0 && skipped.length === 0) return null;
+                const chip = (s: string, j: number, cls: string) => (
+                  <span key={`${j}-${s}`} className={`rounded-md border px-1.5 py-0.5 text-[10px] ${cls}`}>
+                    {s.replace(/^[▶✖×]/, "")}
+                  </span>
+                );
+                return (
+                  <div
+                    className={`mt-1 flex max-w-[90%] flex-col gap-1 border-t border-dashed border-line pt-1 ${
+                      m.role === "user" ? "self-end" : "self-start"
+                    }`}
+                  >
+                    {done.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1">
+                        <span className="text-[10px] text-emerald-400/80">✓ 已执行 {done.length}</span>
+                        {done.map((a, j) => chip(a, j, "border-emerald-500/30 bg-emerald-500/10 text-emerald-200/90"))}
+                      </div>
+                    )}
+                    {skipped.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1">
+                        <span className="text-[10px] text-red-400/80">✖ 未发送 {skipped.length}</span>
+                        {skipped.map((a, j) => chip(a, j, "border-red-500/30 bg-red-500/10 text-red-200/90"))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>

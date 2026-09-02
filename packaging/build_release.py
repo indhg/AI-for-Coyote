@@ -98,8 +98,8 @@ README_TXT = """Coyote in Cradle v{version}（绿色免装版）
 导入后角色设置里出现新角色/新风格档（调教=中、重口=重）。
 
 【许可】
-GPL-3.0。源码：https://github.com/indhg/AI-for-Coyote
-中继基于 dglab-websocket-server（GPL-3.0），见 relay\\LICENSE。
+本软件为作者原创的专有软件（All Rights Reserved），未授权任何渠道转载、倒卖与二次分发。
+中继基于 dglab-websocket-server（GPL-3.0），作为独立第三方组件分发，见 relay\\LICENSE。
 """
 
 
@@ -222,13 +222,16 @@ def main() -> None:
     )
     for name in ("config.example.yaml", "character.example.yaml", "waveforms.yaml"):
         shutil.copy2(ROOT / "config" / name, PKG / "config" / name)
-    shutil.copytree(ROOT / "content" / "pure", PKG / "content" / "pure")
+    shutil.copytree(ROOT / "content" / "pure", PKG / "content" / "pure",
+                    ignore=shutil.ignore_patterns("*-EN.md"))
+    shutil.copytree(ROOT / "content" / "roles", PKG / "content" / "roles",
+                    ignore=shutil.ignore_patterns("*-EN.md"))
     # DLC 本体（本地仓库形态为嵌套 git 仓库；CI 干净检出时不存在则跳过）
     pack = ROOT / "content" / "pack"
     if pack.exists():
         shutil.copytree(
             pack, PKG / "content" / "pack",
-            ignore=shutil.ignore_patterns(".git"),
+            ignore=shutil.ignore_patterns(".git", "*-EN.md"),
         )
     shutil.copytree(ROOT / "frontend" / "dist", PKG / "frontend" / "dist")
     shutil.copy2(ROOT / "LICENSE", PKG / "LICENSE")

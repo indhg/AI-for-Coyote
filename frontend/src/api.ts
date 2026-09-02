@@ -1,5 +1,7 @@
 import type {
   ChatResult,
+  DungeonRender,
+  DungeonState,
   FullState,
   ManualResult,
   NetworkInfo,
@@ -57,21 +59,19 @@ export const api = {
       "/api/character/profile",
       json({ role, profile }),
     ),
+  setIntensity: (level: string) =>
+    j<{ ok: boolean; intensity_level?: string; strength_scale?: Record<string, number> }>(
+      "/api/intensity",
+      json({ level }),
+    ),
   setNick: (nick: string) =>
     j<{ ok: boolean }>("/api/character/nick", json({ nick })),
-  importDlc: (file: File) => {
-    const fd = new FormData();
-    fd.append("file", file);
-    return j<{
-      ok: boolean;
-      dir?: string;
-      files?: string[];
-      role?: string | null;
-      profile?: string | null;
-    }>("/api/dlc/import", { method: "POST", body: fd });
-  },
   setAutopilot: (enabled: boolean) =>
     j<{ ok: boolean }>("/api/autopilot", json({ enabled })),
+  setAutopilotInterval: (interval_s: number) =>
+    j<{ ok: boolean; interval_s: number }>("/api/autopilot/interval", json({ interval_s })),
+  testMode: (enabled: boolean) =>
+    j<{ ok: boolean; test_mode: boolean }>("/api/test_mode", json({ enabled })),
   getLlm: () =>
     j<{
       base_url: string;
@@ -95,4 +95,19 @@ export const api = {
       "/api/update",
       json({ enabled }),
     ),
+  // ---------- 地牢 ----------
+  dungeonState: () => j<DungeonState>("/api/dungeon/state"),
+  dungeonStart: (body: {
+    active_themes?: string[];
+    mix_policy?: string;
+    floors?: number;
+    seed?: number;
+    map_mode?: boolean;
+  }) => j<DungeonRender>("/api/dungeon/start", json(body)),
+  dungeonAdvance: (body: { choice_id?: string; text?: string; map_target?: { row: number; col: number } }) =>
+    j<DungeonRender>("/api/dungeon/advance", json(body)),
+  dungeonSave: (slot: string) =>
+    j<{ ok: boolean; path: string }>("/api/dungeon/save", json({ slot })),
+  dungeonLoad: (slot: string) => j<DungeonRender>("/api/dungeon/load", json({ slot })),
+  dungeonRestart: () => j<{ ok: boolean }>("/api/dungeon/restart", json({})),
 };

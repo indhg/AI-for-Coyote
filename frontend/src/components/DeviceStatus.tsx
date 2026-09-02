@@ -29,7 +29,7 @@ function Seg({
 export default function DeviceStatus() {
   const s = useApp((st) => st.state);
   const st = s?.relay?.status ?? "disconnected";
-  const paired = st === "paired";
+  const paired = s?.connected === true || st === "paired" || st === "ready";
   const waveOf = (ch: "A" | "B") =>
     !s?.pulse_active?.[ch] ? "空闲" : s?.patterns?.[ch] ?? "播放中";
   // 音量显示：相对「惨叫档」的百分比（后端 level_pct；旧版无此字段时回退原始电平×100）
@@ -97,6 +97,7 @@ export default function DeviceStatus() {
         {icon}
         {label}
         {visual === "warn" && <AlertTriangle size={11} className="flex-none" />}
+        {errText && <span className="flex-none text-[10px] text-bad">错误</span>}
       </button>
     );
   };
@@ -137,16 +138,18 @@ export default function DeviceStatus() {
               {audioPct}
             </span>
             <span
-              className="w-16 flex-none truncate text-[11px] text-faint"
+              className={`w-16 flex-none truncate text-[11px] ${micErr ? "font-semibold text-bad" : "text-faint"}`}
               title={!micRunning && micOn && !sensorsOn ? "自动运行未开启，麦克风未启动" : undefined}
             >
-              {micRunning
-                ? s?.audio?.last_text || "监听中…"
-                : micOn && !sensorsOn
-                  ? "未运行"
-                  : micOn && sensorsOn && !micErr
-                    ? "启动中…"
-                    : "未开启"}
+              {micErr
+                ? "错误"
+                : micRunning
+                  ? s?.audio?.last_text || "监听中…"
+                  : micOn && !sensorsOn
+                    ? "未运行"
+                    : micOn && sensorsOn
+                      ? "启动中…"
+                      : "未开启"}
             </span>
           </span>
         </div>

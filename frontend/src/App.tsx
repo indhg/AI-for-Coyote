@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import TopBar, { type ViewName } from "./components/TopBar";
+import TopBar, { type ViewName, type BoardName } from "./components/TopBar";
 import Sidebar from "./components/Sidebar";
 import DeviceStatus from "./components/DeviceStatus";
 import ChannelControl from "./components/ChannelControl";
 import PresetPanel from "./components/PresetPanel";
 import BottomBar from "./components/BottomBar";
 import ChatPanel from "./components/ChatPanel";
+import DungeonPanel from "./components/DungeonPanel";
 import NoticeToast from "./components/NoticeToast";
 import OnboardingTour from "./components/OnboardingTour";
 import { TOURS } from "./onboarding";
@@ -19,35 +20,84 @@ const ESTOP_HOLD_MS = 1000;
 
 export default function App() {
   const [view, setView] = useState<ViewName>("control");
+  const [board, setBoard] = useState<BoardName>("chat");
+  // 进入地牢：默认关自动运行（传感器随之暂停）；不动摄像头/麦克风各自的开关状态，
+  // 切回聊天后重开「自动运行」即可恢复
+  useEffect(() => {
+    if (board !== "dungeon") return;
+    api.setAutopilot(false).catch(() => {});
+  }, [board]);
   // 新手引导：先等公告处理完（或本版公告已看过），再按版本记忆显示引导 1；设置页可重看
   const [tourIdx, setTourIdx] = useState<number | null>(null);
   const [noticeHandled, setNoticeHandled] = useState(false);
+  const [noticeForced, setNoticeForced] = useState(false); // 帮助里点「公告」→ 强制重弹
   const version = useApp((st) => st.state?.config_info?.version ?? "");
   useEffect(() => {
     if (!version) return;
     // 本版公告已看过 → 公告不会弹，直接放行引导
-    if (localStorage.getItem("notice_dismissed_version") === version) {
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem("notice_dismissed_version") === version;
+    } catch {
+      /* 非核心的公告记忆失败不影响引导流程 */
+    }
+    if (dismissed) {
       setNoticeHandled(true);
     }
   }, [version]);
   useEffect(() => {
     if (!version || !noticeHandled) return;
     const tour = TOURS[0];
-    if (!localStorage.getItem(`tour_done_${tour.id}_${version}`)) {
+    let done = false;
+    try {
+      done = localStorage.getItem(`tour_done_${tour.id}_${version}`) === "1";
+    } catch {
+      /* 非核心的新手引导记忆失败时按未完成处理 */
+    }
+    if (!done) {
       const t = window.setTimeout(() => setTourIdx(0), 800);
       return () => window.clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version, noticeHandled]);
+  // 首启保护：新手引导未完成时，若后端还停在模拟测试态（上次会话遗留 / 端口复用旧实例），
+  // 先退出测试，避免「一打开就在测试、自动开场顶掉引导配对步骤」（2026-09-03 用户反馈）；
+  // 想试玩随时可点「点击进入测试（模拟设备）」。
+  useEffect(() => {
+    if (!version) return;
+    const tour = TOURS[0];
+    let done = false;
+    try {
+      done = localStorage.getItem(`tour_done_${tour.id}_${version}`) === "1";
+    } catch {
+      /* 默认未完成 → 走退出逻辑 */
+    }
+    if (done) return;
+    if (useApp.getState().state?.test_mode) {
+      void api.testMode(false).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version]);
   const sidebarW = useLayout((s) => s.sidebarW);
   const controlW = useLayout((s) => s.controlW);
+  const mode = useLayout((s) => s.mode);
   const updateLayout = useLayout((s) => s.updateLayout);
-  // 全局缩放：按窗口宽度缩放整页布局（0.8 ~ 1.3 倍）
+  // 中/窄屏：抽屉开关（右=设备/配对/设置视图；左=角色卡与入口，仅窄屏用）
+  const [rightOpen, setRightOpen] = useState(false);
+  const [leftOpen, setLeftOpen] = useState(false);
+  useEffect(() => {
+    if (mode === "wide") {
+      setRightOpen(false);
+      setLeftOpen(false);
+    }
+  }, [mode]);
+  // 全局缩放：宽/中屏按窗口宽度缩放（0.8~1.3）；窄屏关闭缩放，靠抽屉布局保证可读可用
   const [zoom, setZoom] = useState(1);
   useEffect(() => {
     const calc = () => {
-      setZoom(Math.min(1.3, Math.max(0.8, window.innerWidth / 1600)));
-      updateLayout(); // 三栏按固定比例随窗口宽度重算
+      const w = window.innerWidth;
+      setZoom(w < 800 ? 1 : Math.min(1.3, Math.max(0.8, w / 1600)));
+      updateLayout(); // 三栏比例 + 布局档位随窗口宽度重算
     };
     calc();
     window.addEventListener("resize", calc);
@@ -143,30 +193,109 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col" style={{ zoom }}>
-      <TopBar view={view} onView={setView} />
-      <div
-        className="grid min-h-0 flex-1"
-        style={{ gridTemplateColumns: `${sidebarW}px 1fr ${controlW}px` }}
-      >
-        <Sidebar view={view} onView={setView} />
-        <ChatPanel />
-        <main className="min-h-0 overflow-y-auto border-l border-line px-4 pb-14 pt-3">
-          {view === "control" && (
-            <div className="flex h-full min-h-0 flex-col gap-2">
-              <div className="min-h-0 flex-none">
-                <DeviceStatus />
+      <TopBar view={view} onView={setView} board={board} onBoard={setBoard} />
+      {(() => {
+        const cols =
+          mode === "wide"
+            ? `${sidebarW}px 1fr ${controlW}px`
+            : mode === "mid"
+              ? `${sidebarW}px 1fr 0`
+              : `0 1fr 0`;
+        const rightView = (
+          <main className="min-h-0 overflow-y-auto border-l border-line px-4 pb-14 pt-3">
+            {view === "control" && (
+              <div className="flex h-full min-h-0 flex-col gap-2">
+                <div className="min-h-0 flex-none">
+                  <DeviceStatus />
+                </div>
+                <ChannelControl />
+                {board !== "dungeon" && <PresetPanel />}
               </div>
-              <ChannelControl />
-              <PresetPanel />
-            </div>
-          )}
-          {view === "pair" && <PairView />}
-          {view === "settings" && <SettingsView />}
-          {view === "help" && <HelpView onReplayTour={() => setTourIdx(0)} />}
-        </main>
-      </div>
+            )}
+            {view === "pair" && <PairView />}
+            {view === "settings" && <SettingsView />}
+            {view === "help" && (
+              <HelpView
+                onReplayTour={() => setTourIdx(0)}
+                onShowNotice={() => setNoticeForced(true)}
+              />
+            )}
+          </main>
+        );
+        return (
+          <div
+            className="relative grid h-full min-h-0 flex-1"
+            style={{ gridTemplateColumns: cols, gridTemplateRows: "minmax(0, 1fr)" }}
+          >
+            {mode !== "narrow" && <Sidebar view={view} onView={setView} board={board} />}
+            <div className="h-full min-h-0">{board === "chat" ? <ChatPanel /> : <DungeonPanel />}</div>
+            {mode === "wide" && rightView}
+            {/* 中/窄屏右抽屉：设备/配对/设置/帮助 */}
+            {mode !== "wide" && rightOpen && (
+              <div className="absolute inset-y-0 right-0 z-30 flex w-[min(420px,92vw)] flex-col border-l border-line bg-ink2">
+                <div className="flex flex-none items-center justify-between border-b border-line px-3 py-1.5">
+                  <span className="text-[12px] font-semibold text-muted">设备 / 视图</span>
+                  <button
+                    onClick={() => setRightOpen(false)}
+                    className="rounded-md border border-line bg-panel2 px-2 py-0.5 text-[11px] text-muted transition-colors hover:border-line2 hover:text-text"
+                  >
+                    收起 ✕
+                  </button>
+                </div>
+                <div className="min-h-0 flex-1">{rightView}</div>
+              </div>
+            )}
+            {/* 窄屏左抽屉：角色卡 / 入口导航 */}
+            {mode === "narrow" && leftOpen && (
+              <div className="absolute inset-y-0 left-0 z-30 flex w-[min(320px,90vw)] flex-col border-r border-line bg-ink2">
+                <div className="flex flex-none items-center justify-between border-b border-line px-3 py-1.5">
+                  <span className="text-[12px] font-semibold text-muted">角色 / 入口</span>
+                  <button
+                    onClick={() => setLeftOpen(false)}
+                    className="rounded-md border border-line bg-panel2 px-2 py-0.5 text-[11px] text-muted transition-colors hover:border-line2 hover:text-text"
+                  >
+                    收起 ✕
+                  </button>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <Sidebar view={view} onView={setView} board={board} />
+                </div>
+              </div>
+            )}
+            {/* 中/窄屏浮动开关 */}
+            {mode !== "wide" && (
+              <div className="absolute inset-y-0 right-0 z-40 flex items-center">
+                <button
+                  onClick={() => setRightOpen((o) => !o)}
+                  title={rightOpen ? "收起设备面板" : "打开设备面板"}
+                  className="rounded-l-md border border-r-0 border-line bg-ink2 px-1.5 py-3 text-[13px] text-muted transition-colors hover:text-accent"
+                >
+                  {rightOpen ? "›" : "‹"}
+                </button>
+              </div>
+            )}
+            {mode === "narrow" && (
+              <div className="absolute inset-y-0 left-0 z-40 flex items-center">
+                <button
+                  onClick={() => setLeftOpen((o) => !o)}
+                  title={leftOpen ? "收起角色面板" : "打开角色面板"}
+                  className="rounded-r-md border border-l-0 border-line bg-ink2 px-1.5 py-3 text-[13px] text-muted transition-colors hover:text-accent"
+                >
+                  {leftOpen ? "«" : "»"}
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
       <BottomBar />
-      <NoticeToast onDismissed={() => setNoticeHandled(true)} />
+      <NoticeToast
+        force={noticeForced}
+        onDismissed={() => {
+          setNoticeHandled(true);
+          setNoticeForced(false);
+        }}
+      />
       {tourIdx !== null && TOURS[tourIdx] && (
         <OnboardingTour
           tour={TOURS[tourIdx]}
@@ -174,7 +303,13 @@ export default function App() {
           onView={setView}
           onFinish={() => {
             const tour = TOURS[tourIdx];
-            if (tour) localStorage.setItem(`tour_done_${tour.id}_${version}`, "1");
+            if (tour) {
+              try {
+                localStorage.setItem(`tour_done_${tour.id}_${version}`, "1");
+              } catch {
+                /* 非核心记忆失败不影响结束引导 */
+              }
+            }
             setTourIdx(null);
           }}
         />

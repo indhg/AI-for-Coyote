@@ -66,6 +66,8 @@ export interface FullState {
   profiles: string[];
   profile_available: Record<string, boolean>;
   profile_level: string;
+  intensity_level: string;
+  strength_scale: Record<"A" | "B", number>;
   autopilot: boolean;
   autopilot_interval_s: number;
   sensors_on: boolean;
@@ -83,6 +85,7 @@ export interface FullState {
   };
   ui: { quick_strengths: number[]; default_temp_s: number; default_pulse_s: number };
   dry_run: boolean;
+  test_mode: boolean;
   relay_status: string;
   controller_id: string | null;
   connected: boolean;
@@ -117,6 +120,7 @@ export interface FullState {
     available: boolean;
   };
   character: string;
+  dungeon: DungeonState;
   config_info: {
     model: string;
     safeword: string;
@@ -153,4 +157,82 @@ export interface NetworkInfo {
   public_url: string;
   relay_port: number;
   hint: string;
+}
+
+// ---------- 地牢（紫金地牢） ----------
+export interface DungeonPack {
+  id: string;
+  title: string;
+  themes: string[];
+  event_count: number;
+}
+export interface DungeonRunState {
+  hp: number;
+  will: number;
+  affinity: Record<string, number>;
+  heat?: number;
+  orgasm_count?: number;
+}
+export interface DungeonRun {
+  preset_id: string;
+  active_themes: string[];
+  mix_policy: string;
+  seed: number;
+  floors: number;
+  floor_index: number;
+  room_index: number;
+  event_id: string | null;
+  turn_index: number;
+  run_state: DungeonRunState;
+  flags: Record<string, unknown>;
+  visited: string[];
+  phase: string;
+  ending_id: string | null;
+}
+export interface DungeonChoice {
+  id: string;
+  label: string;
+}
+export interface DungeonEvent {
+  id: string;
+  title: string;
+  theme_id: string;
+  kind: string;
+  content_level: string;
+  tier: number;
+  choices: DungeonChoice[];
+  free_input: boolean;
+}
+export interface DungeonRender {
+  run: DungeonRun;
+  event: DungeonEvent | null;
+  narrative: { text: string; source: string } | null;
+  feedback: { hint: string };
+  executed: string[];
+  dropped: string[];
+  map?: DungeonMap;
+}
+export interface DungeonMapNode {
+  row: number;
+  col: number;
+}
+export interface DungeonMap {
+  floor: number;
+  rows: number;
+  cols: number;
+  node_types: Record<string, string>;
+  node_elite: Record<string, boolean>;
+  boss: { row: number; col: number };
+  edges: { from: DungeonMapNode; to: DungeonMapNode }[];
+  entry: DungeonMapNode[];
+  visited_nodes: string[];
+  chains: Record<string, string>;
+  current: (DungeonMapNode & { floor?: number; boss?: boolean }) | null;
+  reachable: DungeonMapNode[];
+  phase: string;
+}
+export interface DungeonState {
+  active: boolean;
+  packs: DungeonPack[];
+  run?: DungeonRun;
 }

@@ -2,13 +2,16 @@ import { useApp } from "../store";
 import watermarkGold from "../assets/watermark-gold.png";
 
 export type ViewName = "control" | "pair" | "settings" | "help";
+export type BoardName = "chat" | "dungeon";
 
 interface Props {
   view: ViewName;
   onView: (v: ViewName) => void;
+  board: BoardName;
+  onBoard: (b: BoardName) => void;
 }
 
-export default function TopBar({ view, onView }: Props) {
+export default function TopBar({ view, onView, board, onBoard }: Props) {
   const s = useApp((st) => st.state);
 
   const nav: { key: ViewName; label: string }[] = [
@@ -25,23 +28,46 @@ export default function TopBar({ view, onView }: Props) {
         <img
           src={watermarkGold}
           alt="作者水印"
-          title="Coyote in Cradle · github.com/indhg/AI-for-Coyote"
+          title="Coyote in Cradle · 作者原创"
           className="h-10 w-auto opacity-80"
         />
       </div>
       <nav className="flex gap-1">
-        {nav.map((n, i) => (
-          <button
-            key={i}
-            data-tour={n.label === "设置" ? "settings-btn" : n.label === "帮助" ? "help-btn" : undefined}
-            onClick={() => onView(n.key)}
-            className={`rounded-lg px-3.5 py-2 text-sm transition-colors ${
-              view === n.key ? "bg-ink3 text-accent" : "text-muted hover:bg-ink3 hover:text-text"
-            }`}
-          >
-            {n.label}
-          </button>
-        ))}
+        <button
+          onClick={() => {
+            onBoard("dungeon");
+            onView("control");
+          }}
+          className={`rounded-lg px-3.5 py-2 text-sm transition-colors ${
+            board === "dungeon"
+              ? "dungeon-glow text-arcane"
+              : "dungeon-entry text-arcane hover:text-[#d6c4ff]"
+          }`}
+        >
+          进入地牢
+        </button>
+        <span className="mx-1 h-5 w-[2px] self-center rounded-full bg-line2" aria-hidden="true" />
+        {nav.map((n) => {
+          const active =
+            n.key === "control" ? board === "chat" && view === "control" : view === n.key;
+          return (
+            <button
+              key={n.key}
+              data-tour={n.label === "设置" ? "settings-btn" : n.label === "帮助" ? "help-btn" : undefined}
+              onClick={() => {
+                if (n.key === "control") onBoard("chat");
+                onView(n.key);
+              }}
+              className={`rounded-lg border px-3.5 py-2 text-sm transition-colors ${
+                active
+                  ? "border-line2 bg-ink3 text-accent"
+                  : "border-transparent text-muted hover:bg-ink3 hover:text-text"
+              }`}
+            >
+              {n.label}
+            </button>
+          );
+        })}
       </nav>
       <div className="flex-1" />
       {s?.update?.available && s.update.url ? (

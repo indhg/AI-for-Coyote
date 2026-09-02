@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { FullState } from "./types";
+import type { DungeonRender, FullState } from "./types";
 
 // ---------- 应用状态（与后端实时状态同步） ----------
 interface AppStore {
@@ -66,13 +66,54 @@ function calcControlW(): number {
   return 548;
 }
 
+/** 布局档位：宽 ≥1280 三栏；中 800-1279 聊天主栏 + 侧栏抽屉；窄 <800 单列 + 抽屉保安全操作 */
+export type LayoutMode = "wide" | "mid" | "narrow";
+function calcMode(): LayoutMode {
+  try {
+    const w = window.innerWidth;
+    if (Number.isFinite(w) && w > 0) {
+      if (w >= 1280) return "wide";
+      if (w >= 800) return "mid";
+      return "narrow";
+    }
+  } catch {
+    /* ignore */
+  }
+  return "wide";
+}
+
 interface LayoutStore {
   sidebarW: number;
   controlW: number;
+  mode: LayoutMode;
   updateLayout: () => void;
 }
 export const useLayout = create<LayoutStore>((set) => ({
   sidebarW: calcSidebarW(),
   controlW: calcControlW(),
-  updateLayout: () => set({ sidebarW: calcSidebarW(), controlW: calcControlW() }),
+  mode: calcMode(),
+  updateLayout: () =>
+    set({ sidebarW: calcSidebarW(), controlW: calcControlW(), mode: calcMode() }),
+}));
+
+// ---------- 地牢（紫金地牢） ----------
+interface DungeonStore {
+  render: DungeonRender | null;
+  busy: boolean;
+  error: string | null;
+  notice: string | null;
+  setRender: (r: DungeonRender | null) => void;
+  setBusy: (b: boolean) => void;
+  setError: (e: string | null) => void;
+  setNotice: (n: string | null) => void;
+}
+export const useDungeon = create<DungeonStore>((set) => ({
+  render: null,
+  busy: false,
+  error: null,
+  notice: null,
+  setRender: (r) => set({ render: r, error: null }),
+  setBusy: (b) => set({ busy: b }),
+  setError: (e) => set({ error: e }),
+  setNotice: (n) => set({ notice: n }),
 }));
