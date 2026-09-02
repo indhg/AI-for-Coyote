@@ -223,10 +223,17 @@ def main() -> None:
     )
     for name in ("config.example.yaml", "character.example.yaml", "waveforms.yaml"):
         shutil.copy2(ROOT / "config" / name, PKG / "config" / name)
-    shutil.copytree(ROOT / "content" / "pure", PKG / "content" / "pure",
-                    ignore=shutil.ignore_patterns("*-EN.md"))
-    shutil.copytree(ROOT / "content" / "roles", PKG / "content" / "roles",
-                    ignore=shutil.ignore_patterns("*-EN.md"))
+    # 内容目录可能不在公共仓库（安全子集化：角色稿/地牢素材走作者渠道分发）。
+    # 本地打包时存在则打进；CI/干净检出缺失时跳过并告警，不中断构建。
+    for _name, _src in (
+        ("content/pure", ROOT / "content" / "pure"),
+        ("content/roles", ROOT / "content" / "roles"),
+    ):
+        if _src.exists():
+            shutil.copytree(_src, PKG / _name,
+                            ignore=shutil.ignore_patterns("*-EN.md"))
+        else:
+            print(f"[警告] 缺少 {_name}（公共仓库不携带内容），跳过——此包不含角色内容", flush=True)
     # DLC 本体（本地仓库形态为嵌套 git 仓库；CI 干净检出时不存在则跳过）
     pack = ROOT / "content" / "pack"
     if pack.exists():

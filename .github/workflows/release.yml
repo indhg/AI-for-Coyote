@@ -36,6 +36,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller opencv-python numpy pywebview
 
       - name: 打包与组装
+        id: package
         shell: pwsh
         env:
           PYTHONIOENCODING: utf-8
@@ -48,8 +49,12 @@ jobs:
           python packaging/build_release.py $ver --ci 2>&1 | Tee-Object -FilePath build_log.txt
           if ($LASTEXITCODE -ne 0) { Get-Content build_log.txt -Tail 40; exit 1 }
           Get-ChildItem build_release/*.zip | ForEach-Object { Write-Output "ZIP=$($_.FullName)" }
+          # 内容目录不在公共仓库：缺失说明这是“纯代码构建”，不该发布空内容包
+          $hasContent = (Test-Path content/pure) -or (Test-Path content/roles) -or (Test-Path content/pack)
+          echo "has_content=$hasContent" >> $env:GITHUB_OUTPUT
 
       - name: 编译安装包（Inno Setup）
+        if: steps.package.outputs.has_content == 'true'
         shell: pwsh
         run: |
           choco install innosetup -y --no-progress
@@ -57,6 +62,7 @@ jobs:
           Get-ChildItem build_release/*.exe | ForEach-Object { Write-Output "SETUP=$($_.FullName)" }
 
       - name: 上传 Release
+        if: steps.package.outputs.has_content == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: |
