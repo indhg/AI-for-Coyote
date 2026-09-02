@@ -12,6 +12,7 @@ import logging
 
 from .config import reload_character
 from .safety import SafetyManager
+from .ui_en import describe_en, reason_en
 
 logger = logging.getLogger("ai-for-coyote.game")
 
@@ -482,21 +483,42 @@ class GameLoop:
         if not isinstance(actions, list):
             return executed, dropped
 
+        # EN 模式：把发给页面的执行说明/拒绝原因换成英文（T051 §1.5/§4.2）
+        en = str((self.cfg.get("character") or {}).get("lang") or "zh") == "en"
+
         ready = self.backend.ready()
         dry_run = self.safety.dry_run
 
         for action in actions:
             if not isinstance(action, dict):
-                dropped.append({"action": action, "reason": "动作必须是 JSON 对象"})
+                dropped.append(
+                    {
+                        "action": action,
+                        "reason": (
+                            reason_en("动作必须是 JSON 对象") if en else "动作必须是 JSON 对象"
+                        ),
+                    }
+                )
                 continue
             ok, reason, cmd = self.safety.validate(action)
             if not ok:
+                if en:
+                    reason = reason_en(reason)
                 dropped.append({"action": action, "reason": reason})
                 logger.warning("动作被安全层拒绝: %s -> %s", action, reason)
                 continue
 
             if not ready and not dry_run:
-                dropped.append({"action": action, "reason": "设备未连接（无 clientId/slotId）"})
+                dropped.append(
+                    {
+                        "action": action,
+                        "reason": (
+                            reason_en("设备未连接（无 clientId/slotId）")
+                            if en
+                            else "设备未连接（无 clientId/slotId）"
+                        ),
+                    }
+                )
                 continue
 
             # AI 回合：强度动作按玩家强度档倍率修正（手动操作已在调用处传 apply_scale=False）
@@ -523,7 +545,7 @@ class GameLoop:
                 if cmd.get("channel") in ("A", "B"):
                     self.patterns[cmd["channel"]] = cmd.get("pattern")
                 self.safety.record(cmd)
-                label = self._describe(cmd)
+                label = describe_en(cmd) if en else self._describe(cmd)
                 executed.append({"action": action, "reason": reason, "sent": sent, "label": label})
                 logger.info("执行动作: %s（循环播放中）", label)
                 continue
@@ -545,7 +567,7 @@ class GameLoop:
             if ready and not dry_run:
                 sent = await self.backend.apply(cmd)
             self.safety.record(cmd)
-            label = self._describe(cmd)
+            label = describe_en(cmd) if en else self._describe(cmd)
             executed.append({"action": action, "reason": reason, "sent": sent, "label": label})
             logger.info(
                 "%s执行动作: %s（%s）",

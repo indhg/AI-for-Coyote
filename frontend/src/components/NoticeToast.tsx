@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useApp } from "../store";
+import { useT } from "../i18n";
 
 /** 公告浮窗：右下角卡片；勾选「下次更新前不再提示」后按版本号记忆，升级到新版本会再弹。 */
 const STORE_KEY = "notice_dismissed_version";
@@ -12,6 +13,7 @@ export default function NoticeToast({
   /** true = 用户从帮助里主动点开公告，无视"本版已看"记忆强制弹出 */
   force?: boolean;
 }) {
+  const t = useT();
   const version = useApp((st) => st.state?.config_info?.version ?? "");
   const [closed, setClosed] = useState(false);
   const [dontShow, setDontShow] = useState(false);
@@ -46,28 +48,28 @@ export default function NoticeToast({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="max-h-[90vh] w-[360px] max-w-[92vw] overflow-y-auto rounded-[16px] border border-accent/60 bg-panel p-5 shadow-[0_8px_40px_rgba(0,0,0,0.6)]">
         <div className="mb-3 flex items-center">
-          <span className="text-[18px] font-bold text-accent">公告</span>
+          <span className="text-[18px] font-bold text-accent">{t("公告")}</span>
         </div>
         <div className="mb-4 space-y-3 text-[13px] leading-relaxed text-text">
           <section className="rounded-[10px] border border-accent/50 bg-accent/5 px-3 py-2.5">
             <p className="mb-1 text-center text-[15px] font-bold text-accent">
-              本软件完全免费
+              {t("本软件完全免费")}
             </p>
             <p className="text-center leading-relaxed">
-              <span className="font-bold text-bad">⚠ 任何以本软件名义要求付费的版本均为盗版</span>
+              <span className="font-bold text-bad">{t("⚠ 任何以本软件名义要求付费的版本均为盗版")}</span>
             </p>
             <p className="mt-1.5 border-t border-line/60 pt-1.5 text-[12px] text-muted">
-              未经授权，禁止转载、倒卖、二次分发或制作衍生发布包。
+              {t("未经授权，禁止转载、倒卖、二次分发或制作衍生发布包。")}
             </p>
           </section>
           <section>
-            <h4 className="mb-1 font-semibold text-accent">内容版本说明</h4>
-            <p>拓展包及其他 NSFW 内容属于独立的 18+ 内容范围，与主仓库分开维护。地牢内容目前仍在开发中，暂不作为公开发布内容。</p>
+            <h4 className="mb-1 font-semibold text-accent">{t("内容版本说明")}</h4>
+            <p>{t("拓展包及其他 NSFW 内容属于独立的 18+ 内容范围，与主仓库分开维护。地牢内容目前仍在开发中，暂不作为公开发布内容。")}</p>
           </section>
           <section>
-            <h4 className="mb-1 font-semibold text-accent">作者主页</h4>
+            <h4 className="mb-1 font-semibold text-accent">{t("作者主页")}</h4>
             <p>
-              欢迎通过作者主页获取更新信息或支持作者：{" "}
+              {t("欢迎通过作者主页获取更新信息或支持作者：")}{" "}
               <a
                 href="https://x.com/cinnanirch"
                 target="_blank"
@@ -87,13 +89,13 @@ export default function NoticeToast({
               onChange={(e) => setDontShow(e.target.checked)}
               className="h-3 w-3 accent-[#f7d97a]"
             />
-            下次更新前不再提示
+            {t("下次更新前不再提示")}
           </label>
           <button
             onClick={dismiss}
             className="rounded-lg bg-accent px-4 py-1.5 text-[13px] font-semibold text-ink transition-opacity hover:opacity-90"
           >
-            知道了
+            {t("知道了")}
           </button>
         </div>
       </div>

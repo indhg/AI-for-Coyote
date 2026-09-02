@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useApp, useDungeon } from "../store";
+import { useT } from "../i18n";
 import type { DungeonPack, DungeonRender } from "../types";
 import iconEncounter from "../assets/dungeon-icons/encounter.png";
 import iconElite from "../assets/dungeon-icons/elite.png";
@@ -248,6 +249,7 @@ function Lobby(props: {
   error: string | null;
   onStart: () => void;
 }) {
+  const t = useT();
   const { packs, themes, setThemes, floors, setFloors, level, setLevel, busy, error, onStart } = props;
   const themeIds = [...new Set(packs.flatMap((p) => p.themes))];
   // 主题 id → 中文标题（pack.title）
@@ -262,20 +264,20 @@ function Lobby(props: {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-5 pb-20">
       <div className="mb-4">
-        <h2 className="text-2xl font-bold text-accent">紫金地牢</h2>
-        <p className="mt-1 text-sm text-muted">一座变幻莫测的地下城…</p>
+        <h2 className="text-2xl font-bold text-accent">{t("紫金地牢")}</h2>
+        <p className="mt-1 text-sm text-muted">{t("一座变幻莫测的地下城…")}</p>
       </div>
 
       <Section label="本局主题（至少选择 3 项）">
-        {themeIds.length === 0 && <p className="text-sm text-faint">暂无已装主题包</p>}
+        {themeIds.length === 0 && <p className="text-sm text-faint">{t("暂无已装主题包")}</p>}
         <div className="flex flex-wrap gap-2">
           {/* 基础（锁定）：代表基础包集合（地牢刻印 + 淫纹），必选、不出现在可选项里 */}
           <button
             disabled
-            title="地牢刻印、淫纹（基础包，必选）"
+            title={t("地牢刻印、淫纹（基础包，必选）")}
             className="cursor-default rounded-lg border border-arcane bg-arcane/15 px-3.5 py-2 text-sm text-arcane"
           >
-            基础
+            {t("基础")}
           </button>
           {themeIds
             .filter((id) => !BASE_THEMES.includes(id))
@@ -294,7 +296,7 @@ function Lobby(props: {
                       : "border-line text-muted hover:border-arcane hover:text-text"
                   }`}
                 >
-                  {titleOf(id)}
+                  {t(titleOf(id))}
                 </button>
               );
             })}
@@ -313,7 +315,7 @@ function Lobby(props: {
                   : "border-line text-muted hover:border-accent2 hover:text-text"
               }`}
             >
-              {f} 层
+              {t("{f} 层", { f })}
             </button>
           ))}
         </div>
@@ -331,7 +333,7 @@ function Lobby(props: {
                   : "border-line text-muted hover:border-accent2 hover:text-text"
               }`}
             >
-              {l}
+              {t(l)}
             </button>
           ))}
         </div>
@@ -346,21 +348,24 @@ function Lobby(props: {
       <button
         onClick={onStart}
         disabled={!DUNGEON_PLAYABLE || themes.length < MIN_THEMES || busy}
-        title={DUNGEON_PLAYABLE ? undefined : "紫金地牢尚未完工，暂不能开始冒险"}
+        title={DUNGEON_PLAYABLE ? undefined : t("紫金地牢尚未完工，暂不能开始冒险")}
         className="mt-6 rounded-[12px] bg-accent2 px-5 py-3 text-base font-bold text-ink transition-opacity disabled:opacity-40"
       >
         {DUNGEON_PLAYABLE
           ? busy
-            ? "正在开启…"
+            ? t("正在开启…")
             : themes.length < MIN_THEMES
-              ? `再选 ${MIN_THEMES - themes.length} 个主题（至少 ${MIN_THEMES} 个）`
-              : "进入地牢 ▶"
-          : "地牢建设中 · 暂未开放"}
+              ? t("再选 {n} 个主题（至少 {min} 个）", {
+                  n: MIN_THEMES - themes.length,
+                  min: MIN_THEMES,
+                })
+              : t("进入地牢 ▶")
+          : t("地牢建设中 · 暂未开放")}
       </button>
       <p className="mt-2 text-xs text-faint">
         {DUNGEON_PLAYABLE
-          ? "进入前需确认 18+ 同意（可勾选不再提示）"
-          : "紫金地牢尚未完工，内容打磨完成后开放"}
+          ? t("进入前需确认 18+ 同意（可勾选不再提示）")
+          : t("紫金地牢尚未完工，内容打磨完成后开放")}
       </p>
     </div>
   );
@@ -372,40 +377,41 @@ function ConsentModal(props: {
   onCancel: () => void;
   onConfirm: (noMore: boolean) => void;
 }) {
+  const t = useT();
   const [agree, setAgree] = useState(false);
   const [noMore, setNoMore] = useState(false);
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-6">
       <div className="w-full max-w-md rounded-[16px] border border-line bg-panel p-6 shadow-2xl">
-        <h3 className="text-lg font-bold text-accent">开始前确认</h3>
+        <h3 className="text-lg font-bold text-accent">{t("开始前确认")}</h3>
         <ul className="mt-4 space-y-2 text-sm leading-relaxed text-text">
-          <li>· 虚构内容，双方成人，可随时离开</li>
-          <li>· 空格长按 / 底栏急停会立即清零设备</li>
-          <li>· 体感受本机上限与通道开关约束</li>
-          <li>· 通道字母 ≠ 身体部位</li>
+          <li>{t("· 虚构内容，双方成人，可随时离开")}</li>
+          <li>{t("· 空格长按 / 底栏急停会立即清零设备")}</li>
+          <li>{t("· 体感受本机上限与通道开关约束")}</li>
+          <li>{t("· 通道字母 ≠ 身体部位")}</li>
         </ul>
         <label className="mt-5 flex items-center gap-2 text-sm text-text">
           <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
-          我已成年且自愿
+          {t("我已成年且自愿")}
         </label>
         <label className="mt-2 flex items-center gap-2 text-xs text-muted">
           <input type="checkbox" checked={noMore} onChange={(e) => setNoMore(e.target.checked)} />
-          不再显示此提示
+          {t("不再显示此提示")}
         </label>
         <div className="mt-6 flex gap-3">
           <button
             onClick={props.onCancel}
             className="flex-1 rounded-[10px] border border-line px-4 py-2.5 text-sm text-muted hover:text-text"
           >
-            取消
+            {t("取消")}
           </button>
           <button
             onClick={() => props.onConfirm(noMore)}
             disabled={!agree}
             className="flex-1 rounded-[10px] bg-accent2 px-4 py-2.5 text-sm font-bold text-ink disabled:opacity-40"
           >
-            确认进入
+            {t("确认进入")}
           </button>
         </div>
       </div>
@@ -433,6 +439,7 @@ function RunView(props: {
   onAdvance: (choiceId?: string, text?: string) => void;
   onRestart: () => void;
 }) {
+  const t = useT();
   const { render, trail, busy, error, restBanner, onDismissRest, onAdvance, onRestart } = props;
   const ev = render.event;
   const rs = render.run.run_state;
@@ -458,16 +465,21 @@ function RunView(props: {
       {restBanner && (
         <div className="border-b border-arcane/40 bg-arcane/10 px-5 py-3">
           <p className="text-sm font-semibold text-arcane">
-            第 {render.map ? render.map.floor - 1 : render.run.floor_index} 层完成
+            {t("第 {n} 层完成", {
+              n: render.map ? render.map.floor - 1 : render.run.floor_index,
+            })}
           </p>
           <p className="mt-0.5 text-xs text-muted">
-            已走 {render.map?.visited_nodes.length ?? 0} 个节点 · 热 {rs.heat ?? 0} · 本局已自动存档
+            {t("已走 {n} 个节点 · 热 {heat} · 本局已自动存档", {
+              n: render.map?.visited_nodes.length ?? 0,
+              heat: rs.heat ?? 0,
+            })}
           </p>
           <button
             onClick={onDismissRest}
             className="mt-2 rounded-[8px] bg-accent2 px-3 py-1 text-xs font-semibold text-ink"
           >
-            下行 ↓
+            {t("下行 ↓")}
           </button>
         </div>
       )}
@@ -476,11 +488,17 @@ function RunView(props: {
         <div className="flex items-center justify-between">
           <span className="text-sm text-text">
             {render.map
-              ? `第 ${render.map.floor} 层 · 本层已走 ${render.map.visited_nodes.length} 节点`
-              : `第 ${render.run.floor_index} 层 · 第 ${render.run.room_index} 房`}
+              ? t("第 {f} 层 · 本层已走 {n} 节点", {
+                  f: render.map.floor,
+                  n: render.map.visited_nodes.length,
+                })
+              : t("第 {f} 层 · 第 {r} 房", {
+                  f: render.run.floor_index,
+                  r: render.run.room_index,
+                })}
           </span>
           {render.map && (
-            <span className="text-xs text-muted">当前事件：{ev.title}</span>
+            <span className="text-xs text-muted">{t("当前事件：{title}", { title: ev.title })}</span>
           )}
         </div>
         {render.map ? (
@@ -495,7 +513,7 @@ function RunView(props: {
                     alt={type}
                     className="h-4 w-4 rounded-full object-cover"
                   />
-                  <span>·行{r}</span>
+                  <span>{t("·行{r}", { r })}</span>
                 </span>
               );
             })}
@@ -508,16 +526,16 @@ function RunView(props: {
       {/* 状态条 */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-line px-5 py-2 text-sm">
         <span className="text-text">HP {hearts(rs.hp)}</span>
-        <span className="text-text">意志 {bars(rs.will, 6)}</span>
+        <span className="text-text">{t("意志 {bars}", { bars: bars(rs.will, 6) })}</span>
         {Object.keys(rs.affinity).length > 0 && (
           <span className="text-text">
-            亲和{" "}
+            {t("亲和")}{" "}
             {Object.entries(rs.affinity)
               .map(([k, v]) => `${k} ${bars(v, 5)}`)
               .join("  ")}
           </span>
         )}
-        <span className="text-muted">体感[{render.feedback.hint}]</span>
+        <span className="text-muted">{t("体感[{hint}]", { hint: render.feedback.hint })}</span>
       </div>
 
       {/* 滚动历史流：旧事件 + 当前事件 */}
@@ -570,7 +588,7 @@ function RunView(props: {
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submitText()}
-              placeholder="描述你的行动……"
+              placeholder={t("描述你的行动……")}
               disabled={busy}
               className="min-w-0 flex-1 rounded-[10px] border border-line bg-field px-3 py-2 text-sm text-text outline-none focus:border-arcane disabled:opacity-40"
             />
@@ -579,15 +597,15 @@ function RunView(props: {
               disabled={busy || !text.trim()}
               className="rounded-[10px] bg-accent2 px-4 py-2 text-sm font-semibold text-ink disabled:opacity-40"
             >
-              说出
+              {t("说出")}
             </button>
           </div>
         )}
         <div className="mt-3 flex items-center justify-between">
           <button onClick={onRestart} className="text-xs text-faint hover:text-muted">
-            回大厅（结束本局）
+            {t("回大厅（结束本局）")}
           </button>
-          <span className="text-xs text-faint">{busy ? "地牢主正在写下这一房…" : ""}</span>
+          <span className="text-xs text-faint">{busy ? t("地牢主正在写下这一房…") : ""}</span>
         </div>
       </div>
     </div>
@@ -601,6 +619,7 @@ function EventCardView(props: {
   skipped?: boolean;
   onToggleSkip?: () => void;
 }) {
+  const t = useT();
   const { entry, current, skipped, onToggleSkip } = props;
   return (
     <div
@@ -617,14 +636,14 @@ function EventCardView(props: {
           <span className="rounded-md border border-arcane/50 bg-arcane/10 px-2 py-0.5 text-arcane">
             {entry.theme_id}
           </span>
-          <span className="rounded-md border border-line px-2 py-0.5 text-muted">{kindLabel(entry.kind)}</span>
+          <span className="rounded-md border border-line px-2 py-0.5 text-muted">{t(kindLabel(entry.kind))}</span>
           <span className="rounded-md border border-line px-2 py-0.5 text-muted">
-            {entry.content_level} · 第 {entry.tier} 层
+            {t("{level} · 第 {tier} 层", { level: t(entry.content_level), tier: entry.tier })}
           </span>
         </div>
         {current && (
           <button onClick={onToggleSkip} className="text-xs text-muted hover:text-text">
-            {skipped ? "展开描写" : "跳过描写"}
+            {skipped ? t("展开描写") : t("跳过描写")}
           </button>
         )}
       </div>
@@ -645,12 +664,12 @@ function EventCardView(props: {
         </div>
       )}
       {entry.executed.length === 0 && current && (
-        <p className="mt-2 text-xs text-faint">体感[{entry.hint}]</p>
+        <p className="mt-2 text-xs text-faint">{t("体感[{hint}]", { hint: entry.hint })}</p>
       )}
 
       {/* 历史条目显示玩家选择 */}
       {!current && entry.chosen && (
-        <p className="mt-2 text-xs text-muted">你选择了：「{entry.chosen}」</p>
+        <p className="mt-2 text-xs text-muted">{t("你选择了：「{chosen}」", { chosen: entry.chosen })}</p>
       )}
     </div>
   );
@@ -658,6 +677,7 @@ function EventCardView(props: {
 
 /* ============================== 结局 ============================== */
 function EndingView(props: { render: DungeonRender; trail: TrailEntry[]; onRestart: () => void }) {
+  const t = useT();
   const { render, trail, onRestart } = props;
   const rs = render.run.run_state;
   if (!render.event || !render.narrative) return null;
@@ -670,30 +690,36 @@ function EndingView(props: { render: DungeonRender; trail: TrailEntry[]; onResta
             {render.narrative.text}
           </p>
           <div className="mt-4 text-sm text-muted">
-            第 {render.run.floor_index} 层 · 房间 {render.run.room_index}
+            {t("第 {f} 层 · 房间 {r}", {
+              f: render.run.floor_index,
+              r: render.run.room_index,
+            })}
             <br />
-            HP {hearts(rs.hp)} · 意志 {bars(rs.will, 6)}
+            {t("HP {h} · 意志 {w}", {
+              h: hearts(rs.hp),
+              w: bars(rs.will, 6),
+            })}
           </div>
-          <p className="mt-3 text-xs text-faint">体感已清理</p>
+          <p className="mt-3 text-xs text-faint">{t("体感已清理")}</p>
           <div className="mt-6 flex gap-3">
             <button
               onClick={onRestart}
               className="flex-1 rounded-[10px] bg-accent2 px-4 py-2.5 text-sm font-bold text-ink"
             >
-              再开一局
+              {t("再开一局")}
             </button>
             <button
               onClick={onRestart}
               className="flex-1 rounded-[10px] border border-line px-4 py-2.5 text-sm text-muted hover:text-text"
             >
-              回大厅
+              {t("回大厅")}
             </button>
           </div>
         </div>
 
         {trail.length > 0 && (
           <div className="mt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-faint">本局足迹</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-faint">{t("本局足迹")}</p>
             {trail.map((t, i) => (
               <div key={i} className="mb-2 rounded-[10px] border border-line bg-panel p-3">
                 <p className="text-sm font-medium text-text">{t.title}</p>
@@ -711,9 +737,10 @@ function EndingView(props: { render: DungeonRender; trail: TrailEntry[]; onResta
 
 /* ============================== 小部件 ============================== */
 function Section(props: { label: string; children: React.ReactNode }) {
+  const t = useT();
   return (
     <div className="mb-5">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-faint">{props.label}</p>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-faint">{t(props.label)}</p>
       {props.children}
     </div>
   );

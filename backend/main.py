@@ -227,6 +227,8 @@ class AppState:
         state["layout"] = dict(self.layout)
         state["update"] = self.update.to_state(_app_version())
         state["character"] = self.cfg["character"]["name"]
+        state["lang"] = str(self.cfg["character"].get("lang") or "zh")
+        state["en_available"] = bool(self.cfg["character"].get("en_available"))
         state["dungeon"] = self.dungeon.to_state()
         state["config_info"] = {
             "model": self.cfg["llm"]["model"],
@@ -649,6 +651,25 @@ def make_app() -> FastAPI:
         save_character_runtime(cfg, player_nick=nick)
         await state.broadcast()
         return JSONResponse({"ok": True, "player_nick": cfg["character"]["player_nick"]})
+
+    @app.post("/api/character/lang")
+    async def api_character_lang(body: dict) -> JSONResponse:
+        """中英内容切换：{lang: "zh"|"en"}，保存并热加载；英文稿缺失时保持中文。"""
+        lang = str(body.get("lang") or "").strip()
+        if lang not in ("zh", "en"):
+            return JSONResponse({"error": "lang 只能是 zh/en"}, status_code=400)
+        save_character_runtime(cfg, lang=lang)
+        # 目标角色无英文稿：自动退回中文（前端 EN 档本就禁用，此为多端/切角色竞态兜底）
+        if lang == "en" and not cfg["character"].get("en_available"):
+            save_character_runtime(cfg, lang="zh")
+        await state.broadcast()
+        return JSONResponse(
+            {
+                "ok": True,
+                "lang": str(cfg["character"].get("lang") or "zh"),
+                "en_available": bool(cfg["character"].get("en_available")),
+            }
+        )
 
     # （DLC 导入机制已随闭源移除：内容全部内置 content/roles/ 与 content/pack/dungeon/）
 

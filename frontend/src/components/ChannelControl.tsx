@@ -3,8 +3,10 @@ import { Link2, Minus, Pause, Play, Plus, Square } from "lucide-react";
 import { run, targets } from "../commands";
 import { api } from "../api";
 import { useApp, useLayout } from "../store";
+import { useT } from "../i18n";
 
 export default function ChannelControl() {
+  const t = useT();
   const s = useApp((st) => st.state);
   const focusCh = useApp((st) => st.focusCh);
   const linkOn = useApp((st) => st.linkOn);
@@ -19,7 +21,7 @@ export default function ChannelControl() {
 
   return (
     <div className="mb-0 flex min-h-0 flex-none flex-col rounded-[14px] border border-line bg-panel p-3">
-      <h3 className="mb-2 flex-none text-[12px] font-semibold tracking-[1.5px] text-muted">A / B 双通道</h3>
+      <h3 className="mb-2 flex-none text-[12px] font-semibold tracking-[1.5px] text-muted">{t("A / B 双通道")}</h3>
       <div
         className={`grid items-start gap-2 ${
           compact ? "grid-cols-1" : "grid-cols-[1fr_56px_1fr]"
@@ -30,7 +32,7 @@ export default function ChannelControl() {
           <div className="flex items-center justify-center">
             <button
               onClick={toggleLink}
-              title="A/B 联动"
+              title={t("A/B 联动")}
               className={`h-[48px] w-[48px] rounded-[12px] border text-xl transition-colors ${
                 linkOn ? "border-accent bg-accent text-ink" : "border-line bg-panel text-muted"
               }`}
@@ -58,6 +60,7 @@ function ChannelCard({
   onFocus: () => void;
   preset: string | null;
 }) {
+  const t = useT();
   const s = useApp((st) => st.state);
   const cur = s?.current?.[ch] ?? 0;
   const pulsing = !!s?.pulse_active?.[ch];
@@ -113,22 +116,22 @@ function ChannelCard({
     >
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[13px] font-bold">
-          <span className="flex-none">{ch} 通道</span>
-          <span className="truncate text-[11px] font-semibold text-accent">{dev?.name ?? "未设置"}</span>
+          <span className="flex-none">{t("{ch} 通道", { ch })}</span>
+          <span className="truncate text-[11px] font-semibold text-accent">{t(dev?.name ?? "未设置")}</span>
         </span>
         <button
           onClick={(e) => {
             e.stopPropagation();
             void toggleChan();
           }}
-          title={chanOn ? `关闭 ${ch} 通道` : `开启 ${ch} 通道`}
+          title={t(chanOn ? "关闭 {ch} 通道" : "开启 {ch} 通道", { ch })}
           className={`h-6 w-8 flex-none shrink-0 rounded-[6px] border text-[11px] font-semibold leading-none transition-colors ${
             chanOn
               ? "border-line bg-panel2 text-muted hover:text-text"
               : "border-bad/60 bg-bad/20 text-bad"
           }`}
         >
-          {chanOn ? "开" : "关"}
+          {t(chanOn ? "开" : "关")}
         </button>
       </div>
       <div className="flex items-baseline justify-between">
@@ -137,18 +140,18 @@ function ChannelCard({
           /
           <button
             onClick={() => setCapOpen((v) => !v)}
-            title="调整该通道强度上限"
+            title={t("调整该通道强度上限")}
             className="hover:text-accent"
           >
             {cap}
           </button>
-          <span className="ml-1 align-middle text-[10px] font-normal text-faint">上限可调</span>
+          <span className="ml-1 align-middle text-[10px] font-normal text-faint">{t("上限可调")}</span>
           {req !== null && req !== undefined && req !== cur && (
-            <small className="text-[11px] font-normal text-warn"> 设定{req}</small>
+            <small className="text-[11px] font-normal text-warn"> {t("设定{req}", { req })}</small>
           )}
           {capOpen && (
             <div className="absolute left-0 top-full z-40 mt-1 flex w-40 flex-col gap-1 rounded-[8px] border border-line bg-panel p-2 shadow-xl shadow-black/60">
-              <span className="text-[10px] text-muted">强度上限（1~{hardCap}）</span>
+              <span className="text-[10px] text-muted">{t("强度上限（1~{hardCap}）", { hardCap })}</span>
               <input
                 type="range"
                 min={1}
@@ -165,7 +168,13 @@ function ChannelCard({
           )}
         </div>
         <span className="text-[10px] text-muted">
-          {!chanOn ? "已关闭" : active ? (pulsing ? "▶ " + (pattern ?? preset ?? "播放中") : "工作中") : "未工作"}
+          {!chanOn
+            ? t("已关闭")
+            : active
+              ? pulsing
+                ? "▶ " + t(pattern ?? preset ?? "播放中")
+                : t("工作中")
+              : t("未工作")}
         </span>
       </div>
       <input
@@ -178,8 +187,8 @@ function ChannelCard({
         onKeyUp={commit}
       />
       <div className="flex items-center justify-between gap-1">
-        <Btn icon={<Minus size={12} />} label="" title={`${ch} 减弱`} onClick={() => run("add_strength", { delta: -10 }, targets(ch))} />
-        <Btn icon={<Plus size={12} />} label="" title={`${ch} 增强`} onClick={() => run("add_strength", { delta: 10 }, targets(ch))} />
+        <Btn icon={<Minus size={12} />} label="" title={t("{ch} 减弱", { ch })} onClick={() => run("add_strength", { delta: -10 }, targets(ch))} />
+        <Btn icon={<Plus size={12} />} label="" title={t("{ch} 增强", { ch })} onClick={() => run("add_strength", { delta: 10 }, targets(ch))} />
         <Btn
           icon={pulsing ? <Pause size={12} /> : <Play size={12} />}
           label={pulsing ? "暂停" : "播放"}
@@ -212,9 +221,10 @@ function Btn({
   danger?: boolean;
   onClick: () => void;
 }) {
+  const t = useT();
   return (
     <button
-      title={title}
+      title={title ? t(title) : undefined}
       onClick={onClick}
       className={`flex items-center gap-1 rounded-[8px] border px-2 py-1 text-[11px] transition-colors ${
         accent
@@ -225,7 +235,7 @@ function Btn({
       }`}
     >
       {icon}
-      {label}
+      {t(label)}
     </button>
   );
 }

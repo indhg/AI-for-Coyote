@@ -86,6 +86,8 @@ export interface FullState {
   ui: { quick_strengths: number[]; default_temp_s: number; default_pulse_s: number };
   dry_run: boolean;
   test_mode: boolean;
+  lang: string;
+  en_available: boolean;
   relay_status: string;
   controller_id: string | null;
   connected: boolean;

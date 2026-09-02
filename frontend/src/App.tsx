@@ -14,11 +14,13 @@ import { PairView, SettingsView, HelpView } from "./components/views";
 import { api } from "./api";
 import { useApp, useChat, useLayout } from "./store";
 import { doEstop } from "./commands";
+import { useT } from "./i18n";
 
 /** 空格长按触发急停的时长（毫秒，与进度条动画同步） */
 const ESTOP_HOLD_MS = 1000;
 
 export default function App() {
+  const t = useT();
   const [view, setView] = useState<ViewName>("control");
   const [board, setBoard] = useState<BoardName>("chat");
   // 进入地牢：默认关自动运行（传感器随之暂停）；不动摄像头/麦克风各自的开关状态，
@@ -138,6 +140,16 @@ export default function App() {
       .then((s) => {
         useApp.getState().setState(s);
         if (s.config_info?.title) document.title = s.config_info.title;
+        // 语言记忆同步：localStorage 里存过 中/EN 且与后端不一致时补一次切换
+        let saved: string | null = null;
+        try {
+          saved = localStorage.getItem("lang");
+        } catch {
+          /* 记忆失败不阻塞 */
+        }
+        if (saved && (saved === "zh" || saved === "en") && s.lang && saved !== s.lang) {
+          void api.setLang(saved as "zh" | "en").catch(() => {});
+        }
       })
       .catch(() => {});
     // WebSocket 实时同步
@@ -234,13 +246,12 @@ export default function App() {
             {mode !== "wide" && rightOpen && (
               <div className="absolute inset-y-0 right-0 z-30 flex w-[min(420px,92vw)] flex-col border-l border-line bg-ink2">
                 <div className="flex flex-none items-center justify-between border-b border-line px-3 py-1.5">
-                  <span className="text-[12px] font-semibold text-muted">设备 / 视图</span>
+                  <span className="text-[12px] font-semibold text-muted">{t("设备 / 视图")}</span>
                   <button
                     onClick={() => setRightOpen(false)}
                     className="rounded-md border border-line bg-panel2 px-2 py-0.5 text-[11px] text-muted transition-colors hover:border-line2 hover:text-text"
                   >
-                    收起 ✕
-                  </button>
+                    {t("收起 ✕")}                  </button>
                 </div>
                 <div className="min-h-0 flex-1">{rightView}</div>
               </div>
@@ -249,13 +260,12 @@ export default function App() {
             {mode === "narrow" && leftOpen && (
               <div className="absolute inset-y-0 left-0 z-30 flex w-[min(320px,90vw)] flex-col border-r border-line bg-ink2">
                 <div className="flex flex-none items-center justify-between border-b border-line px-3 py-1.5">
-                  <span className="text-[12px] font-semibold text-muted">角色 / 入口</span>
+                  <span className="text-[12px] font-semibold text-muted">{t("角色 / 入口")}</span>
                   <button
                     onClick={() => setLeftOpen(false)}
                     className="rounded-md border border-line bg-panel2 px-2 py-0.5 text-[11px] text-muted transition-colors hover:border-line2 hover:text-text"
                   >
-                    收起 ✕
-                  </button>
+                    {t("收起 ✕")}                  </button>
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   <Sidebar view={view} onView={setView} board={board} />
@@ -267,7 +277,7 @@ export default function App() {
               <div className="absolute inset-y-0 right-0 z-40 flex items-center">
                 <button
                   onClick={() => setRightOpen((o) => !o)}
-                  title={rightOpen ? "收起设备面板" : "打开设备面板"}
+                  title={rightOpen ? t("收起设备面板") : t("打开设备面板")}
                   className="rounded-l-md border border-r-0 border-line bg-ink2 px-1.5 py-3 text-[13px] text-muted transition-colors hover:text-accent"
                 >
                   {rightOpen ? "›" : "‹"}
@@ -278,7 +288,7 @@ export default function App() {
               <div className="absolute inset-y-0 left-0 z-40 flex items-center">
                 <button
                   onClick={() => setLeftOpen((o) => !o)}
-                  title={leftOpen ? "收起角色面板" : "打开角色面板"}
+                  title={leftOpen ? t("收起角色面板") : t("打开角色面板")}
                   className="rounded-r-md border border-l-0 border-line bg-ink2 px-1.5 py-3 text-[13px] text-muted transition-colors hover:text-accent"
                 >
                   {leftOpen ? "«" : "»"}
@@ -318,8 +328,8 @@ export default function App() {
         <div className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center">
           <div className="w-64 rounded-[10px] border border-line bg-panel2 px-4 py-3 shadow-lg">
             <div className="flex items-baseline justify-between">
-              <span className="text-sm font-semibold text-text">「急停中…」</span>
-              <span className="text-xs text-muted">松开取消</span>
+              <span className="text-sm font-semibold text-text">{t("「急停中…」")}</span>
+              <span className="text-xs text-muted">{t("松开取消")}</span>
             </div>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink3">
               <div

@@ -22,10 +22,54 @@ def _preset_text(state: dict) -> str:
     return "、".join(parts)
 
 
+def _system_prompt_en(character: dict, state: dict, presets: str) -> str:
+    """英文模式脚手架：角色稿（-EN.md）已自含风格/语料/输出格式与 op 规范，
+    程序只补实时状态与通用安全规则（文案英文，保持与中文版同等的安全语义）。"""
+    caps = state.get("effective_caps", {"A": 100, "B": 100})
+    status = state.get("relay_status", "disconnected")
+    cur = state.get("current") or {}
+    nick = character.get("player_nick") or "player"
+    lines = [
+        f"You are playing “{character.get('name', '')}”. Your character sheet below defines style,"
+        " line kit, corpus, output format and device-op rules — follow it strictly, reply in English.",
+        character.get("prompt", "").strip(),
+        "",
+    ]
+    if character.get("prompt_file"):
+        lines.append(
+            "Your character sheet already contains the full output-format and device-op spec; follow it exactly."
+        )
+    lines += [
+        "",
+        "【Live device state】relay: %s; channel A strength %s/%s; channel B strength %s/%s."
+        % (status, cur.get("A", 0), caps.get("A", 100), cur.get("B", 0), caps.get("B", 100)),
+        "【Addressing】You address the player as “%s” (or in-character pet terms only). The player calls you “%s”."
+        % (nick, character.get("role_title", "master")),
+    ]
+    note = str(character.get("profile_note") or "").strip()
+    if note:
+        lines.append(f"【Current profile】{note}")
+    if presets:
+        lines.append(
+            "【Waveforms】Available patterns (copy the exact name, never invent one): %s." % presets
+        )
+    lines += [
+        "",
+        "【Output】Reply as strict JSON per your sheet: the visible line goes in “line”"
+        " (stage directions in parentheses), device ops in “actions” (may be empty).",
+        "【Safety】Begging, “no” and fake resistance are play — keep teasing, never actually harmful."
+        " If the player repeatedly shows real distress, back the strength down noticeably and check on them."
+        " E-Stop / safeword is absolute: clear all device actions and break the scene immediately.",
+    ]
+    return "\n".join(lines)
+
+
 def build_system_prompt(character: dict, state: dict) -> str:
     """系统提示词 = 角色设定 + 指令 JSON 规范 + 实时状态。"""
     caps = state.get("effective_caps", {"A": 100, "B": 100})
     presets = _preset_text(state)
+    if str(character.get("lang")) == "en":
+        return _system_prompt_en(character, state, presets)
     lines = [
         f"你在扮演角色「{character.get('name', '')}」，以下是角色设定：",
         character.get("prompt", "").strip(),

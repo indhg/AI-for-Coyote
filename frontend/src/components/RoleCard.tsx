@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { api } from "../api";
 import { useApp } from "../store";
+import { useT } from "../i18n";
 import {
   ENTRIES,
   INTENSITY_BADGE_CLS,
@@ -19,6 +20,7 @@ const TRIAL_BADGE_KEY = "trial_badge_seen";
 
 // 侧边栏顶部的「当前入口卡」：显示当前角色一行；点开浮动小下拉——上段列入口（体验版/角色），下段强度三档
 export default function RoleCard() {
+  const t = useT();
   const role = useApp((st) => st.state?.role ?? "触手");
   const profile = useApp((st) => st.state?.profile ?? "纯爱");
   const intensity = useApp((st) => st.state?.intensity_level ?? "中");
@@ -81,7 +83,7 @@ export default function RoleCard() {
       await api.setProfile(e.role, e.profile);
       setListStep(false);
     } catch (ex) {
-      setErr(`切换失败：${(ex as Error).message}`);
+      setErr(t("切换失败：{msg}", { msg: (ex as Error).message }));
     }
   };
 
@@ -91,7 +93,7 @@ export default function RoleCard() {
     try {
       await api.setIntensity(lv);
     } catch (ex) {
-      setErr(`强度档切换失败：${(ex as Error).message}`);
+      setErr(t("强度档切换失败：{msg}", { msg: (ex as Error).message }));
     }
   };
 
@@ -100,7 +102,7 @@ export default function RoleCard() {
       <button
         className="flex w-full items-center gap-2.5 text-left"
         onClick={() => setOpen((v) => (v ? false : (setListStep(false), true)))}
-        title="切换角色入口与电击强度"
+        title={t("切换角色入口与电击强度")}
       >
         <span
           className={`relative flex h-9 w-9 flex-none items-center justify-center overflow-hidden rounded-[10px] border text-[16px] font-bold ${
@@ -110,24 +112,24 @@ export default function RoleCard() {
           {entryAvatar(current?.key ?? "") ? (
             <img
               src={entryAvatar(current?.key ?? "")!}
-              alt={current?.label ?? role}
+              alt={t(current?.label ?? role)}
               className="h-full w-full object-cover"
             />
           ) : (
-            (current?.label ?? role).slice(0, 1)
+            t(current?.label ?? role).slice(0, 1)
           )}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 text-[14px] font-semibold">
-            {current?.label ?? role}
+            {t(current?.label ?? role)}
             {current?.recommended && (
               <span className="flex-none rounded-md border border-accent/60 bg-accent/15 px-1.5 py-px text-[10px] font-bold text-accent">
-                推荐
+                {t("推荐")}
               </span>
             )}
             {current?.trial && !trialSeen && (
               <span className="flex-none rounded-md bg-accent px-1.5 py-px text-[10px] font-bold text-ink">
-                新手推荐
+                {t("新手推荐")}
               </span>
             )}
           </span>
@@ -135,7 +137,7 @@ export default function RoleCard() {
             <span
               className={`h-1.5 w-1.5 flex-none rounded-full ${INTENSITY_DOT_CLS[intensity] ?? ""}`}
             />
-            强度 · {intensity}
+            {t("强度 · {v}", { v: t(intensity) })}
           </span>
         </span>
         {open ? (
@@ -149,16 +151,16 @@ export default function RoleCard() {
         <div className="absolute left-0 right-0 top-full z-30 mt-2 rounded-[12px] border border-line bg-panel shadow-xl shadow-black/50">
           <div className="flex flex-col gap-2 p-3">
             <div className="relative flex flex-col gap-0.5">
-              <span className="px-1 text-[10px] font-medium tracking-wide text-muted">角色入口</span>
+              <span className="px-1 text-[10px] font-medium tracking-wide text-muted">{t("角色入口")}</span>
               <button
                 ref={rowRef}
                 onClick={() => setListStep((v) => !v)}
                 className="flex items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] transition-colors hover:bg-panel2"
-                title="展开入口列表"
+                title={t("展开入口列表")}
               >
                 <span className="flex-1 text-text">
-                  {current?.label ?? role}
-                  <span className="ml-1 text-[10px] text-muted">（点击换入口）</span>
+                  {t(current?.label ?? role)}
+                  <span className="ml-1 text-[10px] text-muted">{t("（点击换入口）")}</span>
                 </span>
                 {listStep ? (
                   <ChevronUp size={12} className="flex-none text-faint" />
@@ -185,20 +187,20 @@ export default function RoleCard() {
                       >
                         <span className="flex h-5 w-5 flex-none items-center justify-center overflow-hidden rounded-[5px]">
                           {entryAvatar(e.key) ? (
-                            <img src={entryAvatar(e.key)!} alt={e.label} className="h-full w-full object-cover" />
+                            <img src={entryAvatar(e.key)!} alt={t(e.label)} className="h-full w-full object-cover" />
                           ) : (
-                            <span className="text-[10px] font-bold">{e.label.slice(0, 1)}</span>
+                            <span className="text-[10px] font-bold">{t(e.label).slice(0, 1)}</span>
                           )}
                         </span>
-                        <span className="min-w-0 flex-1">{e.label}</span>
+                        <span className="min-w-0 flex-1">{t(e.label)}</span>
                         {e.recommended && (
                           <span className="flex-none rounded border border-accent/40 px-1 py-px text-[9px] font-bold text-accent">
-                            推荐
+                            {t("推荐")}
                           </span>
                         )}
                         {e.trial && !trialSeen && (
                           <span className="flex-none rounded bg-accent/15 px-1 py-px text-[9px] font-bold text-accent">
-                            新手推荐
+                            {t("新手推荐")}
                           </span>
                         )}
                         {active && <Check size={12} className="flex-none text-accent" />}
@@ -211,11 +213,11 @@ export default function RoleCard() {
 
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-medium tracking-wide text-muted">强度</span>
+                <span className="text-[10px] font-medium tracking-wide text-muted">{t("强度")}</span>
                 <span
                   className={`rounded-md border px-1.5 py-px text-[10px] ${INTENSITY_BADGE_CLS[intensity] ?? INTENSITY_BADGE_CLS["中"]}`}
                 >
-                  当前 ×{INTENSITY_SCALE_TEXT[intensity] ?? 1}
+                  {t("当前 ×{s}", { s: INTENSITY_SCALE_TEXT[intensity] ?? "1" })}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-1">
@@ -236,7 +238,7 @@ export default function RoleCard() {
                           selected ? "bg-ink" : (INTENSITY_DOT_CLS[lv] ?? "bg-faint")
                         }`}
                       />
-                      {lv}
+                      {t(lv)}
                     </button>
                   );
                 })}

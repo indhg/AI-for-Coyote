@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { api } from "../api";
 import { useApp } from "../store";
+import { useT } from "../i18n";
 
 /** 配件预设：选类型自动带出默认位置与强度基准（敏感配件基准低） */
 const PRESETS: { name: string; location: string; baseline: number }[] = [
@@ -11,23 +12,25 @@ const PRESETS: { name: string; location: string; baseline: number }[] = [
 ];
 
 export default function AccessoryConfig() {
+  const t = useT();
   return (
     <div className="mt-3 rounded-[14px] border border-line bg-panel p-3.5">
-      <div className="mb-2 text-[12px] font-semibold tracking-[1.5px] text-muted">配件设置</div>
+      <div className="mb-2 text-[12px] font-semibold tracking-[1.5px] text-muted">{t("配件设置")}</div>
       <div className="flex flex-col gap-2">
         <ChannelAccessory ch="A" />
         <ChannelAccessory ch="B" />
       </div>
       <p className="mt-2 text-[11px] leading-relaxed text-faint">
-        改动称谓的时候记得敲回车（Enter）
+        {t("改动称谓的时候记得敲回车（Enter）")}
         <br />
-        未工作的通道不会被描写。
+        {t("未工作的通道不会被描写。")}
       </p>
     </div>
   );
 }
 
 function ChannelAccessory({ ch }: { ch: "A" | "B" }) {
+  const t = useT();
   const dev = useApp((st) => st.state?.device_channels?.[ch]);
   // 本地乐观状态：点选立即生效（避免等服务器回包时闪回旧值/待适配）
   const [name, setName] = useState(dev?.name ?? "贴片");
@@ -77,10 +80,10 @@ function ChannelAccessory({ ch }: { ch: "A" | "B" }) {
       <span className="relative flex-none">
         <button
           onClick={() => setOpen((v) => !v)}
-          title="更换配件"
+          title={t("更换配件")}
           className="flex w-[86px] items-center justify-between rounded-[8px] border border-line bg-panel2 px-1.5 py-1 text-[12px] transition-colors hover:border-line2"
         >
-          <span className="truncate">{name}</span>
+          <span className="truncate">{t(name)}</span>
           {open ? (
             <ChevronUp size={12} className="flex-none text-faint" />
           ) : (
@@ -97,7 +100,7 @@ function ChannelAccessory({ ch }: { ch: "A" | "B" }) {
                   p.name === name ? "bg-accent/15 text-text" : "text-muted hover:bg-panel2"
                 }`}
               >
-                <span>{p.name}</span>
+                <span>{t(p.name)}</span>
                 {p.name === name && <Check size={12} className="flex-none text-accent" />}
               </button>
             ))}
@@ -106,7 +109,7 @@ function ChannelAccessory({ ch }: { ch: "A" | "B" }) {
       </span>
       <input
         value={loc}
-        placeholder="位置（如 大腿根内侧）"
+        placeholder={t("位置（如 大腿根内侧）")}
         onChange={(e) => setLoc(e.target.value)}
         onBlur={() => void save({ location: loc })}
         onKeyDown={(e) => {

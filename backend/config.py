@@ -427,6 +427,27 @@ def _prompt_read(pf) -> str:
     return ""
 
 
+def _en_sibling(pf) -> str | None:
+    """中英切换：由当前中文角色稿路径推出英文稿路径。
+
+    命名约定：`触手-角色提示词-正式.md` → `触手-角色提示词-EN.md`
+    （英文稿不带 -正式 后缀）；其余（如 哥布林-角色提示词.md、
+    触手-角色提示词-纯爱.md）直接在 .md 前插 -EN。不存在返回 None。
+    """
+    if not pf:
+        return None
+    pp = Path(str(pf))
+    if not pp.is_absolute():
+        pp = PROJECT_ROOT / pp
+    stem = pp.stem
+    if stem.endswith("-正式"):
+        stem = stem[: -len("-正式")]
+    cand = pp.with_name(f"{stem}-EN.md")
+    if cand.exists():
+        return str(cand)
+    return None
+
+
 def _load_character(path: Path) -> dict:
     if not path.exists():
         return {
@@ -445,6 +466,11 @@ def _load_character(path: Path) -> dict:
         }
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     runtime = _load_character_runtime()
+
+    # 内容语言（zh/en，写 character_runtime.yaml 持久化，全局生效）
+    lang = str(runtime.get("lang") or "zh").strip() or "zh"
+    if lang not in ("zh", "en"):
+        lang = "zh"
 
     # 新格式：roles.<角色>.profiles.<风格>；旧格式（平铺 profiles）包装成单角色「触手」
     roles_raw = data.get("roles")
@@ -514,6 +540,12 @@ def _load_character(path: Path) -> dict:
     profile_available = {p["name"]: p["available"] for p in current_profs}
 
     prompt_file = profile.get("prompt_file") or top_prompt_file
+    # 英文稿可用性独立于当前语言（前端据此决定 EN 档是否可点）
+    en_file = _en_sibling(prompt_file) if prompt_file else None
+    en_available = en_file is not None
+    if lang == "en" and en_file:
+        # 英文模式：切到同名 -EN 稿（缺失时保持中文，前端禁用 EN）
+        prompt_file = en_file
     prompt = _prompt_read(prompt_file)
     if not prompt:
         prompt = str(data.get("prompt", "")).strip()
@@ -523,8 +555,13 @@ def _load_character(path: Path) -> dict:
             logger.warning("提示词文件缺失，改用内置输出格式规范: %s", prompt_file)
             prompt_file = None
 
-    examples = _parse_examples(
-        profile.get("examples") if profile.get("examples") is not None else data.get("examples")
+    # 英文模式不给中文 few-shot（避免中英混档锚定文风）
+    examples = (
+        []
+        if lang == "en"
+        else _parse_examples(
+            profile.get("examples") if profile.get("examples") is not None else data.get("examples")
+        )
     )
 
     nick = str(
@@ -549,6 +586,8 @@ def _load_character(path: Path) -> dict:
         "profile_available": profile_available,
         "prompt_file": prompt_file,
         "examples": examples,
+        "lang": lang,
+        "en_available": en_available,
     }
 
 
@@ -559,7 +598,7 @@ def save_character_runtime(cfg: Config, **fields) -> None:
     """
     runtime = _load_character_runtime()
     for key, value in fields.items():
-        if key not in ("role", "profile", "player_nick"):
+        if key not in ("role", "profile", "player_nick", "lang"):
             continue
         if value is None:
             continue

@@ -1,9 +1,11 @@
 import { Ban, Pause, Play } from "lucide-react";
 import { doEstop, doResume, run } from "../commands";
 import { useApp, useLayout } from "../store";
+import { useT } from "../i18n";
 
 export default function BottomBar() {
   const s = useApp((st) => st.state);
+  const t = useT();
   const estop = !!s?.estop;
   const sidebarW = useLayout((st) => st.sidebarW);
   const controlW = useLayout((st) => st.controlW);
@@ -20,18 +22,18 @@ export default function BottomBar() {
         className="rounded-[10px] border border-line bg-panel2 px-3.5 py-1.5 text-[13px] hover:border-line2"
         onClick={() => run("stop", {}, ["A", "B"])}
       >
-        全部清零
+        {t("全部清零")}
       </button>
       <button
         className="rounded-[10px] border border-line bg-panel2 px-3.5 py-1.5 text-[13px] hover:border-line2"
         onClick={doResume}
       >
-        解除急停
+        {t("解除急停")}
       </button>
       <button
         onClick={() => (estop ? doResume() : doEstop())}
         data-tour="estop"
-        title={estop ? "恢复（解除急停）" : "暂停（急停：全部清零并暂停 AI）"}
+        title={t(estop ? "恢复（解除急停）" : "暂停（急停：全部清零并暂停 AI）")}
         className={`absolute left-1/2 top-[-12px] h-[52px] w-[52px] -translate-x-1/2 rounded-full border border-line2 text-[22px] shadow-[0_4px_16px_rgba(247,217,122,0.25)] transition-colors ${
           estop ? "bg-panel2 text-text" : "bg-accent text-ink"
         }`}
@@ -39,7 +41,7 @@ export default function BottomBar() {
         <span className="mx-auto flex justify-center">{estop ? <Play size={22} /> : <Pause size={22} />}</span>
       </button>
       <span className="ml-auto text-xs text-muted">
-        空格 = 急停
+        {t("空格 = 急停")}
         <Ban size={12} className="ml-1 inline" />
       </span>
     </div>

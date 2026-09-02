@@ -1,6 +1,7 @@
 import { AlertTriangle, Mic, Video } from "lucide-react";
 import { api } from "../api";
 import { useApp } from "../store";
+import { useT } from "../i18n";
 
 function Seg({
   k,
@@ -13,20 +14,22 @@ function Seg({
   valueClass?: string;
   accent?: boolean;
 }) {
+  const t = useT();
   return (
     <span className="flex min-w-0 items-baseline gap-1">
-      {k && <span className="flex-none text-[11px] text-muted">{k}</span>}
+      {k && <span className="flex-none text-[11px] text-muted">{t(k)}</span>}
       <span
         className={`truncate font-semibold leading-tight ${valueClass} ${accent ? "text-accent" : ""}`}
-        title={v}
+        title={t(v)}
       >
-        {v}
+        {t(v)}
       </span>
     </span>
   );
 }
 
 export default function DeviceStatus() {
+  const t = useT();
   const s = useApp((st) => st.state);
   const st = s?.relay?.status ?? "disconnected";
   const paired = s?.connected === true || st === "paired" || st === "ready";
@@ -40,7 +43,7 @@ export default function DeviceStatus() {
     const d = s?.device_channels?.[ch];
     const name = d?.name ?? "未设置";
     const loc = d?.location?.trim();
-    return loc ? `${name} · ${loc}` : name;
+    return loc ? `${t(name)} · ${loc}` : t(name);
   };
 
   const camOn = s?.sensors?.camera ?? false;
@@ -73,15 +76,18 @@ export default function DeviceStatus() {
     errText: string,
   ) => {
     const visual = visualOf(on, running);
+    const labelEn = t(label);
     const title =
       errText ||
       (visual === "on"
-        ? `点击关闭${label}`
+        ? t("点击关闭{label}", { label: labelEn })
         : on && !sensorsOn
-          ? `自动运行未开启，${label}不会启动——请打开聊天栏顶部「清空」旁边的「自动运行」开关`
+          ? t("自动运行未开启，{label}不会启动——请打开聊天栏顶部「清空」旁边的「自动运行」开关", {
+              label: labelEn,
+            })
           : visual === "warn"
-            ? `${label}启动中…`
-            : `点击开启${label}`);
+            ? t("{label}启动中…", { label: labelEn })
+            : t("点击开启{label}", { label: labelEn }));
     const cls =
       visual === "on"
         ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
@@ -95,16 +101,16 @@ export default function DeviceStatus() {
         className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold transition-colors ${cls}`}
       >
         {icon}
-        {label}
+        {labelEn}
         {visual === "warn" && <AlertTriangle size={11} className="flex-none" />}
-        {errText && <span className="flex-none text-[10px] text-bad">错误</span>}
+        {errText && <span className="flex-none text-[10px] text-bad">{t("错误")}</span>}
       </button>
     );
   };
 
   return (
     <div className="flex min-h-0 flex-none flex-col rounded-[14px] border border-line bg-panel p-3">
-      <h3 className="mb-2 flex-none text-[12px] font-semibold tracking-[1.5px] text-muted">设备状态</h3>
+      <h3 className="mb-2 flex-none text-[12px] font-semibold tracking-[1.5px] text-muted">{t("设备状态")}</h3>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
         {/* 第一行：连接 + 传感器开关（左侧）；麦克风音量条（右侧，放不下自动换行） */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-line bg-panel2 px-4 py-2">
@@ -121,13 +127,13 @@ export default function DeviceStatus() {
                   paired ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-bad"
                 }`}
               />
-              {paired ? "已连接" : "未连接"}
+              {paired ? t("已连接") : t("未连接")}
             </span>
             {sensorBtn(camOn, <Video size={12} />, "摄像头", "camera", camRunning, camErr)}
             {sensorBtn(micOn, <Mic size={12} />, "麦克风", "audio", micRunning, micErr)}
           </span>
           <span className="ml-auto flex items-center gap-2">
-            <span className="flex-none text-[11px] text-muted">麦克风</span>
+            <span className="flex-none text-[11px] text-muted">{t("麦克风")}</span>
             <div className="h-[8px] w-16 flex-none overflow-hidden rounded-full bg-ink3">
               <div
                 className="h-full rounded-full bg-accent transition-all"
@@ -139,17 +145,19 @@ export default function DeviceStatus() {
             </span>
             <span
               className={`w-16 flex-none truncate text-[11px] ${micErr ? "font-semibold text-bad" : "text-faint"}`}
-              title={!micRunning && micOn && !sensorsOn ? "自动运行未开启，麦克风未启动" : undefined}
+              title={
+                !micRunning && micOn && !sensorsOn ? t("自动运行未开启，麦克风未启动") : undefined
+              }
             >
               {micErr
-                ? "错误"
+                ? t("错误")
                 : micRunning
-                  ? s?.audio?.last_text || "监听中…"
+                  ? s?.audio?.last_text || t("监听中…")
                   : micOn && !sensorsOn
-                    ? "未运行"
+                    ? t("未运行")
                     : micOn && sensorsOn
-                      ? "启动中…"
-                      : "未开启"}
+                      ? t("启动中…")
+                      : t("未开启")}
             </span>
           </span>
         </div>
@@ -159,7 +167,7 @@ export default function DeviceStatus() {
             key={ch}
             className="grid grid-cols-[3rem_5.5rem_6.5rem_1fr] items-baseline gap-3 rounded-xl border border-line bg-panel2 px-4 py-2"
           >
-            <span className="text-[13px] font-bold">{ch} 通道</span>
+            <span className="text-[13px] font-bold">{t(`${ch} 通道`)}</span>
             <Seg k="强度" v={`${s?.current[ch] ?? 0} / ${s?.effective_caps?.[ch] ?? 100}`} accent />
             <Seg k="波形" v={waveOf(ch)} />
             <Seg v={acc(ch)} valueClass="text-[13px]" />

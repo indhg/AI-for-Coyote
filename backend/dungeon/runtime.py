@@ -15,6 +15,7 @@ from .feedback import resolve_feedback
 from .loader import load_packs
 from .narrative import NarrativeWriter
 from .save import load_run, save_run
+from ..ui_en import hint_en
 
 logger = logging.getLogger("ai-for-coyote.dungeon.runtime")
 
@@ -119,6 +120,10 @@ class DungeonRuntime:
     def has_run(self) -> bool:
         return self.run is not None
 
+    def _en(self) -> bool:
+        """当前 UI 语言是否为英文（character.lang 运行时配置）。"""
+        return str((self.cfg.get("character") or {}).get("lang") or "zh") == "en"
+
     def to_state(self) -> dict:
         if self.run is None:
             return {"active": False, "packs": self.list_packs()}
@@ -151,6 +156,8 @@ class DungeonRuntime:
         # 急停闸（T030 #3）：急停中拒绝推进事件，解除后停在原事件
         if getattr(self.safety, "estop_active", False):
             raise RunError("急停中：先解除急停再继续（本事件已停住，不会丢进度）")
+        if self.executor is not None:
+            self.executor.en = self._en()
         if self.run.get("phase") == "map_select":
             if map_target:
                 self.engine.map_select(
@@ -171,6 +178,9 @@ class DungeonRuntime:
         if self.run.get("phase") == "map_select" and not self.run.get("event_id"):
             mv = self._map_view()
             return {"run": self._snapshot(), "event": None, "narrative": None, "map": mv}
+        en = self._en()
+        if self.executor is not None:
+            self.executor.en = en
         ev = self.engine.current_event(self.run)
         fb = resolve_feedback(ev, self.engine.bindings)
         exec_res = await self.executor.execute(fb["on_enter"])  # 进入新事件：反馈
@@ -189,7 +199,7 @@ class DungeonRuntime:
             "run": self._snapshot(),
             "event": self._event_view(ev),
             "narrative": narr,
-            "feedback": {"hint": fb["hint"]},
+            "feedback": {"hint": hint_en(fb["hint"]) if en else fb["hint"]},
             "executed": [e["label"] for e in exec_res["executed"]],
             "dropped": [d["reason"] for d in exec_res["dropped"]],
         }

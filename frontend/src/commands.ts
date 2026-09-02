@@ -1,6 +1,7 @@
 import { api } from "./api";
 import { useApp, useChat } from "./store";
 import type { ManualResult } from "./types";
+import { tr, uiLang } from "./i18n";
 
 /** 联动开启时动作同时发到 A/B 两通道 */
 export function targets(ch: "A" | "B"): ("A" | "B")[] {
@@ -30,7 +31,7 @@ export async function run(
     try {
       text += labels(await api.manual({ op, channel: t, ...params })) + "\n";
     } catch (e) {
-      text += `✖ 请求失败: ${String(e)}\n`;
+      text += tr("✖ 请求失败：{e}", uiLang(), { e: String(e) }) + "\n";
     }
   }
   report(text);
@@ -42,10 +43,10 @@ export async function doEstop(): Promise<void> {
   } catch {
     /* 状态由 ws 推送刷新 */
   }
-  useChat.getState().push({ role: "sys", text: "⚠ 急停：全部清零、波形停止、AI 循环暂停" });
+  useChat.getState().push({ role: "sys", text: tr("⚠ 急停：全部清零、波形停止、AI 循环暂停", uiLang()) });
 }
 
 export async function doResume(): Promise<void> {
   await api.resume();
-  useChat.getState().push({ role: "sys", text: "急停已解除" });
+  useChat.getState().push({ role: "sys", text: tr("急停已解除", uiLang()) });
 }

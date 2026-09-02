@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Tour, TourStep } from "../onboarding";
+import { useT } from "../i18n";
 
 /**
  * 新手引导浮窗引擎（v2：元素自带发光，不再画坐标框）。
@@ -19,6 +20,7 @@ export default function OnboardingTour({
   onView: (v: "control" | "settings" | "pair" | "help") => void;
   onFinish: () => void;
 }) {
+  const t = useT();
   const [idx, setIdx] = useState(0);
   const timer = useRef<number | null>(null);
   const raised = useRef<HTMLElement[]>([]);
@@ -137,10 +139,10 @@ export default function OnboardingTour({
     >
       <div className="mb-1 flex items-center gap-2">
         <span className="text-[13px] font-bold text-accent">
-          {idx + 1}/{tour.steps.length} · {step.title}
+          {idx + 1}/{tour.steps.length} · {t(step.title)}
         </span>
       </div>
-      <p className="mb-3 whitespace-pre-line text-[12px] leading-relaxed text-text">{renderBody(step.body)}</p>
+      <p className="mb-3 whitespace-pre-line text-[12px] leading-relaxed text-text">{renderBody(t(step.body))}</p>
       <div className="flex items-center justify-between">
         <button
           onClick={() => {
@@ -149,7 +151,7 @@ export default function OnboardingTour({
           }}
           className="text-[12px] text-faint hover:text-muted"
         >
-          跳过
+          {t("跳过")}
         </button>
         <div className="flex items-center gap-2">
           {idx > 0 && (
@@ -157,14 +159,14 @@ export default function OnboardingTour({
               onClick={prev}
               className="rounded-lg border border-line bg-panel2 px-3 py-1.5 text-[12px] text-muted hover:border-line2"
             >
-              上一步
+              {t("上一步")}
             </button>
           )}
           <button
             onClick={next}
             className="rounded-lg bg-accent px-4 py-1.5 text-[12px] font-semibold text-ink"
           >
-            {last ? "完成" : "下一步"}
+            {last ? t("完成") : t("下一步")}
           </button>
         </div>
       </div>

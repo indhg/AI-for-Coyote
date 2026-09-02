@@ -66,6 +66,11 @@ export const api = {
     ),
   setNick: (nick: string) =>
     j<{ ok: boolean }>("/api/character/nick", json({ nick })),
+  setLang: (lang: "zh" | "en") =>
+    j<{ ok: boolean; lang?: string; en_available?: boolean }>(
+      "/api/character/lang",
+      json({ lang }),
+    ),
   setAutopilot: (enabled: boolean) =>
     j<{ ok: boolean }>("/api/autopilot", json({ enabled })),
   setAutopilotInterval: (interval_s: number) =>

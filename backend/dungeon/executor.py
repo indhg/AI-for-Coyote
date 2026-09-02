@@ -9,16 +9,19 @@ from __future__ import annotations
 
 import logging
 
+from ..ui_en import describe_en, reason_en
+
 logger = logging.getLogger("ai-for-coyote.dungeon.executor")
 
 
 class FeedbackExecutor:
     """把反馈动作逐条过安全层。"""
 
-    def __init__(self, safety, dry_run: bool = True, send=None):
+    def __init__(self, safety, dry_run: bool = True, send=None, en: bool = False):
         self.safety = safety
         self.dry_run = bool(dry_run)
         self.send = send  # async (cmd) -> bool，真机执行回调
+        self.en = bool(en)  # EN 模式：执行说明/拒绝原因走英文（T051 §1.5/§4.2）
 
     async def execute(self, actions: list[dict]) -> dict:
         """执行 on_enter 反馈动作，返回 {executed, dropped}。"""
@@ -30,17 +33,25 @@ class FeedbackExecutor:
 
     async def _run(self, actions: list[dict]) -> dict:
         executed, dropped = [], []
+        en = self.en
         for a in actions or []:
             if not isinstance(a, dict):
-                dropped.append({"action": a, "reason": "动作必须是对象"})
+                dropped.append(
+                    {
+                        "action": a,
+                        "reason": reason_en("动作必须是对象") if en else "动作必须是对象",
+                    }
+                )
                 continue
             ok, reason, cmd = self.safety.validate(a)
             if not ok:
+                if en:
+                    reason = reason_en(reason)
                 dropped.append({"action": a, "reason": reason})
                 logger.warning("地牢反馈被安全层拒绝：%s -> %s", a, reason)
                 continue
             self.safety.record(cmd)
-            label = _describe(cmd)
+            label = describe_en(cmd) if en else _describe(cmd)
             sent = False
             if self.send and not self.dry_run:
                 try:
