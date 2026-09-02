@@ -20,7 +20,7 @@
 
 👉 <https://github.com/indhg/AI-for-Coyote/releases/latest>
 
-**本项目完全免费开源（GPL-3.0），任何收费渠道均为盗版。** 作者推特主页欢迎来支持喵～<https://x.com/cinnanirch>
+**本项目为作者原创的专有软件（All Rights Reserved），未授权任何渠道转载、倒卖与二次分发，请认准官方发布渠道。** 作者推特主页欢迎来支持喵～<https://x.com/cinnanirch>
 
 ## 📦 相关仓库
 
@@ -80,8 +80,8 @@ AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像�
 
 ## 📜 许可证
 
-- 本仓库整体以 **GPL-3.0** 发布（见 [LICENSE](LICENSE)）。
-- `relay/` 目录源自 [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0），保留其原始许可证。
+- 本仓库主体为作者原创的**专有软件**（All Rights Reserved，见 [LICENSE](LICENSE)）。
+- `relay/` 目录源自 [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0），作为独立第三方组件随包分发，保留其原始许可证（`relay/LICENSE`）。
 - **本体与 DLC**：多角色体系——每个角色自带若干风格档（轻／中／重）。「触手」角色随本体发布（纯爱版=轻，`content/pure/`）；其「调教版」（中）作为 DLC1、「品评会」角色（调教·中）作为 DLC2，存放在 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（成人内容，18+）。未来新角色照同一 DLC 机制接入。具体清单见下节「项目内容」。
 
 ## 🧩 项目内容
@@ -238,7 +238,8 @@ AI-for-Coyote\
 ├── packaging\           打包脚本（免装 zip 组装 + Inno Setup 安装器模板）
 ├── config\              config.example.yaml（示例配置）、waveforms.yaml（波形库）
 ├── content\pure\        仓库自带内容：纯爱版提示词／语料／设定（默认角色）
-├── content\pack\        DLC 系列（DLC1-触手-调教、DLC2-品评会-调教；本地形态为嵌套 git 仓库）
+├── content\roles\       自由聊角色内容（触手/品评会各档位提示词、语料，随包内置）
+├── content\pack\dungeon\  地牢主题包（00-地牢 大包 + 触手 / 品评会 / 淫纹 theme pack）
 ├── logs\                程序运行日志（app.log）
 └── start.bat             一键启动
 ```
@@ -272,7 +273,7 @@ Download the latest release here:
 
 👉 <https://github.com/indhg/AI-for-Coyote/releases/latest>
 
-**This project is completely free and open source（GPL-3.0）. Any paid distribution channel is piracy.** You are welcome to support the author on Twitter: <https://x.com/cinnanirch>
+**This project is the author's original proprietary software（All Rights Reserved）. Redistribution, resale and republishing through any channel are not authorized—please get it only from official channels.** Welcome to support the author on Twitter: <https://x.com/cinnanirch>
 
 ## 📦 Related repositories
 
@@ -332,8 +333,8 @@ This project is for **adults** only, and only for personal entertainment under *
 
 ## 📜 License
 
-- The repository as a whole is released under **GPL-3.0**（see [LICENSE](LICENSE)）.
-- The `relay/` directory originates from [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0）and retains its original license.
+- The repository as a whole is the author's original **proprietary software**（All Rights Reserved, see [LICENSE](LICENSE)）.
+- The `relay/` directory originates from [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0）and is shipped as an independent third-party component, retaining its original license（`relay/LICENSE`）.
 - **Core content and DLC**: the multi-character system gives each character several style tiers（light／medium／heavy）. The “Tentacles” character ships with the core（Pure Love = light, `content/pure/`）; its Training version（medium）is DLC1, and the “Appraisal Event” character（Training · medium）is DLC2 in the [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) repository（adult content, 18+）. Future characters follow the same DLC mechanism. See “Project content” below for the detailed list.
 
 ## 🧩 Project content
@@ -490,7 +491,8 @@ AI-for-Coyote\
 ├── packaging\           Packaging scripts（portable zip assembly + Inno Setup installer template）
 ├── config\              config.example.yaml（example configuration）, waveforms.yaml（waveform library）
 ├── content\pure\        Built-in content: Pure-Love prompts／corpus／setting（default character）
-├── content\pack\        DLC series（DLC1-Tentacles-Training, DLC2-Appraisal Event-Training; locally a nested git repository）
+├── content\roles\       Free-chat role content（Tentacle / Appraisal tier prompts & corpus, bundled）
+├── content\pack\dungeon\  Dungeon theme packs（00-地牢 master pack + Tentacle / Appraisal / 淫纹 theme packs）
 ├── logs\                Runtime logs（app.log）
 └── start.bat             One-click startup
 ```

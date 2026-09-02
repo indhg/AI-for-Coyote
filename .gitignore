@@ -10,6 +10,8 @@ logs/
 *.log
 # 本地/测试环境版本标记（打包版由构建脚本写入自己目录的 version.txt）
 version.txt
+# 地牢运行时存档（run_state/进度，按需 gitignore；不传远端）
+data/
 
 # ============ 隐私与密钥（绝不入库） ============
 # 含 API 密钥与个人安全配置
@@ -38,3 +40,8 @@ ollama/
 # ============ IDE ============
 .vscode/
 .idea/
+# ===== public-push isolation (2026-09-03): NSFW role content & dungeon story assets stay local =====
+content/roles/
+backend/story_pack/
+_t032_*
+_t048_*
