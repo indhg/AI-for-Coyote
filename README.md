@@ -1,141 +1,114 @@
 <a id="top"></a>
 
 <div align="center">
-  <h1>Coyote in Cradle</h1>
-  <p>郊狼 × AI 角色扮演系统</p>
-  <p><a href="#中文">中文</a> · <a href="#english">English</a></p>
+
+<h1>Coyote in Cradle</h1>
+<p><strong>AI 角色扮演 × 郊狼（DG-Lab）—— 会看、会听、会出手的本地角色扮演</strong></p>
+
+<p>
+  <a href="https://github.com/indhg/AI-for-Coyote/releases/latest"><img alt="Release" src="https://img.shields.io/badge/下载-Windows-blue?style=flat-square&logo=windows"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-All%20Rights%20Reserved-black?style=flat-square"></a>
+</p>
+
+<p>
+  <a href="#中文">中文</a> · <a href="#english">English</a>
+</p>
+
+<p><sub>18+ · 成人向 · 请在自愿、知情、同意的前提下使用</sub></p>
+
 </div>
+
+---
 
 <a id="中文"></a>
 
-## 中文
+## 🇨🇳 中文
 
-> **一句话介绍**：AI 扮演角色，通过摄像头观察、麦克风听声，实时控制郊狼（DG-Lab）设备。
+## ⬇️ 下载最新包（Windows）
 
-当前主题：**触手**（纯爱／调教两档）、**品评会**（调教档，DLC）；档位显示名为纯爱／调教／凌辱（=轻／中／重），更多角色通过 DLC 机制接入。
+最新安装包/免装包发布在这里（或点页面顶部「下载」徽章）：
 
-## ⬇️ 下载安装包（Windows）
+👉 **<https://github.com/indhg/AI-for-Coyote/releases/latest>**
 
-下载请点这里喵：
+下载 `Coyote-in-Cradle-setup-v*.exe`（安装版）或免装 zip，解压即用；用法见下方「快速开始」。
 
-👉 <https://github.com/indhg/AI-for-Coyote/releases/latest>
+---
 
-**本项目为作者原创的专有软件（All Rights Reserved），未授权任何渠道转载、倒卖与二次分发，请认准官方发布渠道。** 作者推特主页欢迎来支持喵～<https://x.com/cinnanirch>
+## ✨ 它能做什么
 
-## 📦 相关仓库
-
-本项目是**多端应用**。除本仓库（PC 端主仓库）外，还有两个配套仓库：
-
-| 仓库 | 地址 | 说明 |
+| | 能力 | 说明 |
 |---|---|---|
-| 🧪 **DLC 拓展仓库** | [indhg/AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) | 18+ 拓展内容（当前：DLC1-触手-调教、DLC2-品评会-调教） |
-| 📱 **安卓端** | [indhg/Coyote-in-Cradle-Android](https://github.com/indhg/Coyote-in-Cradle-Android) | 无需电脑，蓝牙直连郊狼 3.0（BLE 直连，无需中继） |
+| 🎭 | **AI 角色闭环** | 每轮按「观察 → 描写 → 动作 → 发言」推进；回复为严格 JSON，台词与设备指令分离 |
+| 👁️🎤 | **摄像头 / 麦克风观察** | 画面变暗或无人 → 角色逐渐不耐烦再到暴怒；呻吟分级：普通呻吟小幅加码、惨叫立即收敛 |
+| 🤖 | **自动运行（Autopilot）** | 不需要打字，按间隔自动循环观察-描写-动作-发言；传感器跟随启停 |
+| 🎛️ | **手动控制台** | A/B 双通道独立控制：保持强度、增减、清除、24 种内置波形（可循环）；通道开关与强度上限（1–200，默认 100） |
+| 🗺️ | **紫金地牢（Dungeon）** | 内置地牢玩法：主题包 + 事件流 + 地图路线，三态体感反馈（无 / 轻微 / 持续），带真机反馈绑定 |
+| 🌐 | **中英一键切换** | 聊天栏上方的 ZH / EN 入口；整个界面与角色内容同步切英文（地牢事件正文按设计保留原文） |
+| 🛡️ | **多层安全** | 强度上限、单指令步长 ≤40、过热降限、中继 / App 断连自动清零、急停（按钮 / 长按空格 1 秒） |
+| 🧩 | **多角色内容** | 内置多个角色与地牢主题包（见下「内容清单」），角色卡直接切换 |
+| 📦 | **随开随用** | Windows 安装包 / 免装包；自动更新检测、公告浮窗、首次使用引导 |
 
-依赖 **郊狼 + dglab-websocket-server 的 Socket 接口**。
+---
+
+## 🧩 内容清单
+
+内置内容（随正式发行包分发；本仓库托管代码主体，成人内容文件经作者渠道分发）：
+
+**角色**（`content/pure` + `content/roles`）
+
+| 角色 | 说明 | 英文稿 |
+|---|---|---|
+| 体验版（Trial） | 触手 · 纯爱向试玩内容，默认开启 | ✅ |
+| 触手（Tentacle） | 完整角色稿：设定、风格规则、语料、示例 | ✅ |
+| 品评会（Appraisal） | 公开审评世界观角色 | ✅ |
+| 哥布林（Goblin） | 地牢向角色 | ✅ |
+| 史莱姆（Slime） | 软体触感向角色 | ✅ |
+| 蛛后（Arachne） | 支配向角色 | ✅ |
+
+> 在界面切换为 EN 后，角色稿自动加载对应的 `-EN.md` 英文版本（体验版走 `content/pure` 的纯爱英文稿）。
+
+**地牢主题包**（`content/pack/dungeon`）
+
+| 主题包 | 说明 |
+|---|---|
+| 地牢刻印（Marks） | 基础地牢：统一世界观 + 叙事者基调 + DM 骨架 |
+| 触手 / 品评会 / 哥布林 / 淫纹（Sigil） | 各主题的事件流、场景插图、设备反馈绑定表 |
+
+**运行链路**
 
 ```text
-桌面应用窗口（或浏览器 Web 页面） ⇄ Python 主程序（FastAPI） ⇄ dglab-websocket-server v4（Bun） ⇄ DG-LAB 4.0 App（手机） ⇄ 郊狼主机（A／B 通道）
-                     │
-                     └─ OpenAI 兼容模型（角色台词 + 结构化设备指令 + 摄像头／麦克风观察）
+桌面窗口 / 浏览器网页 ⇄ Python 主程序（FastAPI，8000）
+        ⇄ dglab-websocket-server v4 中继（Bun，9998）
+        ⇄ DG-LAB 4.0 App（手机，扫码配对） ⇄ 郊狼主机（A/B 通道）
+
+主程序横切：摄像头观察 · 麦克风分级 · LLM（OpenAI 兼容） · 安全层 · 地牢运行时
 ```
 
-## ✨ 功能一览
+---
 
-### AI 观察与角色推进
+## 🚀 快速开始（Windows）
 
-AI 每轮按「观察 → 描写 → 动作 → 发言」推进：先看摄像头画面和麦克风信号，写现场描写，再给设备动作，最后发言。回复采用严格 JSON，程序拆出台词和设备指令，动作经安全层校验后才执行。
+### 方式 A：安装包（推荐）
 
-摄像头和麦克风各自形成反馈：画面变黑或没人时，角色会逐渐变得不耐烦，再升级到愤怒、暴怒；呻吟声分级，普通呻吟会小幅加码，惨叫会立即降低；长时间没有声音时，角色会主动挑逗。
+1. 到 [Releases](https://github.com/indhg/AI-for-Coyote/releases/latest) 下载 `Coyote-in-Cradle-setup-v*.exe`；
+2. 双击安装，打开桌面图标「Coyote in Cradle」；
+3. 免命令行、免浏览器——一个应用窗口，关窗即全部退出。
 
-### 设备控制与网页控制台
+> 不想安装？下载免装 zip，解压后双击 `Coyote-in-Cradle.exe`（备用 `start.bat`）。
 
-- 设备侧 A／B 双通道独立控制，内置 24 个波形（面板分类名「经典波形」）。
-- 网页控制台负责聊天、手动控制、通道开关、通道强度上限（1～200，默认 100）和主题切换。
-- 安全层负责强度上限、步长限制和过热保护；长按空格可急停。
-- 摄像头／麦克风支持独立开关，并带失败警示与自动重试。
-- 支持清空对话历史、更新检测（顶栏徽章提示新版本，可在设置中关闭）、公告浮窗和 DLC 导入（`.zip` 或 `.md`，导入即生效）。
+### 方式 B：源码运行
 
-## 🗺️ 计划
+<details>
+<summary><b>环境要求</b></summary>
 
-**短期**
+- Python 3.10+（主程序）
+- [Bun](https://bun.sh)（中继服务；`npm install -g bun`）
+- Node.js 18+（仅首次构建前端需要）
+- 可选：摄像头 `pip install opencv-python`；麦克风 `pip install sounddevice numpy`（不装则对应功能自动禁用）
 
-- 架构改进：动作与台词分离（tool call 优先，不支持时回退 JSON），降低解析／兜底成本。
-- Web UI 响应式优化 + 配置项 UI 补全。
+</details>
 
-**长期**
-
-- 角色体系扩展：更多角色（各自含风格子项）以 DLC 方式接入，目录规范为 `content/pack/DLC<序号>-<角色>-<风格>`。
-- ASR 可选开关（语音指令提取，默认关）。
-- 郊狼 2.0（脉冲主机 V2／D-LAB ESTIM01）适配评估。
-- 英文版（EN）待市场调研。
-
-## ⚠️ 免责声明
-
-本项目仅供**成年用户**在**自愿、知情、同意**的前提下使用，仅用于个人娱乐。请：
-
-- 遵守所在地区法律法规；
-- 评估自身身体状况，心脏病、心脏起搏器等健康风险人群请勿使用；
-- 控制强度与时长，随时可用急停（长按空格 1 秒）中断；
-- 使用本项目造成的任何后果由使用者自行承担，作者不承担任何责任。
-
-## 📜 许可证
-
-- 本仓库主体为作者原创的**专有软件**（All Rights Reserved，见 [LICENSE](LICENSE)）。
-- `relay/` 目录源自 [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0），作为独立第三方组件随包分发，保留其原始许可证（`relay/LICENSE`）。
-- **本体与 DLC**：多角色体系——每个角色自带若干风格档（轻／中／重）。「触手」角色随本体发布（纯爱版=轻，`content/pure/`）；其「调教版」（中）作为 DLC1、「品评会」角色（调教·中）作为 DLC2，存放在 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（成人内容，18+）。未来新角色照同一 DLC 机制接入。具体清单见下节「项目内容」。
-
-## 🧩 项目内容
-
-### 触手 · 纯爱版（本体，轻）
-
-`content/pure/` 中是默认启用的「纯爱版」角色内容：
-
-| 文件 | 说明 |
-|---|---|
-| `触手-角色提示词-纯爱.md` | 运行时提示词：风格、格式规则、轻量语料 |
-| `触手-语料库-纯爱.md` | 纯爱向描写语料 |
-| `触手-漫画设定-纯爱.md` | 角色与世界观设定 |
-
-### DLC1：触手 · 调教版（中）
-
-存放于 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（18+）。**推荐在程序内导入**：窗口左侧「角色设置」→「导入 DLC」→选择下载好的 `Coyote-in-Cradle-DLC1.zip`（或单个 `.md`），自动拷贝进 `content/pack/` 并启用，无需重启。
-
-| 文件 | 说明 |
-|---|---|
-| `触手-角色提示词-调教.md` | 调教版运行时提示词 |
-| `触手-语料库-调教.md` | 调教向描写语料 |
-| `触手-漫画设定-调教.md` | 角色与世界观设定 |
-
-### DLC2：品评会 · 调教版（中）
-
-存放于 [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) 仓库（18+）。导入方式同上（选择 `Coyote-in-Cradle-DLC2.zip` 或单个 `.md`）——导入后，「角色设置」里会出现「品评会」角色卡片，切过去即用。
-
-| 文件 | 说明 |
-|---|---|
-| `品评会-角色提示词-调教.md` | 主评身份：公开审评、装置支配、围观施压 |
-| `品评会-语料库-调教.md` | 羞辱／支配／装置向描写语料 |
-| `品评会-漫画设定-调教.md` | 贵族品评会世界观设定 |
-
-**手动方式**：把对应 DLC 目录放进 `content/pack/`，再在 `config/character.yaml` 的 `roles.<角色>.profiles` 中启用其 `prompt_file`（参考 `config/character.example.yaml`）。新角色照 `content/pack/DLC<序号>-<角色>-<风格>/` 建目录，文件名沿用「角色名-」前缀。没有装好的角色／风格档会显示「未装 DLC」，并被切换拦截。
-
-## 🚀 快速开始
-
-### 一键安装（推荐）
-
-下载最新 Release 的 `Coyote-in-Cradle-setup-v*.exe`，双击安装。桌面图标「Coyote in Cradle」点开即用：一个应用窗口，关窗口即全部退出，无需命令行与浏览器。
-
-不想安装可下载免装 zip，解压后双击 `Coyote-in-Cradle.exe`（或备用 `start.bat`）。
-
-### 环境要求
-
-- Python 3.10+（主程序）。
-- [Bun](https://bun.sh)（中继服务）。
-- Node.js 18+（前端构建）。
-- 可选依赖（不装则对应功能自动禁用）：
-  - 摄像头：`pip install opencv-python`
-  - 麦克风：`pip install sounddevice numpy`（只测音量分级，不做语音转写）
-
-### 1. 安装依赖
+**1. 装依赖 + 构建前端**
 
 ```bat
 pip install -r requirements.txt
@@ -143,252 +116,259 @@ cd relay & bun install
 cd ..\frontend & npm install & npm run build
 ```
 
-> 主程序通过 FastAPI 直接托管 `frontend/dist`，所以**必须先构建一次前端**。
+> 主程序通过 FastAPI 直接托管 `frontend/dist`，源码运行**必须先构建一次前端**。
 
-### 2. 配置
-
-复制示例配置并填写：
+**2. 配置**
 
 ```bat
 copy config\config.example.yaml config\config.yaml
 copy config\character.example.yaml config\character.yaml
 ```
 
-- `config/config.yaml`：填写 `llm.api_key`（或环境变量 `DGLAB_LLM_API_KEY`）和模型地址；先 `dry_run: true` 联调，接真机时改为 `false`。
-- 也可以启动后打开网页 **「设置 → AI 模型配置」**，直接填写 API Key／地址／模型名：点「测试连接」验证，点「保存并生效」即时生效（无需重启；首次保存自动生成 `config.yaml`）。
-- `config/character.yaml`：角色设定（默认「纯爱版」；调教版见 DLC1）。
-- `config/device_channels.yaml`：通道与配件映射、强度基准（首次运行自动生成）。
+- `config/config.yaml`：填 `llm.api_key`（或环境变量 `DGLAB_LLM_API_KEY`）与模型 Base URL；联调阶段 `dry_run: true`，接真机再改 `false`；
+- 更省事：启动后网页 **设置 → AI 模型配置** 里直接填，点「测试连接」验证、「保存并生效」即时切换，无需重启；
+- `config/character.yaml`：角色清单与切换；`config/device_channels.yaml`：通道配件映射（首次运行自动生成）。
 
-### 3. 启动
+**3. 启动**
 
 双击 `start.bat`（自动：起中继 → 起主程序 → 开浏览器），或手动：
 
 ```bat
-cd relay & bun run v4-server.ts        REM 窗口 1：中继（端口 9998）
-python -m backend.main                 REM 窗口 2：主程序（端口 8000）
+cd relay & bun run v4-server.ts        REM 窗口 1：中继（9998）
+python -m backend.main                 REM 窗口 2：主程序（8000）
 ```
 
 浏览器打开 <http://127.0.0.1:8000>。
 
-### 4. 配对郊狼（手机 + 局域网）
+**4. 配对郊狼（手机 + 局域网）**
 
-1. 手机连接到**与电脑同一个 Wi-Fi**；
-2. 打开 DG-LAB 4.0 App，进入 Socket V4 控制入口，扫描 Web 页面右侧二维码（形如 `https://dungeon-lab.cn/s/?v=1&action=socket&url=ws://192.168.x.x:9998?tid=...`）；
+1. 手机连接**与电脑同一个 Wi-Fi**；
+2. DG-LAB 4.0 App → Socket V4 控制入口 → 扫网页右侧二维码；
 3. App 内蓝牙连接郊狼主机，页面状态变为「已配对」；
-4. 若扫不上，检查防火墙是否放行 9998 端口（管理员运行）：
+4. 扫不上？检查防火墙放行 9998（管理员运行）：
    `netsh advfirewall firewall add rule name="dglab-relay" dir=in action=allow protocol=TCP localport=9998`
 
-## 🎛️ 使用说明
+---
 
-- **聊天**：左侧与 AI 对话，AI 返回台词 + 设备动作，动作经安全层校验后执行。
-- **手动控制**：右侧每通道支持持续强度（保持型）、增减强度、清除和波形（可选时长与通道，持续波形可循环）。
-- **通道与配件**：A=贴片、B=肛塞（可在「配件配置」中修改），基准强度按配件设定（默认贴片 15／肛塞 5）。
-- **自动运行**：聊天栏顶部「自动运行」开关（清空按钮旁）开启后，按间隔自动循环「观察 → 描写 → 动作 → 发言」；摄像头／麦克风跟随自动运行启停。
-- **急停**：页面大红按钮，或页面不在输入框时**长按空格 1 秒**（松手取消，防误触）；急停 = 全通道清零 + 清波形 + 暂停 AI 循环，点「解除急停」恢复。
-- **安全约定**：本程序不设安全词口令，靠急停和「AI 察觉连续痛苦表达自动收敛」兜底；实机使用前先 `dry_run` 联调并确认强度基准。
+## 🎛️ 使用要点
 
-## ❓ 常见问题
+- **聊天**：左侧与 AI 对话；指令先校验后执行，被拒原因（如超上限、通道关闭、急停中）会以 ✖ 卡片回显，中英文随界面切换。
+- **手动控制**：右侧每通道 保持强度 / 增减 / 清除 / 波形（可循环）；配件名与位置可改（敲回车生效）。
+- **自动运行**：聊天栏顶部开关；摄像头 / 麦克风跟随启停。
+- **急停**：大红按钮，或页面不在输入框时**长按空格 1 秒**（松手取消）；急停 = 全通道清零 + 清波形 + 暂停 AI，点「解除急停」恢复。
+- **安全约定**：不设安全词口令，靠急停 + 「AI 察觉连续痛苦表达自动收敛」兜底；实机前务必先 `dry_run` 联调并核对强度基准。
 
-- **开场／聊天报「API Key 无效」**：官方与中转站的密钥不通用——确认 Base URL 与密钥配套（官方填 `https://api.deepseek.com`）；先点设置页「测试连接」验证再配对。
-- **报「服务器返回了网页」／测试连接通过但对话抽风**：Base URL 填成了网页地址（应填 API 地址），或中转站不支持 JSON 模式 → 设置页**关掉「JSON 模式」**（程序自动兜底解析；开着时收到 400 也会自动降级重试）。
-- **麦克风显示「未运行／启动中」**：先开自动运行（传感器跟随它）；按钮变橙色时悬停看具体原因（常见：台式机没有麦克风、系统禁用了麦克风权限）；没有插麦克风属于正常现象。
-- **台式机没有麦克风**：不插也能玩，画面观察仍工作；麦克风功能自动报错提示，不影响其他功能。
-- **更新提示**：顶栏出现「新版本 vX.Y.Z」徽章即可点下载；设置页可关闭自动检查更新。
+---
 
 ## 🛡️ 安全设计
 
-任何来源命令的唯一出口是 `backend/safety.py`：
+一切来源（AI / 手动 / 地牢反馈）的指令都经过 `backend/safety.py`：
 
-1. 每通道独立强度上限（配置，默认 100），AI／手动超不过；
-2. 单条指令强度变化 ≤ 40（防跳变）；
-3. 单次波形／临时强度到点自动归零；
-4. 设备过热 → 该通道上限临时降到 20；
-5. 中继／App 断开 → 自动清零；
-6. 急停（按钮／长按空格）= 清零 + 清波形 + 暂停循环；
-7. 使用注意：电极不可跨心脏／颈部以上；不同配件请分别调低对应通道上限。
+1. 每通道独立强度上限（默认 100），AI / 手动都超不过；
+2. 单条指令强度变化 ≤ 40，防跳变；
+3. 波形 / 临时强度到点自动归零；持续波形仅在明确持有命令下保持；
+4. 设备过热 → 该通道上限临时降为 20；
+5. 中继 / App 断开 → 自动清零；
+6. 急停 = 清零 + 清波形 + 暂停循环；
+7. 使用注意：电极不可跨心脏、不可置于颈部以上；不同配件分别调低对应上限。
+
+---
 
 ## 🤖 AI 指令协议
 
-模型每次回复严格 JSON：
+模型每次回复为严格 JSON：
 
 ```json
 {
   "line": "角色台词（原样显示）",
   "actions": [
-    {"op": "temp_strength", "channel": "A", "value": 60, "duration_s": 3},
-    {"op": "add_strength", "channel": "B", "delta": 10},
-    {"op": "pulse", "channel": "A", "pattern": "短促连击", "duration_s": 2},
-    {"op": "clear", "channel": "B"},
-    {"op": "stop"}
+    { "op": "temp_strength", "channel": "A", "value": 60, "duration_s": 3 },
+    { "op": "add_strength",  "channel": "B", "delta": 10 },
+    { "op": "pulse",         "channel": "A", "pattern": "短促连击", "duration_s": 2 },
+    { "op": "clear",         "channel": "B" },
+    { "op": "stop" }
   ]
 }
 ```
 
-波形库在 `config/waveforms.yaml`：`presets` 是中文名到波形的映射（含默认／最长时长），`custom` 存放官方波形的 64 帧数据。
+波形库在 `config/waveforms.yaml`（`presets` 中文名 → 波形映射，`custom` 为官方波形 64 帧数据）。操作代码名不变，界面显示名中英文随语言切换（详见英文版 §AI 指令协议）。
+
+---
+
+## ❓ 常见问题
+
+- **报「API Key 无效」**：官方与中转站密钥不通用——Base URL 与密钥要配套（官方填 `https://api.deepseek.com`），先用设置页「测试连接」验证。
+- **「服务器返回了网页」/ 测试连接过但对话抽风**：Base URL 填成了网页地址；或中转站不支持 JSON 模式 → 设置里**关掉「JSON 模式」**（程序自动兜底解析）。
+- **麦克风「未运行 / 启动中」**：先开自动运行；按钮变橙色时悬停看原因（常见：台式机无麦克风、系统权限被禁）。
+- **没有二维码 / 配不上**：确认中继在跑（9998 端口有进程、`start.bat` 窗口没关），再看防火墙。
+- **语言切了没变化**：角色无英文稿时保持中文是设计（会显示对应提示）；内容语言与界面语言走同一个开关。
+
+---
 
 ## 🗂️ 目录结构
 
 ```text
 AI-for-Coyote\
-├── backend\             Python 后端（FastAPI：main / config / safety / relay_client / device_ops
-│                        waveforms / llm / game_loop / camera / audio / logging_utils）
-├── frontend\            React 19 + TS + Vite + Tailwind v4 桌面控制台（dist\ 为构建产物，由后端托管）
-├── relay\               dglab-websocket-server（Bun，v4 端口 9998）
-├── desktop\             桌面壳（pywebview 应用窗口，双击即用；shell.py + app.ico）
-├── packaging\           打包脚本（免装 zip 组装 + Inno Setup 安装器模板）
-├── config\              config.example.yaml（示例配置）、waveforms.yaml（波形库）
-├── content\pure\        仓库自带内容：纯爱版提示词／语料／设定（默认角色）
-├── content\roles\       自由聊角色内容（触手/品评会各档位提示词、语料，随包内置）
-├── content\pack\dungeon\  地牢主题包（00-地牢 大包 + 触手 / 品评会 / 淫纹 theme pack）
-├── logs\                程序运行日志（app.log）
+├── backend\              Python 主程序（FastAPI：控制 / 安全层 safety / 游戏闭环 game_loop /
+│                         LLM / 中继客户端 / 设备波形 / 摄像头 / 麦克风 / 地牢 dungeon / UI 英文映射 ui_en）
+├── frontend\             React 19 + TS + Vite + Tailwind v4 控制台（i18n 中英切换；dist\ 由后端托管）
+├── desktop\              桌面壳（pywebview 应用窗口；shell.py）
+├── packaging\            打包脚本（免装 zip + Inno Setup 安装器）
+├── relay\                dglab-websocket-server（Bun，v4 端口 9998，GPL-3.0 第三方组件）
+├── config\               示例配置 / waveforms.yaml 波形库
+├── content\pure\         触手 · 纯爱向内容（体验版角色稿，含 EN）
+├── content\roles\        正式角色稿（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后，含 EN）
+├── content\pack\dungeon\ 地牢主题包（地牢刻印 + 触手 / 品评会 / 哥布林 / 淫纹）
+├── logs\                 运行日志
 └── start.bat             一键启动
 ```
 
+---
+
 ## 🧑‍💻 前端开发
 
-- 日常使用：后端直接托管 `frontend\dist`（改完前端先 `npm run build`）。
-- 开发模式：`frontend\` 下 `npm run dev`（Vite 代理 `/api` 与 `/ws` 到 8000，浏览器打开 5173）。
+- 日常使用：后端托管 `frontend/dist`——改完前端先 `npm run build`；
+- 开发模式：`frontend\` 下 `npm run dev`（Vite 代理 `/api` 与 `/ws` 到 8000，浏览器开 5173）；
+- 文案体系：界面文案全部收敛到 `frontend/src/i18n.ts`（中英词典 + `t()`/`useT()`），新增可见文案请走词典而非硬编码。
 
-## 📚 依赖
+---
 
-- Python 3.10+：`pip install -r requirements.txt`
-- Bun（运行中继）：`npm install -g bun`
-- Node 18+（前端构建）
-- 桌面壳（仅源码运行桌面应用时需要）：`pip install pywebview`（打包时由脚本自动安装）
-- 手机端：DG-LAB 4.0 App（v4 协议）
+## 🗺️ 路线
 
-[回到顶部](#top)
+**进行中**
+
+- 18+ 内容与英文版内容的发行渠道整合（仓库与 Release 拆分）；
+- 地牢叙事 / 事件正文的英文覆盖。
+
+**计划**
+
+- 语音指令（ASR）可选开关评估；
+- 郊狼 2.0（脉冲主机 V2 / D-LAB ESTIM01）适配评估；
+- 更多角色与地牢主题包。
+
+---
+
+## ⚠️ 免责声明
+
+本项目仅供**成年用户**在**自愿、知情、同意**的前提下用于个人娱乐。请：
+
+- 遵守所在地区法律法规；
+- 评估自身身体状况——心脏病、心脏起搏器等风险人群请勿使用；
+- 控制强度与时长，随时可用急停中断（长按空格 1 秒）；
+- 使用本项目造成的一切后果由使用者自行承担。
+
+## 📜 许可证
+
+- 本仓库主体为作者原创的**专有软件**（All Rights Reserved，见 [LICENSE](LICENSE)），未授权任何渠道转载、倒卖与二次分发；
+- `relay/` 源自 [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0），作为独立第三方组件随包分发（见 `relay/LICENSE`）；
+- 角色稿与主题包内容版权归作者，仅通过作者分发的渠道获得；本 GitHub 仓库托管代码主体，不含成人内容文件。
+
+## 🙏 致谢与联系
+
+- 作者推特：<https://x.com/cinnanirch>（支持请去点个关注喵～）
+- 中继协议与上游：[dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)
+- 问题反馈 / 建议：GitHub [Issues](https://github.com/indhg/AI-for-Coyote/issues) / [Discussions](https://github.com/indhg/AI-for-Coyote/discussions)
+
+[⬆ 回到顶部](#top)
+
+---
 
 <a id="english"></a>
 
-## English
+# 🇬🇧 English
 
-> **In one sentence:** An AI role-playing system where the AI plays a character, observes through the camera, listens through the microphone, and controls a Coyote（DG-Lab）device in real time.
+## ⬇️ Download the latest build（Windows）
 
-Current themes: **Tentacles**（Pure Love／Training）, and **Appraisal Event**（Training, DLC）. The displayed tiers are Pure Love／Training／Humiliation（= light／medium／heavy）. More characters are connected through the DLC mechanism.
+Installers / portable builds are released here（or use the “下载” badge at the top of the page）:
 
-## ⬇️ Download（Windows）
+👉 **<https://github.com/indhg/AI-for-Coyote/releases/latest>**
 
-Download the latest release here:
+Grab `Coyote-in-Cradle-setup-v*.exe`（installer）or the portable zip and unzip it; usage below under “Quick start”.
 
-👉 <https://github.com/indhg/AI-for-Coyote/releases/latest>
+---
 
-**This project is the author's original proprietary software（All Rights Reserved）. Redistribution, resale and republishing through any channel are not authorized—please get it only from official channels.** Welcome to support the author on Twitter: <https://x.com/cinnanirch>
+> **In one sentence:** an AI role-playing system in which the character watches through your camera, listens through your microphone, and drives a Coyote（DG-Lab）device in real time — a full "observe → describe → act → speak" loop inside a **local web console**.
+>
+> **What makes it more than a chatbot:** the actions are real. The model emits structured device commands that pass through `backend/safety.py` first（intensity caps / step limits / overheat protection / auto-clear on disconnect）— only validated commands touch the hardware.
 
-## 📦 Related repositories
+### Three promises
 
-This is a **multi-platform application**. Alongside this PC repository, there are two companion repositories:
+- **Your data stays local** — apart from the model API you choose, everything runs on your own machine;
+- **No model lock-in** — any OpenAI-compatible endpoint works（DeepSeek, relays, local servers）; fill in the Base URL from the UI;
+- **Bilingual out of the box** — one ZH / EN switch flips both the interface and the character content.
 
-| Repository | Link | Description |
+---
+
+## ✨ Highlights
+
+| | Feature | What it does |
 |---|---|---|
-| 🧪 **DLC repository** | [indhg/AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) | 18+ expansion content（currently DLC1-Tentacles-Training and DLC2-Appraisal Event-Training） |
-| 📱 **Android client** | [indhg/Coyote-in-Cradle-Android](https://github.com/indhg/Coyote-in-Cradle-Android) | No computer required; connects directly to Coyote 3.0 over Bluetooth（BLE direct connection, no relay） |
+| 🎭 | **AI role loop** | Each round: observe → describe → act → speak; replies are strict JSON, dialogue separated from device commands |
+| 👁️🎤 | **Camera / mic sensing** | Dark or empty frame → impatience, then anger; moans are graded — ordinary ones nudge intensity up, screams pull it straight down |
+| 🤖 | **Autopilot** | Runs the whole loop on an interval without typing; sensors follow it |
+| 🎛️ | **Manual console** | Independent A/B channels: hold, adjust, clear, 24 built-in waveforms（loopable）; per-channel on/off and caps（1–200, default 100） |
+| 🗺️ | **Dungeon mode** | Built-in dungeon themes with event flows, map routes, and feel feedback（none / light / steady）with real device-feedback bindings |
+| 🌐 | **One-tap bilingual UI** | ZH / EN switch above the chat panel; the whole interface and character content switch together |
+| 🛡️ | **Layered safety** | Caps, ≤40 step changes, overheat limit drop, auto-clear on disconnect, emergency stop（button / hold Space for 1s） |
+| 🧩 | **Multiple characters** | Built-in role cards and dungeon theme packs（see below） |
+| 📦 | **Open-and-play** | Windows installer / portable builds; update checks, announcement pop-ups, first-run onboarding |
 
-It depends on the **Socket interface of Coyote + dglab-websocket-server**.
+---
+
+## 🧩 Built-in content
+
+Shipped with official releases（this GitHub repo hosts the code base; adult content files are distributed through the author's own channels）:
+
+**Characters**（`content/pure` + `content/roles`）
+
+| Character | Notes | EN script |
+|---|---|---|
+| Trial（体验版） | Tentacle · pure-love sample content, enabled by default | ✅ |
+| Tentacle（触手） | Full script: setting, style rules, corpus, examples | ✅ |
+| Appraisal（品评会） | Public-appraisal world | ✅ |
+| Goblin（哥布林） | Dungeon-flavored | ✅ |
+| Slime（史莱姆） | Soft / gooey | ✅ |
+| Arachne（蛛后） | Dominant | ✅ |
+
+> Switching the UI to EN automatically loads each character's `-EN.md` script（Trial uses the pure-love EN file in `content/pure`）.
+
+**Dungeon theme packs**（`content/pack/dungeon`）— Marks（地牢刻印）base dungeon + Tentacle / Appraisal / Goblin / Sigil（淫纹）theme packs, each with event flows, scene art, and device-binding tables.
+
+**Runtime chain**
 
 ```text
-Desktop app（or browser page） ⇄ Python app（FastAPI） ⇄ dglab-websocket-server v4（Bun） ⇄ DG-LAB 4.0 App（phone） ⇄ Coyote device（A／B channels）
-                         │
-                         └─ OpenAI-compatible model（character lines + structured device commands + camera／microphone observation）
+Desktop window / browser ⇄ Python app（FastAPI, 8000）
+        ⇄ dglab-websocket-server v4 relay（Bun, 9998）
+        ⇄ DG-LAB 4.0 App（phone, scan-to-pair） ⇄ Coyote device（A/B）
+
+The main program also owns: camera sensing · mic grading · LLM（OpenAI-compatible）· safety layer · dungeon runtime
 ```
 
-## ✨ Features
+---
 
-### AI observation and role progression
+## 🚀 Quick start（Windows）
 
-Each AI round follows “observe → describe → act → speak”: it first reads the camera image and microphone signal, writes a scene description, produces device actions, and then speaks. The response is strict JSON; the program separates dialogue from device commands, and the safety layer validates actions before execution.
+### Option A — Installer（recommended）
 
-The camera and microphone provide separate feedback. When the image is dark or nobody is present, the character gradually becomes impatient, then angry and enraged. Vocal reactions are graded: ordinary moans slightly increase intensity, while screams immediately lower it. After a long period of silence, the character actively teases.
+1. Grab `Coyote-in-Cradle-setup-v*.exe` from [Releases](https://github.com/indhg/AI-for-Coyote/releases/latest);
+2. Install and open the “Coyote in Cradle” shortcut;
+3. No command line, no browser — one app window; closing it exits everything.
 
-### Device control and web console
+> Prefer portable? Download the zip, unzip, and double-click `Coyote-in-Cradle.exe`（fallback `start.bat`）.
 
-- Independent A／B channel control, with 24 built-in waveforms（the panel category is “Classic Waveforms”）.
-- Web console for chat, manual control, channel toggles, per-channel intensity caps（1–200, default 100）, and theme switching.
-- Safety layer for intensity caps, step limits, and overheating protection; hold Space to emergency-stop.
-- Independent camera／microphone switches with failure warnings and automatic retry.
-- Clear chat history, update checks（new-version badge in the top bar; can be disabled in Settings）, announcement pop-up, and DLC import（`.zip` or `.md`, effective immediately）.
+### Option B — Run from source
 
-## 🗺️ Roadmap
-
-**Short term**
-
-- Architecture improvement: separate actions from dialogue（tool calls first, JSON fallback when unsupported）to reduce parsing and fallback cost.
-- Responsive Web UI improvements + a more complete configuration UI.
-
-**Long term**
-
-- Expand the character system: add more characters（each with style tiers）through DLC, using `content/pack/DLC<index>-<character>-<style>`.
-- Optional ASR switch（voice-command extraction, off by default）.
-- Evaluate Coyote 2.0（Pulse Host V2／D-LAB ESTIM01）support.
-- English version（EN）pending market research.
-
-## ⚠️ Disclaimer
-
-This project is for **adults** only, and only for personal entertainment under **voluntary, informed, and consensual** conditions. Please:
-
-- Follow the laws and regulations in your region.
-- Assess your physical condition. People with heart disease, pacemakers, or similar health risks must not use it.
-- Control intensity and duration; use the emergency stop at any time（hold Space for 1 second）.
-- Users bear all consequences resulting from use of this project; the author assumes no responsibility.
-
-## 📜 License
-
-- The repository as a whole is the author's original **proprietary software**（All Rights Reserved, see [LICENSE](LICENSE)）.
-- The `relay/` directory originates from [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0）and is shipped as an independent third-party component, retaining its original license（`relay/LICENSE`）.
-- **Core content and DLC**: the multi-character system gives each character several style tiers（light／medium／heavy）. The “Tentacles” character ships with the core（Pure Love = light, `content/pure/`）; its Training version（medium）is DLC1, and the “Appraisal Event” character（Training · medium）is DLC2 in the [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) repository（adult content, 18+）. Future characters follow the same DLC mechanism. See “Project content” below for the detailed list.
-
-## 🧩 Project content
-
-### Tentacles · Pure Love（core, light）
-
-`content/pure/` contains the default “Pure Love” character content:
-
-| File | Description |
-|---|---|
-| `触手-角色提示词-纯爱.md` | Runtime prompt: style, format rules, and light corpus |
-| `触手-语料库-纯爱.md` | Pure-Love descriptive corpus |
-| `触手-漫画设定-纯爱.md` | Character and world setting |
-
-### DLC1: Tentacles · Training（medium）
-
-Stored in the [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) repository（18+）. **Importing from inside the program is recommended**: in the left-side “Character Settings” panel, choose “Import DLC”, select `Coyote-in-Cradle-DLC1.zip`（or a single `.md` file）, and it will be copied into `content/pack/` and enabled without a restart.
-
-| File | Description |
-|---|---|
-| `触手-角色提示词-调教.md` | Training-version runtime prompt |
-| `触手-语料库-调教.md` | Training-oriented descriptive corpus |
-| `触手-漫画设定-调教.md` | Character and world setting |
-
-### DLC2: Appraisal Event · Training（medium）
-
-Stored in the [AI-for-Coyote-DLC](https://github.com/indhg/AI-for-Coyote-DLC) repository（18+, extreme content）. Import it the same way（select `Coyote-in-Cradle-DLC2.zip` or a single `.md` file）; after import, an “Appraisal Event” character card appears in “Character Settings” and is ready to use.
-
-| File | Description |
-|---|---|
-| `品评会-角色提示词-调教.md` | Judge identity: public appraisal, device domination, and crowd pressure |
-| `品评会-语料库-调教.md` | Humiliation／domination／device-oriented descriptive corpus |
-| `品评会-漫画设定-调教.md` | Aristocratic appraisal-event world setting |
-
-**Manual method**: place the corresponding DLC directory in `content/pack/`, then enable its `prompt_file` under `roles.<character>.profiles` in `config/character.yaml`（see `config/character.example.yaml`）. Create new characters under `content/pack/DLC<index>-<character>-<style>/`, keeping the “character name-” filename prefix. An uninstalled character or style tier is shown as “DLC not installed” and cannot be selected.
-
-## 🚀 Quick start
-
-### One-click installation（recommended）
-
-Download the latest Release `Coyote-in-Cradle-setup-v*.exe` and double-click to install. Open the “Coyote in Cradle” desktop shortcut to start: everything runs in one application window, and closing it exits all components; no command line or browser is required.
-
-Prefer a portable version? Download the no-install zip, extract it, and double-click `Coyote-in-Cradle.exe`（or the fallback `start.bat`）.
-
-### Requirements
+<details>
+<summary><b>Requirements</b></summary>
 
 - Python 3.10+（main program）
-- [Bun](https://bun.sh)（relay service）
-- Node.js 18+（frontend build）
-- Optional dependencies（the corresponding feature is disabled automatically when absent）:
-  - Camera: `pip install opencv-python`
-  - Microphone: `pip install sounddevice numpy`（volume grading only; no speech transcription）
+- [Bun](https://bun.sh)（relay; `npm install -g bun`）
+- Node.js 18+（frontend build only）
+- Optional: camera `pip install opencv-python`; mic `pip install sounddevice numpy`（features auto-disable when missing）
 
-### 1. Install dependencies
+</details>
+
+**1. Install + build once**
 
 ```bat
 pip install -r requirements.txt
@@ -396,118 +376,136 @@ cd relay & bun install
 cd ..\frontend & npm install & npm run build
 ```
 
-> The main program serves `frontend/dist` directly through FastAPI, so you **must build the frontend once first**.
+> The backend serves `frontend/dist` directly — you **must build the frontend once** when running from source.
 
-### 2. Configure
-
-Copy the example configuration files and fill them in:
+**2. Configure**
 
 ```bat
 copy config\config.example.yaml config\config.yaml
 copy config\character.example.yaml config\character.yaml
 ```
 
-- `config/config.yaml`: set `llm.api_key`（or the `DGLAB_LLM_API_KEY` environment variable）and the model address; use `dry_run: true` for integration testing, then change it to `false` for a real device.
-- You can also open **“Settings → AI Model Configuration”** after startup and enter the API Key, address, and model name directly. “Test Connection” verifies it; “Save and Apply” takes effect immediately（no restart; the first save creates `config.yaml` automatically）.
-- `config/character.yaml`: character settings（default: “Pure Love”; see DLC1 for Training）
-- `config/device_channels.yaml`: channel and accessory mapping plus intensity baselines（generated automatically on first run）
+- `config/config.yaml`: set `llm.api_key`（or `DGLAB_LLM_API_KEY`）and the Base URL; keep `dry_run: true` while testing, switch to `false` for a real device;
+- Easier: use **Settings → AI model** in the UI — “Test Connection”, then “Save & Apply” takes effect immediately;
+- `config/character.yaml`: roles; `config/device_channels.yaml`: channel-to-accessory mapping（auto-generated on first run）.
 
-### 3. Start
+**3. Start**
 
-Double-click `start.bat`（starts the relay, starts the main program, and opens the browser automatically）, or run manually:
+Double-click `start.bat`, or manually:
 
 ```bat
-cd relay & bun run v4-server.ts        REM Window 1: relay（port 9998）
-python -m backend.main                 REM Window 2: main program（port 8000）
+cd relay & bun run v4-server.ts        REM Window 1: relay（9998）
+python -m backend.main                 REM Window 2: main program（8000）
 ```
 
-Open <http://127.0.0.1:8000> in a browser.
+Open <http://127.0.0.1:8000>.
 
-### 4. Pair the Coyote（phone + LAN）
+**4. Pair the Coyote（phone + LAN）**
 
-1. Connect the phone to the **same Wi-Fi network as the computer**.
-2. Open the DG-LAB 4.0 App, enter the Socket V4 control entry, and scan the QR code on the right side of the web page（for example, `https://dungeon-lab.cn/s/?v=1&action=socket&url=ws://192.168.x.x:9998?tid=...`）.
-3. Connect the Coyote device over Bluetooth inside the App; the page status changes to “Paired”.
-4. If scanning fails, check that the firewall allows port 9998（run as administrator）:
+1. Connect the phone to the **same Wi-Fi** as the PC;
+2. DG-LAB 4.0 App → Socket V4 entry → scan the QR code on the page;
+3. Connect the Coyote over Bluetooth inside the App; the page shows “Paired”;
+4. Can't scan? Allow port 9998 through the firewall（as admin）:
    `netsh advfirewall firewall add rule name="dglab-relay" dir=in action=allow protocol=TCP localport=9998`
 
-## 🎛️ Usage
+---
 
-- **Chat**: talk with the AI on the left; it returns dialogue and device actions, which are validated by the safety layer before execution.
-- **Manual control**: on the right, each channel supports sustained intensity（hold mode）, intensity increase/decrease, clear, and waveform control（optional duration and channel; sustained waveforms can loop）.
-- **Channels and accessories**: A = patch, B = anal plug（editable in “Accessory Configuration”）. Baselines follow the accessory（patch 15／anal plug 5 by default）.
-- **Autopilot**: enable “Autopilot” at the top of the chat panel（beside the Clear button）to loop “observe → describe → act → speak” at an interval; the camera and microphone follow autopilot.
-- **Emergency stop**: use the large red button, or **hold Space for 1 second** when the page is not focused on an input（release cancels to prevent accidental activation）. It clears every channel, clears waveforms, and pauses the AI loop; select “Release Emergency Stop” to resume.
-- **Safety agreement**: there is no safety-word password. The fallback is the emergency stop plus automatic AI convergence after repeated expressions of pain. Run an integration test with `dry_run` and confirm intensity baselines before using a real device.
+## 🎛️ Usage notes
 
-## ❓ FAQ
-
-- **“Invalid API Key” at startup or in chat**: official and relay-provider keys are not interchangeable. Confirm that the Base URL and key belong together（for the official endpoint, use `https://api.deepseek.com`）; test it in Settings before pairing.
-- **“The server returned a webpage”／connection test passes but chat behaves strangely**: the Base URL may be a web page instead of an API endpoint, or the relay provider may not support JSON mode. **Turn off “JSON Mode”** in Settings; the program falls back to parsing automatically and retries after a 400 response.
-- **Microphone shows “Not running／Starting”**: enable autopilot first（sensors follow it）. Hover over the orange button for the reason（common causes are no desktop microphone or disabled system permission）. No microphone connected is normal.
-- **No microphone on the desktop**: the program still works without one and camera observation continues; the microphone feature shows an automatic error notice without affecting other functions.
-- **Update notice**: click the “New version vX.Y.Z” badge in the top bar to download; automatic update checks can be disabled in Settings.
+- **Chat**: dialogue on the left; commands are validated first — rejected reasons（over cap, channel off, E-Stop…）come back as ✖ cards, bilingual with the UI.
+- **Manual control**: hold / adjust / clear / waveforms per channel; rename accessories and locations（press Enter to apply）.
+- **Autopilot**: switch at the top of the chat panel; camera / mic follow it.
+- **E-Stop**: the big red button, or **hold Space for 1 second** while the page is not focused on an input（release to cancel）. It clears every channel, clears waveforms, and pauses the AI loop.
+- **No safe-word password**: safety rests on E-Stop plus the AI's automatic convergence after repeated distress signals. Always `dry_run` first and confirm baselines before a real session.
 
 ## 🛡️ Safety design
 
-The only exit for commands from any source is `backend/safety.py`:
+Every command — from AI, manual control, or dungeon feedback — goes through `backend/safety.py`:
 
-1. Independent per-channel intensity caps（configured, default 100）that AI and manual control cannot exceed.
-2. Intensity change per command ≤ 40（prevents jumps）.
-3. Waveforms and temporary intensity return to zero automatically when their duration ends.
-4. Overheating temporarily lowers the affected channel cap to 20.
-5. Relay／App disconnection automatically clears intensity.
-6. Emergency stop（button／hold Space）= clear intensity + clear waveforms + pause the loop.
-7. Safety note: do not place electrodes across the heart or above the neck; lower the cap separately for different accessories.
+1. Independent per-channel intensity caps（default 100）that no source can exceed;
+2. Intensity changes per command ≤ 40（no jumps）;
+3. Waveforms / temporary intensity auto-zero when done;
+4. Overheating drops that channel's cap to 20 temporarily;
+5. Relay / App disconnect clears everything;
+6. E-Stop = clear + zero + pause;
+7. Never place electrodes across the heart or above the neck; lower caps per accessory.
 
 ## 🤖 AI command protocol
 
-Every model response is strict JSON:
-
 ```json
 {
-  "line": "Character dialogue（displayed as-is）",
+  "line": "Character dialogue（shown as-is）",
   "actions": [
-    {"op": "temp_strength", "channel": "A", "value": 60, "duration_s": 3},
-    {"op": "add_strength", "channel": "B", "delta": 10},
-    {"op": "pulse", "channel": "A", "pattern": "短促连击", "duration_s": 2},
-    {"op": "clear", "channel": "B"},
-    {"op": "stop"}
+    { "op": "temp_strength", "channel": "A", "value": 60, "duration_s": 3 },
+    { "op": "add_strength",  "channel": "B", "delta": 10 },
+    { "op": "pulse",         "channel": "A", "pattern": "短促连击", "duration_s": 2 },
+    { "op": "clear",         "channel": "B" },
+    { "op": "stop" }
   ]
 }
 ```
 
-The waveform library is in `config/waveforms.yaml`: `presets` maps Chinese names to waveforms（including default／maximum durations）, and `custom` stores the official waveform data as 64 frames.
+Command names never change; their display labels on the chips are localized（`backend/ui_en.py` + the frontend dictionary）.
 
-## 🗂️ Directory structure
+## ❓ FAQ
+
+- **“Invalid API Key”**: official and relay keys are not interchangeable — Base URL and key must match（official: `https://api.deepseek.com`）; use “Test Connection” first.
+- **“The server returned a webpage” / weird chats**: the Base URL is a web page, not an API endpoint; or the relay lacks JSON mode — turn **JSON Mode off** in Settings（the app falls back automatically）.
+- **Mic shows “Not running / Starting”**: enable autopilot first; hover the orange button for the reason.
+- **No QR code / can't pair**: make sure the relay is up（something listening on 9998）and check the firewall.
+- **Language switch has no effect**: characters without an EN script stay Chinese by design（the UI says so）; one switch drives both interface and content language.
+
+## 🗂️ Directory layout
 
 ```text
 AI-for-Coyote\
-├── backend\             Python backend（FastAPI: main / config / safety / relay_client / device_ops
-│                        waveforms / llm / game_loop / camera / audio / logging_utils）
-├── frontend\            React 19 + TS + Vite + Tailwind v4 desktop console（dist\ is built and served by the backend）
-├── relay\               dglab-websocket-server（Bun, v4 on port 9998）
-├── desktop\             Desktop shell（pywebview app window; double-click to use; shell.py + app.ico）
-├── packaging\           Packaging scripts（portable zip assembly + Inno Setup installer template）
-├── config\              config.example.yaml（example configuration）, waveforms.yaml（waveform library）
-├── content\pure\        Built-in content: Pure-Love prompts／corpus／setting（default character）
-├── content\roles\       Free-chat role content（Tentacle / Appraisal tier prompts & corpus, bundled）
-├── content\pack\dungeon\  Dungeon theme packs（00-地牢 master pack + Tentacle / Appraisal / 淫纹 theme packs）
-├── logs\                Runtime logs（app.log）
+├── backend\              Python main program（FastAPI: control / safety / game_loop / LLM /
+│                         relay client / waveforms / camera / audio / dungeon / ui_en）
+├── frontend\             React 19 + TS + Vite + Tailwind v4 console（i18n; dist\ served by backend）
+├── desktop\              Desktop shell（pywebview; shell.py）
+├── packaging\            Packaging scripts（portable zip + Inno Setup installer）
+├── relay\                dglab-websocket-server（Bun, v4 on 9998; GPL-3.0 third-party）
+├── config\               Example configs + waveforms.yaml
+├── content\pure\         Tentacle pure-love content（Trial script, incl. EN）
+├── content\roles\        Full role scripts（Tentacle / Appraisal / Goblin / Slime / Arachne, incl. EN）
+├── content\pack\dungeon\ Dungeon theme packs（Marks + Tentacle / Appraisal / Goblin / Sigil）
+├── logs\                 Runtime logs
 └── start.bat             One-click startup
 ```
 
 ## 🧑‍💻 Frontend development
 
-- Normal use: the backend serves `frontend\dist` directly（run `npm run build` after frontend changes）.
-- Development mode: run `npm run dev` under `frontend\`（Vite proxies `/api` and `/ws` to port 8000; open port 5173 in the browser）.
+- Production: the backend serves `frontend\dist` — run `npm run build` after changes;
+- Dev: `npm run dev` under `frontend\`（Vite proxies `/api` and `/ws` to 8000; open 5173）;
+- i18n: all visible strings live in `frontend/src/i18n.ts`（ZH/EN dictionary + `t()`/`useT()`）— add new strings there, never hard-code.
 
-## 📚 Dependencies
+## 🗺️ Roadmap
 
-- Python 3.10+: `pip install -r requirements.txt`
-- Bun（relay runtime）: `npm install -g bun`
-- Node 18+（frontend build）
-- Desktop shell（only needed to run the desktop app from source）: `pip install pywebview`（the packaging script installs it automatically when packaging）
-- Phone client: DG-LAB 4.0 App（v4 protocol）
+**In progress**
 
-[Back to top](#top)
+- Channeling 18+ / English content through dedicated distribution（repo & Release split）;
+- English coverage for dungeon narrative / event text.
+
+**Planned**
+
+- Optional ASR（voice-command extraction）;
+- Coyote 2.0（Pulse Host V2 / D-LAB ESTIM01）evaluation;
+- More characters and dungeon theme packs.
+
+## ⚠️ Disclaimer
+
+For **adults only**, for personal entertainment under **voluntary, informed, and consensual** conditions. Follow local law; do not use with heart disease, pacemakers, or similar risks; control intensity and duration and use the E-Stop freely（hold Space for 1s）; all consequences of use are the user's own.
+
+## 📜 License
+
+- The repository as a whole is the author's original **proprietary software**（All Rights Reserved, see [LICENSE](LICENSE)）— no redistribution, resale, or republishing through other channels;
+- `relay/` originates from [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0）, shipped as an independent third-party component（`relay/LICENSE`）;
+- Character scripts and theme-pack content are the author's copyright and are obtained only through the author's channels; this GitHub repo hosts the code base and does not include adult content files.
+
+## 🙏 Thanks & contact
+
+- Author on X（Twitter）: <https://x.com/cinnanirch>
+- Relay protocol & upstream: [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)
+- Bugs / ideas: GitHub [Issues](https://github.com/indhg/AI-for-Coyote/issues) / [Discussions](https://github.com/indhg/AI-for-Coyote/discussions)
+
+[⬆ Back to top](#top)
