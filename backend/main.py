@@ -14,12 +14,11 @@ import re
 import socket
 import sys
 import urllib.parse
-import zipfile
 from pathlib import Path
 
 import httpx
 import qrcode
-from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -28,17 +27,17 @@ from .camera import Camera
 from .update_check import UpdateChecker
 from .config import (
     load_config,
-    patch_character_add_role,
-    patch_character_prompt_file,
     reload_character,
+    save_autopilot_interval,
     save_character_runtime,
     save_device_channels,
 )
 from .game_loop import GameLoop
 from .llm import LLM
 from .logging_utils import setup_logging
-from .relay_client import RelayClient
+from .device.factory import build_backend
 from .safety import SafetyManager
+from .dungeon.runtime import DungeonRuntime
 
 # 打包（PyInstaller）后以 exe 所在目录为项目根；开发时以仓库根
 if getattr(sys, "frozen", False):
@@ -99,19 +98,26 @@ class AppState:
         self.logger = setup_logging(cfg["log_dir"], cfg["log"]["level"])
 
         self.safety = SafetyManager(cfg)
-        self.relay = RelayClient(
-            cfg["relay"]["url"],
-            reconnect_delay_s=float(cfg["relay"]["reconnect_delay_s"]),
-            on_event=self.on_relay_event,
-            on_action=self.on_relay_action,
+        self.backend = build_backend(
+            cfg, self.safety, on_event=self.on_relay_event, on_action=self.on_relay_action
         )
+        self.backend.on_disconnect(self._on_backend_disconnect)
+        # 测试模式（不连郊狼）：保存真实后端，切换时换回
+        self._real_backend = self.backend
+        self._sim_backend = None
+        self._test_mode = False
+        self._test_mode_lock = asyncio.Lock()
         self.llm = LLM(cfg)
         self.camera = Camera(cfg)
         self.audio = AudioManager(
             cfg, on_text=self.on_audio_text, on_moan=self.on_audio_moan
         )
-        self.loop = GameLoop(cfg, self.llm, self.safety, self.relay, self.camera, self.audio)
+        self.loop = GameLoop(cfg, self.llm, self.safety, self.backend, self.camera, self.audio)
         self.loop.on_ai_turn = self.broadcast_chat  # AI 主动回合推送到页面聊天区
+        self.dungeon = DungeonRuntime(cfg, self.llm, self.safety, PROJECT_ROOT)
+        # 地牢反馈真机发送接入同一后端（M3 遗留缺口：FeedbackExecutor 此前无 send 回调）
+        if getattr(self.dungeon, "executor", None) is not None:
+            self.dungeon.executor.send = self.backend.apply
 
         self.ws_clients: set[WebSocket] = set()
         self.tasks: list[asyncio.Task] = []
@@ -119,7 +125,10 @@ class AppState:
         self.sensors_on = False
         self.sensor_watch_task: asyncio.Task | None = None
         self.layout: dict = {}  # 前端上报的三栏布局（监测/调试用）
-        self.update = UpdateChecker(enabled=bool(self.cfg["app"].get("check_update", True)))
+        self.update = UpdateChecker(
+            enabled=bool(self.cfg["app"].get("check_update", True)),
+            url=self.cfg["app"].get("update_url", ""),
+        )
         # 传感器运行时开关（不持久化；初始跟随 config.enabled）
         self.sensor_switches: dict[str, bool] = {
             "camera": bool(self.cfg["camera"].get("enabled", False)),
@@ -149,7 +158,7 @@ class AppState:
     async def on_relay_event(self, event: str, payload: dict) -> None:
         if event == "slots_patch":
             # 取第一台设备的 props/slotState 同步给安全层
-            client = self.relay.clients.get(self.relay.first_client_id() or "")
+            client = self.backend.client_state()
             if client:
                 self.safety.update_device_state(
                     client.get("props"), client.get("slotState")
@@ -161,6 +170,13 @@ class AppState:
         if event == "client_disconnected" and self.cfg["safety"]["auto_clear_on_disconnect"]:
             self.loop.on_client_disconnected()
             self.logger.warning("APP 断开，自动清零并停止循环波形")
+        await self.broadcast()
+
+    async def _on_backend_disconnect(self, payload: dict) -> None:
+        """设备/链路断开（BLE notify 超时、中继断开等）：按配置自动清零。"""
+        if self.cfg["safety"]["auto_clear_on_disconnect"]:
+            self.loop.on_client_disconnected()
+        self.logger.warning("设备后端断开，已按配置处理: %s", payload)
         await self.broadcast()
 
     async def _auto_open_and_broadcast(self) -> None:
@@ -204,11 +220,14 @@ class AppState:
         state = self.loop.build_state()
         state["sensors_on"] = self.sensors_on
         state["sensors"] = dict(self.sensor_switches)
-        state["relay"] = self.relay.to_state()
+        state["relay"] = self.backend.to_state()
+        state["device_backend"] = self.backend.name
+        state["test_mode"] = self._test_mode
         state["audio"] = self.audio.to_state()
         state["layout"] = dict(self.layout)
         state["update"] = self.update.to_state(_app_version())
         state["character"] = self.cfg["character"]["name"]
+        state["dungeon"] = self.dungeon.to_state()
         state["config_info"] = {
             "model": self.cfg["llm"]["model"],
             "character_file": str(self.cfg["character_file"]),
@@ -219,6 +238,53 @@ class AppState:
             "version": _app_version(),
         }
         return state
+
+    # ---------- 测试模式（不连郊狼，模拟设备全流程试跑） ----------
+    def _sim_backend_instance(self):
+        """懒创建模拟后端（测试模式用）。"""
+        if self._sim_backend is None:
+            from backend.device.sim_backend import SimulatedBackend
+
+            self._sim_backend = SimulatedBackend()
+        return self._sim_backend
+
+    def _attach_backend(self, backend) -> None:
+        """把某个后端挂到所有消费点上（loop / 地牢执行器 / 本对象状态）。"""
+        self.backend = backend
+        self.loop.backend = backend
+        if getattr(self.dungeon, "executor", None) is not None:
+            self.dungeon.executor.send = backend.apply
+
+    async def set_test_mode(self, on: bool) -> dict:
+        """开/关测试模式：开 = 换模拟后端 + 强制 dry-run + 假装配对成功；关 = 恢复真实中继。"""
+        on = bool(on)
+        # 串行化开关：连点/前后两次请求交叠时，避免 stop/start 与 backend 换绑交错执行
+        async with self._test_mode_lock:
+            if on == self._test_mode:
+                return {"ok": True, "test_mode": self._test_mode}
+            if on:
+                await self._real_backend.stop()          # 停真实中继重连任务
+                self._attach_backend(self._sim_backend_instance())
+                self.safety.dry_run = True               # 全体标「模拟」+ AI 被告知 dry-run
+                self._test_mode = True
+                self.logger.info("已进入测试模式：模拟设备已配对，不发送真实命令")
+                # 与真实配对一致：缓 3 秒让 AI 主动开场
+                if not self.auto_opened:
+                    self.auto_opened = True
+                    asyncio.create_task(self._auto_open_and_broadcast())
+            else:
+                sim = self._sim_backend
+                if sim is not None:
+                    await sim.stop()
+                self._attach_backend(self._real_backend)
+                self.safety.dry_run = bool(self.cfg["app"].get("dry_run", True))
+                self._test_mode = False
+                # 清掉模拟态残留的强度/波形，避免退出后 UI 显示模拟数值（真实设备 slots_patch 覆盖前）
+                self.loop.on_client_disconnected()
+                self.logger.info("已退出测试模式，恢复真实设备配对")
+                asyncio.create_task(self._real_backend.start())
+            await self.broadcast()
+            return {"ok": True, "test_mode": self._test_mode}
 
     # ---------- 传感器开关（跟随自动运行；浏览器断开超时自动关） ----------
     async def set_sensors(self, on: bool) -> None:
@@ -292,7 +358,7 @@ class AppState:
 
     # ---------- 生命周期 ----------
     async def start_background(self) -> None:
-        self.tasks.append(asyncio.create_task(self.relay.run()))
+        self.tasks.append(asyncio.create_task(self.backend.start()))
         self.tasks.append(asyncio.create_task(self._sensor_watchdog()))
         self.tasks.append(asyncio.create_task(self._update_loop()))
         # 配置里自动运行开着时，启动真正的循环任务（此前只置状态、不启动任务，
@@ -314,6 +380,8 @@ class AppState:
         if self.cfg["safety"]["auto_clear_on_disconnect"]:
             with contextlib.suppress(Exception):
                 await self.loop.estop()
+        with contextlib.suppress(Exception):
+            await self.backend.stop()
         for task in self.tasks:
             task.cancel()
 
@@ -361,9 +429,13 @@ def make_app() -> FastAPI:
 
     @app.get("/api/qrcode.png")
     async def api_qrcode() -> Response:
-        controller_id = state.relay.controller_id
+        controller_id = state.backend.controller_id()
         if not controller_id:
-            return Response("中继未连接，暂无配对码", status_code=503, media_type="text/plain")
+            return Response(
+                "设备未就绪：dglab 后端需中继已连接；coyote2_ble 后端无二维码（走 BLE 扫描）",
+                status_code=503,
+                media_type="text/plain",
+            )
         lan_ip = cfg["relay"]["lan_ip"]
         if lan_ip == "auto":
             lan_ip = get_lan_ip()
@@ -375,9 +447,9 @@ def make_app() -> FastAPI:
 
     @app.get("/api/pair_url")
     async def api_pair_url() -> JSONResponse:
-        controller_id = state.relay.controller_id
+        controller_id = state.backend.controller_id()
         if not controller_id:
-            return JSONResponse({"error": "中继未连接"}, status_code=503)
+            return JSONResponse({"error": "设备未就绪（dglab 中继未连接；coyote2_ble 无二维码）"}, status_code=503)
         lan_ip = cfg["relay"]["lan_ip"]
         if lan_ip == "auto":
             lan_ip = get_lan_ip()
@@ -385,8 +457,8 @@ def make_app() -> FastAPI:
 
     @app.get("/api/network")
     async def api_network() -> JSONResponse:
-        """网络自检：本机 IP 列表 + 当前配对地址。"""
-        controller_id = state.relay.controller_id
+        """网络自检：本机 IP 列表 + 当前配对地址（dglab 后端用）。"""
+        controller_id = state.backend.controller_id()
         lan_ip = cfg["relay"]["lan_ip"]
         if lan_ip == "auto":
             lan_ip = get_lan_ip()
@@ -521,6 +593,22 @@ def make_app() -> FastAPI:
             }
         )
 
+    @app.post("/api/intensity")
+    async def api_intensity(body: dict) -> JSONResponse:
+        """整体强度档位（只乘 AI 输出强度，与对话无关；重启回默认「中」）：{level:"轻"|"中"|"重"}。"""
+        level = str(body.get("level") or "").strip()
+        if level not in ("轻", "中", "重"):
+            return JSONResponse({"error": "level 只能是 轻/中/重"}, status_code=400)
+        state.safety.set_intensity_level(level)
+        await state.broadcast()
+        return JSONResponse(
+            {
+                "ok": True,
+                "intensity_level": state.safety.intensity_level,
+                "strength_scale": state.safety.scale,
+            }
+        )
+
     @app.post("/api/character/profile")
     async def api_character_profile(body: dict) -> JSONResponse:
         """切换角色/风格：{role: "触手", profile: "调教"}，保存并热加载；目标 DLC 未安装时拒绝。"""
@@ -542,8 +630,7 @@ def make_app() -> FastAPI:
         if not avail.get(profile, True):
             return JSONResponse(
                 {
-                    "error": f"「{rmeta['label']}·{profile}」的 DLC 未安装：请先在「角色设置」导入对应 DLC 包。",
-                    "detail": "dlc_missing",
+                    "error": f"「{rmeta['label']}·{profile}」暂不可用（内容未内置）。",
                 },
                 status_code=400,
             )
@@ -563,179 +650,63 @@ def make_app() -> FastAPI:
         await state.broadcast()
         return JSONResponse({"ok": True, "player_nick": cfg["character"]["player_nick"]})
 
-    @app.post("/api/dlc/import")
-    async def api_dlc_import(file: UploadFile = File(...)) -> JSONResponse:
-        """导入 DLC：上传 .zip（解出全部 .md）或单个 .md → 拷进 content\\pack\\ 并自动接通 character.yaml。
+    # （DLC 导入机制已随闭源移除：内容全部内置 content/roles/ 与 content/pack/dungeon/）
 
-        zip 可按 DLC 目录分组（支持仓库 zip 单层包装目录、一个 zip 含多个 DLC）；
-        单个 md 从文件名解析主题（<主题>-角色提示词-<风格>.md）。不用重启：改完即热加载。
-        """
-        name = file.filename or ""
-        low = name.lower()
-        if not (low.endswith(".zip") or low.endswith(".md")):
-            return JSONResponse({"error": "只支持 .zip 或 .md 文件"}, status_code=400)
-        data = await file.read()
-        if not data:
-            return JSONResponse({"error": "文件为空"}, status_code=400)
-        if len(data) > 50 * 1024 * 1024:
-            return JSONResponse({"error": "文件过大（上限 50MB）"}, status_code=400)
+    # ---------- 地牢（紫金地牢，M4） ----------
+    @app.get("/api/dungeon/state")
+    async def api_dungeon_state() -> JSONResponse:
+        return JSONResponse(state.dungeon.to_state())
 
-        pack_dir = PROJECT_ROOT / "content" / "pack"
-        pack_dir.mkdir(parents=True, exist_ok=True)
-
-        groups: dict[str, dict[str, bytes]] = {}  # DLC 目录名 -> {文件名: 内容}
-        total_unpacked = 0
-        MAX_UNPACKED = 256 * 1024 * 1024   # 解压后总上限（防 zip 炸弹）
-        MAX_ENTRIES = 200                  # 条目数上限
-        if low.endswith(".zip"):
-            try:
-                zf = zipfile.ZipFile(io.BytesIO(data))
-            except zipfile.BadZipFile:
-                return JSONResponse({"error": "zip 包损坏或格式不对"}, status_code=400)
-            with zf:
-                raw_names = zf.namelist()
-                if len(raw_names) > MAX_ENTRIES:
-                    return JSONResponse({"error": f"zip 条目过多（上限 {MAX_ENTRIES}）"}, status_code=400)
-                fixed_names: list[str] = []
-                for n in raw_names:
-                    # Windows 压缩工具不写 UTF-8 标志，先按 cp437 还原原始字节再按 UTF-8 解码中文名
-                    fixed = n
-                    try:
-                        fixed = n.encode("cp437").decode("utf-8")
-                    except (UnicodeEncodeError, UnicodeDecodeError):
-                        pass
-                    fixed_names.append(fixed)
-                for n, fixed in zip(raw_names, fixed_names):
-                    # zip slip 防护：拒绝绝对路径/盘符/UNC/路径分隔符
-                    p = Path(fixed)
-                    if p.is_absolute() or p.drive or fixed.startswith(("\\\\", "//")):
-                        continue
-                    bn = p.name
-                    if not bn.lower().endswith(".md") or bn.startswith(".") or bn in (".", ".."):
-                        continue
-                    if Path(bn).name != bn or "\\" in bn or "/" in bn:
-                        continue
-                    parts = [x for x in p.parts if x not in ("", ".", "..")]
-                    # 组名：路径中形如 DLC<序号>-<角色>-<风格> 的组件；否则首个顶层目录（跳过单层包装）
-                    grp = next((x for x in parts if re.match(r"^DLC\d+-.+?-.+$", x)), None)
-                    if not grp:
-                        if len(parts) >= 3 and not re.match(r"^DLC\d+", parts[0]):
-                            grp = parts[1]
-                        elif parts:
-                            grp = parts[0]
-                    if not grp or grp in (".", ".."):
-                        continue
-                    gp = Path(grp)
-                    if gp.is_absolute() or gp.drive or gp.name != grp:
-                        continue
-                    info = zf.getinfo(n)
-                    total_unpacked += info.file_size
-                    if total_unpacked > MAX_UNPACKED:
-                        return JSONResponse({"error": "zip 解压后过大（上限 256MB）"}, status_code=400)
-                    groups.setdefault(grp, {})[bn] = zf.read(n)
-            if not groups:
-                return JSONResponse({"error": "zip 里没有 .md 文件"}, status_code=400)
-        else:
-            # 单个 md：文件名 <主题>-角色提示词-<风格>.md → 归入「DLC导入-<主题>-<风格>」组
-            bn = name.replace("\\", "/").split("/")[-1]  # 只取纯文件名（防路径注入）
-            m2 = re.match(r"^(.+?)-角色提示词-(.+?)\.md$", bn)
-            grp = f"DLC导入-{m2.group(1)}-{m2.group(2)}" if m2 else (Path(bn).stem or "DLC导入")
-            groups[grp] = {bn: data}
-
-        # 落盘（最终边界校验：目标必须落在 content/pack 内）
-        pack_resolved = pack_dir.resolve()
-        for grp, mds in groups.items():
-            gp = Path(grp)
-            if grp in (".", "..") or ".." in gp.parts or gp.is_absolute() or gp.drive:
-                continue
-            dlc_dir = (pack_dir / grp).resolve()
-            if not dlc_dir.is_relative_to(pack_resolved):
-                continue
-            dlc_dir.mkdir(parents=True, exist_ok=True)
-            for bn, content in mds.items():
-                target = (dlc_dir / bn).resolve()
-                if target.parent != dlc_dir or not target.is_relative_to(pack_resolved):
-                    continue
-                target.write_bytes(content)
-
-        # 自动接通（每个 DLC 目录一组；角色已存在则接通其风格档并修正档位为中，
-        # 新角色自动注册角色块；无法解析主题名时才按当前角色兜底）
-        def wire_group(dlc_folder: str, mds: dict[str, bytes]) -> tuple[str | None, str | None]:
-            prompt_md = next((b for b in mds if "角色提示词" in b), None) or next(
-                (b for b in mds if "提示词" in b), None
+    @app.post("/api/dungeon/start")
+    async def api_dungeon_start(body: dict) -> JSONResponse:
+        try:
+            result = await state.dungeon.start(
+                active_themes=body.get("active_themes"),
+                mix_policy=str(body.get("mix_policy") or "mixed_pool"),
+                floors=int(body.get("floors") or 3),
+                seed=body.get("seed"),
+                map_mode=bool(body.get("map_mode", False)),
             )
-            if not prompt_md:
-                return None, None
-            reload_character(cfg)
-            char_path = Path(cfg["character_file"])
-            if not char_path.is_absolute():
-                char_path = PROJECT_ROOT / char_path
-            rel = f"content/pack/{dlc_folder}/{prompt_md}"
-
-            m = re.match(r"^DLC\d+-(.+?)-(.+)$", dlc_folder)
-            dlc_role = (m.group(1) if m else "").strip()
-            dlc_style = (m.group(2) if m else "").strip()
-            if not dlc_role:
-                m2 = re.match(r"^(.+?)-角色提示词", prompt_md)
-                if m2:
-                    dlc_role = m2.group(1).strip()
-                    dlc_style = next((s for s in ("纯爱", "调教", "凌辱") if s in prompt_md), "调教")
-            roles_map = {r["name"]: r for r in (cfg["character"].get("roles") or [])}
-
-            patched_role = None
-            patched_profile = None
-            if dlc_role and dlc_role in roles_map:
-                profiles_of = [p["name"] for p in roles_map[dlc_role]["profiles"]]
-                target = next((p for p in profiles_of if p and p in prompt_md), None)
-                if target is None:
-                    target = profiles_of[0] if profiles_of else None
-                if target and patch_character_prompt_file(char_path, target, rel, role=dlc_role, level="中"):
-                    patched_profile = target
-                    patched_role = dlc_role
-            elif dlc_role:
-                style = dlc_style or "调教"
-                narrative = "触手" if dlc_role == "触手" else "装置"
-                if patch_character_add_role(char_path, dlc_role, dlc_role, style, "中", rel, narrative):
-                    patched_profile = style
-                    patched_role = dlc_role
-            else:
-                # 无法解析主题名（旧式单 md）：当前角色内匹配
-                avail = cfg["character"].get("profile_available") or {}
-                profiles = list(cfg["character"].get("profiles") or [])
-                cur_role = str(cfg["character"].get("role") or "")
-                target = next((p for p in profiles if p and p in prompt_md), None)
-                if target is None:
-                    target = next((p for p in profiles if p != "纯爱" and not avail.get(p, True)), None)
-                if target is None and "调教" in profiles:
-                    target = "调教"
-                if target and patch_character_prompt_file(char_path, target, rel, role=cur_role):
-                    patched_profile = target
-                    patched_role = cur_role
-            reload_character(cfg)
-            return patched_role, patched_profile
-
-        pre_roles = {r["name"] for r in (cfg["character"].get("roles") or [])}
-        results: list[tuple[str, str | None, str | None]] = []
-        for grp, mds in groups.items():
-            r, p = wire_group(grp, mds)
-            results.append((grp, r, p))
-        # 响应里优先展示「新注册的主题」，否则最后一个
-        chosen = next((x for x in results if x[1] and x[1] not in pre_roles), None) or next(
-            (x for x in reversed(results) if x[1]), None
-        )
-
+        except Exception as exc:  # noqa: BLE001
+            return JSONResponse({"error": str(exc)}, status_code=400)
         await state.broadcast()
-        all_files = sorted({bn for _, mds in groups.items() for bn in mds})
-        return JSONResponse(
-            {
-                "ok": True,
-                "dir": chosen[0] if chosen else (next(iter(groups)) if groups else ""),
-                "dirs": [g for g, _, _ in results],
-                "files": all_files,
-                "role": chosen[1] if chosen else None,
-                "profile": chosen[2] if chosen else None,
-            }
-        )
+        return JSONResponse(result)
+
+    @app.post("/api/dungeon/advance")
+    async def api_dungeon_advance(body: dict) -> JSONResponse:
+        try:
+            result = await state.dungeon.advance(
+                choice_id=body.get("choice_id"),
+                text=body.get("text"),
+                map_target=body.get("map_target"),
+            )
+        except Exception as exc:  # noqa: BLE001
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        await state.broadcast()
+        return JSONResponse(result)
+
+    @app.post("/api/dungeon/save")
+    async def api_dungeon_save(body: dict) -> JSONResponse:
+        try:
+            path = state.dungeon.save(str(body.get("slot") or "autosave"))
+        except Exception as exc:  # noqa: BLE001
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        return JSONResponse({"ok": True, "path": path})
+
+    @app.post("/api/dungeon/load")
+    async def api_dungeon_load(body: dict) -> JSONResponse:
+        try:
+            result = await state.dungeon.load(str(body.get("slot") or "autosave"))
+        except Exception as exc:  # noqa: BLE001
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        await state.broadcast()
+        return JSONResponse(result)
+
+    @app.post("/api/dungeon/restart")
+    async def api_dungeon_restart(body: dict) -> JSONResponse:
+        state.dungeon.restart()
+        await state.broadcast()
+        return JSONResponse({"ok": True})
 
     @app.post("/api/autopilot")
     async def api_autopilot(body: dict) -> JSONResponse:
@@ -745,6 +716,28 @@ def make_app() -> FastAPI:
         await state.set_sensors(enabled)
         await state.broadcast()
         return JSONResponse({"ok": True, "autopilot": bool(state.loop.autopilot)})
+
+    @app.post("/api/autopilot/interval")
+    async def api_autopilot_interval(body: dict) -> JSONResponse:
+        """自动运行间隔：{interval_s: 5~30}。改内存值并持久化到 config.yaml 的 autopilot.interval_s。"""
+        try:
+            value = float(body.get("interval_s", 12))
+        except (TypeError, ValueError):
+            return JSONResponse({"error": "间隔必须是 5–30 秒"}, status_code=400)
+        value = state.loop.set_autopilot_interval(value)
+        try:
+            save_autopilot_interval(cfg, value)
+        except Exception:  # noqa: BLE001
+            state.logger.exception("自动运行间隔保存失败，保留内存值")
+        await state.broadcast()
+        return JSONResponse({"ok": True, "interval_s": value})
+
+    @app.post("/api/test_mode")
+    async def api_test_mode(body: dict) -> JSONResponse:
+        """测试模式开关：{enabled: true/false}。不连郊狼，用模拟设备试跑全流程（不会真电击）。"""
+        result = await state.set_test_mode(bool(body.get("enabled", False)))
+        await state.broadcast()
+        return JSONResponse(result)
 
     # ---------- AI 模型配置（设置页填写，保存即生效） ----------
     @app.get("/api/settings/llm")

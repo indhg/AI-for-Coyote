@@ -6,13 +6,30 @@ app:
   port: 8000
   title: Coyote in Cradle   # 控制台标题（顶部与浏览器标签页显示）
   dry_run: false          # true = 不发送真实设备命令，只模拟记录（无设备时联调用）；接真机时改为 false
-  check_update: true      # 启动+每 6 小时静默查 GitHub 最新版本（失败静默，不联网可关）
+  check_update: true      # 启动+每 6 小时静默查更新源（失败静默，不联网可关）
+  update_url: ""          # 更新源：留空=GitHub Releases；自建网站后填 https://你的网站/version.json
+                          # 自定义源 JSON 格式：{ "version": "v1.1.6", "download_url": "https://...", "notes": "更新说明" }
 
 relay:
   url: ws://127.0.0.1:9998   # dglab-websocket-server v4 地址
   reconnect_delay_s: 3       # 断线重连间隔
   lan_ip: auto               # 生成配对二维码用的局域网 IP；auto=自动探测，也可写死如 192.168.1.5
   public_url: ""             # 计划B：填公网中继地址（如 wss://trex.dungeon-lab.cn/v4），二维码改用它，手机任何网络都能连
+
+# ============ 设备后端（T043 多后端；默认手机桥，现有用户零变化） ============
+device:
+  backend: dglab_relay      # dglab_relay = 手机 App 桥（默认）；coyote2_ble = 郊狼 v2 电脑 BLE 直连（跳过手机）
+  ble:                      # 仅 backend: coyote2_ble 时生效（需 pip install bleak）
+    device_name_prefix: "D-LAB ESTIM"   # v2 主机蓝牙名前缀（脉冲主机 V2 / ESTIM01）
+    preferred_address: ""   # 上次成功的 MAC/UUID；留空=扫描到第一台自动连
+    swap_wave_chars: false  # 官方文档 A/B 波形特性对调嫌疑：真机验证 1505/1506 归属后改
+    wave_xy: [1, 10]        # 波形 XYZ 的 X/Y 默认（听感校准项，待实测）
+    # 以下留空=按官方文档自动拼 UUID（955Axxxx-0FE2-F5AA-A094-84B8D4F3E8AD）；
+    # 真机 GATT 枚举与文档不一致时填完整 UUID：
+    svc_pwm: ""
+    char_ab2: ""
+    char_a: ""
+    char_b: ""
 
 llm:
   base_url: https://api.deepseek.com   # OpenAI 兼容接口地址（通义/豆包/GLM 等填对应地址）
@@ -29,6 +46,9 @@ llm:
     model: ""
 
 character_file: config/character.yaml    # 角色设定文件（自己写，可随时改）
+
+dungeon:
+  ai_narrative: false      # 地牢局内叙事走 LLM 扩写？false=直接用作者 seed（即时、稳，推荐）；true=每步调 LLM（慢）
 
 # ============ 安全（任何来源的命令都经过这里钳制） ============
 safety:

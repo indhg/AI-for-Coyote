@@ -11,7 +11,6 @@ import asyncio
 import logging
 
 from .config import reload_character
-from .device_ops import CHANNEL, DeviceOps
 from .safety import SafetyManager
 
 logger = logging.getLogger("ai-for-coyote.game")
@@ -31,24 +30,21 @@ def _friendly_llm_error(exc: Exception) -> str:
 
 
 class GameLoop:
-    def __init__(self, cfg, llm, safety: SafetyManager, relay, camera=None, audio=None) -> None:
+    def __init__(self, cfg, llm, safety: SafetyManager, backend, camera=None, audio=None) -> None:
+        """backend: backend.device 的 DeviceBackend（默认 dglab_relay，零行为变化）。"""
         self.cfg = cfg
         self.llm = llm
         self.safety = safety
-        self.relay = relay
+        self.backend = backend
         self.camera = camera
         self.audio = audio
-        self.ops = DeviceOps()
 
         self.history: list[dict] = []          # [{"role","content"}]
         self.notes: list[str] = []             # 反馈按钮等系统备注，注入下一轮
         self.keep = int(cfg["log"]["history_keep"])
 
-        # 循环波形任务：channel -> (task, stop_event)
-        self.loop_tasks: dict[str, asyncio.Task] = {}
-        self.loop_events: dict[str, asyncio.Event] = {}
-
         # 当前播放的波形（按通道，供页面显示与 AI 上下文）
+        # 循环波形的物理任务由 backend 维护；此处只保留展示/上下文用 patterns
         self.patterns: dict[str, str | None] = {"A": None, "B": None}
 
         # 自动观察循环（阶段 3 摄像头闭环）
@@ -95,11 +91,11 @@ class GameLoop:
             self.rage_rounds = 0
 
     def build_state(self) -> dict:
-        relay_state = self.relay.to_state()
+        backend_state = self.backend.to_state()
         state = self.safety.to_state()
-        state["relay_status"] = relay_state["status"]
-        state["controller_id"] = relay_state["controller_id"]
-        state["connected"] = relay_state["status"] == "paired"
+        state["relay_status"] = backend_state["status"]
+        state["controller_id"] = backend_state["controller_id"]
+        state["connected"] = backend_state["status"] in ("paired", "ready")
         state["notes"] = list(self.notes)
         state["camera_enabled"] = bool(self.camera and self.camera.enabled)
         state["camera"] = self.camera.to_state() if self.camera else {}
@@ -109,10 +105,11 @@ class GameLoop:
             for ch in ("A", "B")
         }
         pulse = self.safety.pulse_active()
+        loops = self.backend.loops_active()
         state["active_channels"] = {
             ch: bool(self.safety.current.get(ch))
             or bool(pulse.get(ch))
-            or (ch in self.loop_tasks)
+            or bool(loops.get(ch))
             for ch in ("A", "B")
         }
         state["patterns"] = dict(self.patterns)
@@ -173,7 +170,7 @@ class GameLoop:
                     line = f"（{_friendly_llm_error(exc)}）"
                 actions = []
             self.turn_count += 1
-            executed, dropped = await self.execute_actions(actions)
+            executed, dropped = await self.execute_actions(actions, apply_scale=True)
             await self._apply_channel_floor()
         finally:
             self.turn_busy = False
@@ -218,7 +215,7 @@ class GameLoop:
                 line = f"（开场调用失败：{_friendly_llm_error(exc)}）"
                 actions = []
             self.turn_count += 1
-            executed, dropped = await self.execute_actions(actions)
+            executed, dropped = await self.execute_actions(actions, apply_scale=True)
             await self._apply_channel_floor()
         finally:
             self.turn_busy = False
@@ -260,7 +257,7 @@ class GameLoop:
                 pass
             if self.safety.estop_active or self.turn_busy:
                 continue
-            if self.relay.to_state()["status"] != "paired":
+            if self.backend.to_state()["status"] not in ("paired", "ready"):
                 continue
             if not (self.camera and self.camera.has_frame()):
                 continue
@@ -298,7 +295,7 @@ class GameLoop:
                 logger.exception("自动观察模型调用失败")
                 return None
             self.turn_count += 1
-            executed, dropped = await self.execute_actions(actions)
+            executed, dropped = await self.execute_actions(actions, apply_scale=True)
             await self._apply_channel_floor()
         finally:
             self.turn_busy = False
@@ -306,6 +303,11 @@ class GameLoop:
         return {"line": line, "executed": executed, "dropped": dropped}
 
     # ---------- 自动运行（玩家不输入，AI 自主回合） ----------
+    def set_autopilot_interval(self, interval_s: float) -> float:
+        """更新自动运行间隔；下一轮等待使用新值，不重启循环任务。"""
+        self.autopilot_interval = max(5.0, min(30.0, float(interval_s)))
+        return self.autopilot_interval
+
     def set_autopilot(self, enabled: bool) -> None:
         """开启/关闭自动运行：AI 每 interval_s 秒自主观察、描写、调整设备并发言。"""
         self.autopilot = bool(enabled)
@@ -330,8 +332,8 @@ class GameLoop:
                     pass
                 if self.safety.estop_active or self.turn_busy:
                     continue
-                if not (self.relay.to_state()["status"] == "paired" or self.safety.dry_run):
-                    continue  # 设备未配对不自动运行（用户设定：连接设备后才开始）
+                if not (self.backend.ready() or self.safety.dry_run):
+                    continue  # 设备未连接不自动运行（用户设定：连接设备后才开始）
                 await self._autopilot_turn()
             except Exception:  # noqa: BLE001
                 # 任何异常都不能杀死循环任务（曾因此静默死亡导致 AI 一直不说话）
@@ -368,7 +370,7 @@ class GameLoop:
                 logger.exception("自动回合模型调用失败: %s", exc)
                 return None
             self.turn_count += 1
-            executed, dropped = await self.execute_actions(actions)
+            executed, dropped = await self.execute_actions(actions, apply_scale=True)
             await self._apply_channel_floor()
         finally:
             self.turn_busy = False
@@ -384,8 +386,7 @@ class GameLoop:
 
     # ---------- 动作执行（AI 与手动共用） ----------
     async def _ensure_default_wave(
-        self, ch_name: str, client_id: str | None, slot_id: str | None,
-        ready: bool, dry_run: bool,
+        self, ch_name: str, ready: bool, dry_run: bool,
     ) -> None:
         """给通道挂默认持续波形（强度没有波形承载时设备无输出）。"""
         pattern = str(self.cfg["ui"].get("default_wave", "呼吸") or "呼吸")
@@ -400,7 +401,7 @@ class GameLoop:
             "wave_key": meta["waveform"], "frames": meta["frames"],
         }
         if ready and not dry_run:
-            await self._start_pulse_loop(client_id, slot_id, CHANNEL[ch_name], ch_name, cmd)
+            await self.backend.start_pulse_hold(ch_name, cmd)
         self.patterns[ch_name] = pattern
         self.safety.record(cmd)
         logger.info("自动挂载默认波形：%s 通道「%s」（强度需波形承载）", ch_name, pattern)
@@ -411,27 +412,25 @@ class GameLoop:
             return
         if self.safety.estop_active:
             return
-        client_id = self.relay.first_client_id()
-        slot_id = self.relay.get_slot_id()
-        ready = bool(client_id and slot_id)
+        ready = self.backend.ready()
         if not ready and not self.safety.dry_run:
             return
         for ch in ("A", "B"):
             base = int(self.cfg["device_channels"].get(ch, {}).get("baseline", 15 if ch == "A" else 5))
-            wave_active = (ch in self.loop_tasks) or bool(self.safety.pulse_active().get(ch))
+            wave_active = self.backend.loops_active().get(ch) or bool(self.safety.pulse_active().get(ch))
             strength = self.safety.current.get(ch, 0)
             fixed = False
             # 规则 1：前两轮结束后，强度必须非零且必须有波形
             if self.turn_count >= 2:
                 if not wave_active:
-                    await self._ensure_default_wave(ch, client_id, slot_id, ready, self.safety.dry_run)
+                    await self._ensure_default_wave(ch, ready, self.safety.dry_run)
                     self.last_wave[ch] = self.turn_count
                     fixed = True
                 if strength <= 0:
                     cmd = {"kind": "hold", "channel": ch, "value": base}
                     self._scale_cmd(cmd)
                     if ready and not self.safety.dry_run:
-                        await self._send_all(self._build_frames(cmd, client_id, slot_id))
+                        await self.backend.apply(cmd)
                     self.safety.record(cmd)
                     self.last_strength[ch] = self.turn_count
                     fixed = True
@@ -441,26 +440,49 @@ class GameLoop:
                 cmd = {"kind": "add", "channel": ch, "delta": delta}
                 self._scale_cmd(cmd)
                 if ready and not self.safety.dry_run:
-                    await self._send_all(self._build_frames(cmd, client_id, slot_id))
+                    await self.backend.apply(cmd)
                 self.safety.record(cmd)
                 self.last_strength[ch] = self.turn_count
                 fixed = True
             if self.turn_count - self.last_wave.get(ch, 0) >= 2:
-                await self._ensure_default_wave(ch, client_id, slot_id, ready, self.safety.dry_run)
+                await self._ensure_default_wave(ch, ready, self.safety.dry_run)
                 self.last_wave[ch] = self.turn_count
                 fixed = True
             if fixed:
                 logger.info("通道保底：%s 通道强度/波形已自动补齐（第 %d 轮）", ch, self.turn_count)
 
-    async def execute_actions(self, actions: list) -> tuple[list, list]:
-        """校验并执行动作列表，返回 (已执行说明列表, 被拒绝说明列表)。"""
+    def _scale_cmd(self, cmd: dict) -> None:
+        """按强度档倍率修正强度动作（最终强度 = AI 设定值 × 档位倍率；手动操作不乘）。
+
+        只作用于 hold/add/temp 三类强度动作；倍率为 1.0 时跳过；结果再钳到该通道上限。
+        """
+        ch = cmd.get("channel")
+        if ch not in ("A", "B") or cmd.get("kind") not in ("hold", "add", "temp"):
+            return
+        scale = self.safety.scale.get(ch, 1.0)
+        if scale == 1.0:
+            return
+        cap = self.safety.cap_for(ch)
+        try:
+            if cmd["kind"] == "add":
+                delta = round(int(cmd.get("delta", 0)) * scale)
+                cmd["value"] = max(0, min(cap, self.safety.current.get(ch, 0) + delta))
+            else:
+                cmd["value"] = max(0, min(cap, round(int(cmd.get("value", 0)) * scale)))
+        except (TypeError, ValueError):
+            return
+
+    async def execute_actions(self, actions: list, apply_scale: bool = False) -> tuple[list, list]:
+        """校验并执行动作列表，返回 (已执行说明列表, 被拒绝说明列表)。
+
+        apply_scale=True 时（AI 回合），强度动作按玩家选择的强度档倍率（轻/中/重）修正；
+        手动操作（apply_scale=False）保持原值。
+        """
         executed, dropped = [], []
         if not isinstance(actions, list):
             return executed, dropped
 
-        client_id = self.relay.first_client_id()
-        slot_id = self.relay.get_slot_id()
-        ready = bool(client_id and slot_id)
+        ready = self.backend.ready()
         dry_run = self.safety.dry_run
 
         for action in actions:
@@ -477,6 +499,10 @@ class GameLoop:
                 dropped.append({"action": action, "reason": "设备未连接（无 clientId/slotId）"})
                 continue
 
+            # AI 回合：强度动作按玩家强度档倍率修正（手动操作已在调用处传 apply_scale=False）
+            if apply_scale:
+                self._scale_cmd(cmd)
+
             # 记录每通道最近一次强度/波形调整轮次（保底规则用）
             if cmd["kind"] in ("hold", "add", "temp") and cmd.get("channel") in ("A", "B"):
                 self.last_strength[cmd["channel"]] = self.turn_count
@@ -486,17 +512,14 @@ class GameLoop:
             # 强度类动作必须有波形承载才有输出（DG-LAB 特性）：通道无波形时自动挂默认波形
             if cmd["kind"] in ("hold", "add", "temp") and cmd.get("channel") in ("A", "B"):
                 ch_name = cmd["channel"]
-                if ch_name not in self.loop_tasks and not self.safety.pulse_active().get(ch_name):
-                    await self._ensure_default_wave(ch_name, client_id, slot_id, ready, dry_run)
+                if not self.backend.loops_active().get(ch_name) and not self.safety.pulse_active().get(ch_name):
+                    await self._ensure_default_wave(ch_name, ready, dry_run)
 
             if cmd["kind"] == "pulse_hold":
-                # 循环波形：程序周期性重发（不依赖 App 的 d=0），直到清除/急停
+                # 循环波形：由 backend 内部周期性重发，直到清除/急停
                 sent = False
                 if ready and not dry_run:
-                    sent = await self._start_pulse_loop(
-                        client_id, slot_id,
-                        CHANNEL[cmd["channel"]], cmd["channel"], cmd,
-                    )
+                    sent = await self.backend.start_pulse_hold(cmd["channel"], cmd)
                 if cmd.get("channel") in ("A", "B"):
                     self.patterns[cmd["channel"]] = cmd.get("pattern")
                 self.safety.record(cmd)
@@ -507,7 +530,9 @@ class GameLoop:
 
             if cmd["kind"] in ("clear", "stop"):
                 # 清除/停止先取消该通道（或全部）的循环波形
-                self._cancel_loops(None if cmd["kind"] == "stop" or cmd["channel"] is None else cmd["channel"])
+                self.backend.stop_pulse_hold(
+                    None if cmd["kind"] == "stop" or cmd["channel"] is None else cmd["channel"]
+                )
                 if cmd["kind"] == "stop" or cmd["channel"] is None:
                     self.patterns = {"A": None, "B": None}
                 elif cmd["channel"] in ("A", "B"):
@@ -516,10 +541,9 @@ class GameLoop:
             if cmd["kind"] == "pulse" and cmd.get("channel") in ("A", "B"):
                 self.patterns[cmd["channel"]] = cmd.get("pattern")
 
-            frames = self._build_frames(cmd, client_id, slot_id)
             sent = False
             if ready and not dry_run:
-                sent = all(await self._send_all(frames))
+                sent = await self.backend.apply(cmd)
             self.safety.record(cmd)
             label = self._describe(cmd)
             executed.append({"action": action, "reason": reason, "sent": sent, "label": label})
@@ -530,163 +554,6 @@ class GameLoop:
                 "已发送" if sent else "模拟",
             )
         return executed, dropped
-
-    def _build_frames(self, cmd: dict, client_id: str | None, slot_id: str | None) -> list[dict]:
-        """内部命令 -> V4 服务器帧列表。client_id/slot_id 可能为 None（dry-run 时）。"""
-        frames: list[dict] = []
-        kind = cmd["kind"]
-        if client_id is None or slot_id is None:
-            return frames
-        ch = CHANNEL.get(cmd.get("channel"))          # 数字通道（设备帧用）
-        ch_name = cmd.get("channel")                   # 字母通道（safety 状态用）
-        if kind == "temp":
-            # 爆发：加差值到目标，到时自动归零
-            delta = cmd["value"] - self.safety.current[ch_name]
-            if delta:
-                frames.append(self.ops.add_strength(client_id, slot_id, ch, delta))
-            self._schedule_temp_revert(client_id, slot_id, ch, ch_name, cmd["duration_s"])
-        elif kind == "hold":
-            # 持续强度：加差值到目标（AddIntensity 是实测可靠的原语）
-            delta = cmd["value"] - self.safety.current[ch_name]
-            if delta:
-                frames.append(self.ops.add_strength(client_id, slot_id, ch, delta))
-        elif kind == "add":
-            frames.append(self.ops.add_strength(client_id, slot_id, ch, cmd["delta"]))
-        elif kind == "pulse":
-            # 波形按帧消费（每帧 100ms），帧播完即停；循环补齐到请求的时长
-            base = cmd["frames"]
-            total = max(1, int(round(cmd["duration_s"] * 10)))
-            tiled = (base * (total // len(base) + 1))[:total] if base else []
-            frames.append(
-                self.ops.pulse(
-                    client_id, slot_id, ch, tiled,
-                    int(cmd["duration_s"] * 1000), immediate=True,
-                )
-            )
-        elif kind == "clear":
-            frames.append(
-                self.ops.clear(client_id, slot_id, None if cmd["channel"] is None else ch)
-            )
-            # 用可靠的 AddIntensity 负值归零，另发 reset 兜底
-            if cmd["channel"] is None:
-                for c in ("A", "B"):
-                    if self.safety.current[c]:
-                        frames.append(
-                            self.ops.add_strength(
-                                client_id, slot_id, CHANNEL[c], -self.safety.current[c]
-                            )
-                        )
-                    frames.append(self.ops.reset_intensity(client_id, slot_id, CHANNEL[c]))
-            else:
-                if self.safety.current[ch_name]:
-                    frames.append(
-                        self.ops.add_strength(
-                            client_id, slot_id, ch, -self.safety.current[ch_name]
-                        )
-                    )
-                frames.append(self.ops.reset_intensity(client_id, slot_id, ch))
-        elif kind == "stop":
-            frames.append(self.ops.clear(client_id, slot_id))
-            for c in ("A", "B"):
-                if self.safety.current[c]:
-                    frames.append(
-                        self.ops.add_strength(
-                            client_id, slot_id, CHANNEL[c], -self.safety.current[c]
-                        )
-                    )
-                frames.append(self.ops.reset_intensity(client_id, slot_id, CHANNEL[c]))
-        return frames
-
-    def _schedule_temp_revert(
-        self, client_id: str, slot_id: str, ch: int, ch_name: str, duration_s: float
-    ) -> None:
-        """爆发时长结束后自动归零（AddIntensity 负值 + reset 兜底）。"""
-
-        async def revert() -> None:
-            await asyncio.sleep(duration_s)
-            if self.safety.estop_active:
-                return
-            value = self.safety.current[ch_name]
-            frames = []
-            if value:
-                frames.append(
-                    self.ops.add_strength(client_id, slot_id, ch, -value)
-                )
-            frames.append(self.ops.reset_intensity(client_id, slot_id, ch))
-            sent = all(await self._send_all(frames))
-            if sent:
-                self.safety.record({"kind": "zero", "channel": ch_name})
-                logger.info("爆发结束，%s 通道自动归零", ch_name)
-
-        asyncio.create_task(revert())
-
-    # ---------- 循环波形（无时间约束，直到清除/急停） ----------
-    async def _start_pulse_loop(
-        self, client_id: str, slot_id: str, ch: int, ch_name: str, cmd: dict
-    ) -> bool:
-        """分批下发波形实现无限循环，批间提前覆盖消除真空期。
-
-        - 每批 = 波形自然周期的整数倍时长（尽量贴合循环边界）
-        - 提前 loop_overlap_s 秒重发下一批（im=true 直接替换旧批），
-          设备全程无「停止-重启」的空档
-        - 不依赖 App 的 d=0（实测不可靠），只用普通波形帧
-        """
-        self._cancel_loops(ch_name)
-        base = cmd["frames"]
-        playback = self.cfg["playback"]
-        frame_s = float(playback["frame_ms"]) / 1000.0
-        natural = max(len(base) * frame_s, 0.1)
-        batch_s = max(float(playback["loop_batch_s"]), natural)
-        mult = max(1, round(batch_s / natural))
-        batch_s = natural * mult
-        overlap = min(float(playback["loop_overlap_s"]), batch_s * 0.5)
-        total = max(1, int(round(batch_s * 10)))
-        tiled = (base * (total // len(base) + 1))[:total] if base else []
-        frame = self.ops.pulse(
-            client_id, slot_id, ch, tiled, int(batch_s * 1000), immediate=True
-        )
-        wait_s = max(0.1, batch_s - overlap)
-
-        stop_event = asyncio.Event()
-        self.loop_events[ch_name] = stop_event
-
-        async def worker() -> None:
-            ok = await self._send_all([frame])
-            if not ok:
-                return
-            logger.info(
-                "%s 通道循环波形开始：%s（批次 %.1fs，提前 %.2fs 覆盖）",
-                ch_name, cmd["pattern"], batch_s, overlap,
-            )
-            while not stop_event.is_set():
-                try:
-                    await asyncio.wait_for(stop_event.wait(), timeout=wait_s)
-                    break
-                except asyncio.TimeoutError:
-                    pass
-                if self.safety.estop_active:
-                    break
-                await self._send_all([frame])
-            logger.info("%s 通道循环波形结束：%s", ch_name, cmd["pattern"])
-
-        self.loop_tasks[ch_name] = asyncio.create_task(worker())
-        return True
-
-    def _cancel_loops(self, ch_name: str | None) -> None:
-        """取消循环波形；ch_name=None 时取消全部。"""
-        names = [ch_name] if ch_name else list(self.loop_events)
-        for name in names:
-            event = self.loop_events.pop(name, None)
-            if event:
-                event.set()
-            task = self.loop_tasks.pop(name, None)
-            if task:
-                task.cancel()
-        if ch_name and ch_name in self.safety.pulse_until:
-            self.safety.pulse_until[ch_name] = 0.0
-
-    async def _send_all(self, frames: list[dict]) -> list[bool]:
-        return [await self.relay.send_frame(f) for f in frames]
 
     @staticmethod
     def _describe(cmd: dict) -> str:
@@ -708,17 +575,13 @@ class GameLoop:
 
     # ---------- 急停 / 恢复 ----------
     async def estop(self) -> dict:
-        self._cancel_loops(None)  # 停掉所有循环波形
+        self.backend.stop_pulse_hold(None)  # 停掉所有循环波形
         self.patterns = {"A": None, "B": None}
         cmds = self.safety.estop()
-        client_id = self.relay.first_client_id()
-        slot_id = self.relay.get_slot_id()
         sent = False
-        if client_id and slot_id and not self.safety.dry_run:
-            frames: list[dict] = []
-            for cmd in cmds:
-                frames.extend(self._build_frames(cmd, client_id, slot_id))
-            sent = all(await self._send_all(frames))
+        if self.backend.ready() and not self.safety.dry_run:
+            results = [await self.backend.apply(cmd) for cmd in cmds]
+            sent = all(results)
         return {"estop": True, "sent": sent}
 
     async def resume(self) -> dict:
@@ -726,8 +589,8 @@ class GameLoop:
         return {"estop": False}
 
     def on_client_disconnected(self) -> None:
-        """APP 断开：停止所有循环波形并清零跟踪。"""
-        self._cancel_loops(None)
+        """设备断开：停止所有循环波形并清零跟踪。"""
+        self.backend.stop_pulse_hold(None)
         self.patterns = {"A": None, "B": None}
         self.safety.record({"kind": "stop"})
 

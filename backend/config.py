@@ -34,8 +34,23 @@ DEFAULTS = {
         "title": "Coyote in Cradle",
         "sensor_idle_timeout_s": 30,
         "check_update": True,
+        "update_url": "",
     },
     "relay": {"url": "ws://127.0.0.1:9998", "reconnect_delay_s": 3, "lan_ip": "auto", "public_url": ""},
+    "device": {
+        "backend": "dglab_relay",  # 设备后端：dglab_relay（手机 App 桥，默认，零行为变化）| coyote2_ble（郊狼 v2 BLE 直连）
+        "ble": {
+            "adapter": "auto",
+            "device_name_prefix": "D-LAB ESTIM",  # v2 主机蓝牙名前缀（脉冲主机 V2 / ESTIM01）
+            "preferred_address": "",  # 上次成功的 MAC/UUID，留空=自动连第一台
+            "swap_wave_chars": False,  # 官方文档 A/B 波形特性对调嫌疑（待实测）
+            "wave_xy": [1, 10],  # 波形 XYZ 的 X/Y 默认（听感校准项，待实测）
+            "svc_pwm": "",  # 以下留空=按官方文档自动拼 UUID；真机枚举不一致时填完整 UUID
+            "char_ab2": "",
+            "char_a": "",
+            "char_b": "",
+        },
+    },
     "llm": {
         "base_url": "https://api.openai.com/v1",
         "api_key": "",
@@ -52,6 +67,9 @@ DEFAULTS = {
         },
     },
     "character_file": "config/character.yaml",
+    "dungeon": {
+        "ai_narrative": False,  # 地牢局内叙事是否走 LLM 扩写；False=直接用作者 seed（即时、稳，推荐）
+    },
     "safety": {
         "channels": {"A": {"max_strength": 200}, "B": {"max_strength": 200}},
         "max_temp_duration_s": 10,
@@ -188,6 +206,32 @@ def load_config(path: Path | None = None) -> Config:
     cfg["log_dir"] = str(log_dir)
 
     return cfg
+
+
+def save_autopilot_interval(cfg: Config, interval_s: float) -> float:
+    """校验并保存自动运行间隔（5–30 秒/轮），保留 config.yaml 其余内容。"""
+    value = max(5.0, min(30.0, float(interval_s)))
+    cfg_path = CONFIG_DIR / "config.yaml"
+    if not cfg_path.exists():
+        logger.warning("config.yaml 不存在，自动运行间隔仅更新内存值")
+        return value
+    lines = cfg_path.read_text(encoding="utf-8").splitlines()
+    out: list[str] = []
+    in_autopilot = False
+    replaced = False
+    for line in lines:
+        if line and not line.startswith(" "):
+            in_autopilot = line.startswith("autopilot:")
+        if in_autopilot and line.startswith("  interval_s:"):
+            out.append(f"  interval_s: {value:g}")
+            replaced = True
+        else:
+            out.append(line)
+    if not replaced:
+        raise ValueError("config.yaml 缺少 autopilot.interval_s 配置项")
+    cfg_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+    cfg.setdefault("autopilot", {})["interval_s"] = value
+    return value
 
 
 DEVICE_CHANNELS_FILE = CONFIG_DIR / "device_channels.yaml"
@@ -528,144 +572,5 @@ def save_character_runtime(cfg: Config, **fields) -> None:
     logger.info("角色运行时覆盖已保存：%s", runtime)
 
 
-def patch_character_prompt_file(
-    character_path: Path,
-    profile: str,
-    prompt_rel: str,
-    role: str = "",
-    level: str | None = None,
-) -> bool:
-    """把 character.yaml 里指定角色/风格的 prompt_file 设为 prompt_rel（相对项目根的 posix 路径）。
-
-    新格式按 role 定位角色块，旧格式直接找 profile 键；level 给定时一并修正该风格的档位；
-    文件不存在时先从 character.example.yaml 复制；找不到对应键返回 False。供「导入 DLC」自动接通使用。
-    """
-    if not character_path.exists():
-        example = character_path.parent / "character.example.yaml"
-        if not example.exists():
-            return False
-        shutil.copy2(example, character_path)
-
-    text = character_path.read_text(encoding="utf-8")
-    lines = text.splitlines()
-
-    idx: int | None = None
-    indent = 0
-    if role:
-        # 先定位角色块，再在块内找 profile 键
-        role_re = re.compile(r"^(\s*)" + re.escape(role) + r"\s*:")
-        r_idx: int | None = None
-        role_indent = 0
-        for i, ln in enumerate(lines):
-            m = role_re.match(ln)
-            if m:
-                r_idx = i
-                role_indent = len(m.group(1))
-                break
-        if r_idx is None:
-            return False
-        for j in range(r_idx + 1, len(lines)):
-            ln = lines[j]
-            if not ln.strip():
-                continue
-            cur_indent = len(ln) - len(ln.lstrip(" "))
-            if cur_indent <= role_indent:
-                break
-            m = re.match(r"^\s*" + re.escape(profile) + r"\s*:", ln)
-            if m:
-                idx = j
-                indent = cur_indent
-                break
-        if idx is None:
-            return False
-    else:
-        key_re = re.compile(r"^(\s*)" + re.escape(profile) + r"\s*:")
-        for i, ln in enumerate(lines):
-            m = key_re.match(ln)
-            if m:
-                idx = i
-                indent = len(m.group(1))
-                break
-        if idx is None:
-            return False
-
-    pline: int | None = None
-    lline: int | None = None
-    for j in range(idx + 1, len(lines)):
-        ln = lines[j]
-        if not ln.strip():
-            continue
-        cur_indent = len(ln) - len(ln.lstrip(" "))
-        if cur_indent <= indent:
-            break
-        if re.match(r"^\s*#?\s*prompt_file\s*:", ln):
-            pline = j
-        elif level is not None and re.match(r"^\s*#?\s*level\s*:", ln):
-            lline = j
-
-    new_line = " " * (indent + 2) + f"prompt_file: {prompt_rel}"
-    if pline is not None:
-        lines[pline] = new_line
-    else:
-        lines.insert(idx + 1, new_line)
-
-    if level is not None:
-        lv_line = " " * (indent + 2) + f"level: {level}"
-        if lline is not None:
-            lines[lline] = lv_line
-        else:
-            lines.insert(idx + 1, lv_line)
-
-    character_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    logger.info("character.yaml 已更新：%s.%s.prompt_file = %s", role or "-", profile, prompt_rel)
-    return True
 
 
-def patch_character_add_role(
-    character_path: Path,
-    role: str,
-    label: str,
-    profile: str,
-    level: str,
-    prompt_rel: str,
-    narrative: str = "装置",
-) -> bool:
-    """新角色自动注册：在 character.yaml 的 roles 段追加一个角色块（角色已存在则拒绝）。
-
-    供「导入 DLC」傻瓜式接入新角色使用；块插在顶层 prompt: 之前（roles 是它前面的顶层键）。
-    """
-    if not character_path.exists():
-        example = character_path.parent / "character.example.yaml"
-        if not example.exists():
-            return False
-        shutil.copy2(example, character_path)
-
-    text = character_path.read_text(encoding="utf-8")
-    if re.search(r"^\s*" + re.escape(role) + r"\s*:\s*$", text, flags=re.M):
-        logger.warning("角色 %s 已在 character.yaml 中存在，跳过注册", role)
-        return False
-
-    block = [
-        f"  {role}:",
-        f"    name: {label}",
-        "    title: 主人",
-        f"    device_narrative: {narrative}",
-        "    profiles:",
-        f"      {profile}:",
-        f"        level: {level}",
-        f"        prompt_file: {prompt_rel}",
-        "        examples: []",
-    ]
-    lines = text.splitlines()
-    insert_at = None
-    for i, ln in enumerate(lines):
-        if re.match(r"^\s*prompt\s*:", ln):
-            insert_at = i
-            break
-    if insert_at is not None:
-        lines[insert_at:insert_at] = block
-    else:
-        lines += [""] + block
-    character_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    logger.info("character.yaml 已注册新角色：%s（%s·%s）", role, profile, level)
-    return True

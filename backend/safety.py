@@ -46,6 +46,9 @@ class SafetyManager:
         self.pulse_until = {"A": 0.0, "B": 0.0}  # 波形播放结束时刻（monotonic）
         self.overheat = {"A": False, "B": False}
         self.enabled = {"A": True, "B": True}    # 通道开关（页面可手动开闭）
+        # 强度倍率（低/中/高 = 0.7/1.0/1.3）：整体档位，只乘 AI 输出强度，与对话内容无关；重启回默认「中」
+        self.intensity_level = "中"
+        self.scale = {"A": 1.0, "B": 1.0}
         # 从 device_channels 配置读通道开关
         for ch in ("A", "B"):
             d = cfg.get("device_channels", {}).get(ch) or {}
@@ -68,6 +71,20 @@ class SafetyManager:
         if self.overheat[ch]:
             return min(cap, self.overheat_reduce_to)
         return cap
+
+    # 强度档位倍率：轻=0.7 / 中=1.0 / 重=1.3（只乘 AI 输出强度；重启回默认「中」）
+    INTENSITY_LEVELS = {"轻": 0.7, "中": 1.0, "重": 1.3}
+
+    def set_intensity_level(self, level: str) -> str:
+        """设置整体强度档（轻/中/重），A/B 同档；非法输入保持原档。返回生效档。"""
+        key = str(level or "").strip()
+        if key not in self.INTENSITY_LEVELS:
+            return self.intensity_level
+        self.intensity_level = key
+        mult = self.INTENSITY_LEVELS[key]
+        for ch in ("A", "B"):
+            self.scale[ch] = mult
+        return self.intensity_level
 
     def set_user_cap(self, ch: str, value: int) -> int:
         """设置通道运行时强度上限（1~硬上限），并就地钳制当前/请求值。返回生效值。"""
@@ -322,6 +339,8 @@ class SafetyManager:
             "user_caps": dict(self.user_caps),
             "effective_caps": {ch: self.cap_for(ch) for ch in ("A", "B")},
             "app_caps": dict(self.app_caps),
+            "intensity_level": self.intensity_level,
+            "strength_scale": dict(self.scale),
             "current": dict(self.current),
             "requested": dict(self.requested),
             "pulse_active": self.pulse_active(),
