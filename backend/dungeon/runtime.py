@@ -277,7 +277,7 @@ class DungeonRuntime:
     # ------------------------------------------------------------------ 内部
     def _ensure_engine(self) -> None:
         if self.engine is None:
-            raise RunError("没有可用的主题包（请先导入 DLC 主题包）")
+            raise RunError("没有可用的地牢主题包：请确认内容包已安装（content/pack/dungeon 下应有主题包目录）")
 
     def _ensure_run(self) -> None:
         if self.run is None:
