@@ -92,11 +92,12 @@ README_TXT = """Coyote in Cradle v{version}（绿色免装版）
 【急停】
 页面大红按钮，或页面不在输入框时长按空格 1 秒（松手取消）。
 
-【角色与内容】
-内容已随包内置，无需导入：默认「体验版」（触手·纯爱向试玩），正式角色
-触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后 在「角色」卡片直接切换；
-地牢玩法见「地牢」入口（地牢刻印 + 触手 / 品评会 / 哥布林 / 淫纹 主题包）。
-界面与角色稿支持中英双语：聊天栏上方的 ZH / EN 一键切换。
+【角色与内容（R18 请自行导入 DLC）】
+本包为纯软件，不含任何 R18 角色稿 / 地牢主题内容。
+角色内容（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后 + 地牢主题包）以 DLC 大包发布，
+请到发布渠道（GitHub Releases 的 DLC 仓库）下载「Coyote-in-Cradle-DLC-zh-*.zip」，
+在程序侧边栏「内容 / 语言包 → 选择 zip 并安装」一键导入，或解压合并到本目录 content/ 后重启。
+英文稿另见「Coyote-in-Cradle-DLC-en-*.zip」，安装后聊天栏 ZH / EN 一键切换。
 
 【许可】
 本软件为作者原创的专有软件（All Rights Reserved），未授权任何渠道转载、倒卖与二次分发。
@@ -195,7 +196,15 @@ def main() -> None:
     if PKG.exists():
         shutil.rmtree(PKG)
     (PKG / "config").mkdir(parents=True)
+    # R18 内容红线（用户 2026-09-03 明确）：content/（pure/roles/pack）一律不进主发布包，
+    # 只随 DLC 大包（build_dlc_zip.py zh/en）由用户自行导入。
     (PKG / "content").mkdir(parents=True)
+    (PKG / "content" / "安装内容包说明.txt").write_text(
+        "本目录用于放置 DLC 内容（角色稿 content/roles、体验版 content/pure、地牢主题包 "
+        "content/pack）。R18 内容不随主包分发：请在程序侧边栏「内容 / 语言包」选择 DLC "
+        "zh/en 大包 zip 一键安装，或手动把解压出的 content/ 合并进本目录后重启。\n",
+        encoding="utf-8",
+    )
     shutil.copy2(BUILD / "dist" / "AI-for-Coyote.exe", PKG / "AI-for-Coyote.exe")
     shutil.copy2(BUILD / "dist" / "Coyote-in-Cradle.exe", PKG / "Coyote-in-Cradle.exe")
     shutil.copy2(ROOT / "desktop" / "setup.ico", PKG / "setup.ico")
@@ -223,24 +232,8 @@ def main() -> None:
     )
     for name in ("config.example.yaml", "character.example.yaml", "waveforms.yaml"):
         shutil.copy2(ROOT / "config" / name, PKG / "config" / name)
-    # 内容目录可能不在公共仓库（安全子集化：角色稿/地牢素材走作者渠道分发）。
-    # 本地打包时存在则打进；CI/干净检出缺失时跳过并告警，不中断构建。
-    for _name, _src in (
-        ("content/pure", ROOT / "content" / "pure"),
-        ("content/roles", ROOT / "content" / "roles"),
-    ):
-        if _src.exists():
-            shutil.copytree(_src, PKG / _name,
-                            ignore=shutil.ignore_patterns("*-EN.md"))
-        else:
-            print(f"[警告] 缺少 {_name}（公共仓库不携带内容），跳过——此包不含角色内容", flush=True)
-    # DLC 本体（本地仓库形态为嵌套 git 仓库；CI 干净检出时不存在则跳过）
-    pack = ROOT / "content" / "pack"
-    if pack.exists():
-        shutil.copytree(
-            pack, PKG / "content" / "pack",
-            ignore=shutil.ignore_patterns(".git", "*-EN.md"),
-        )
+    # 注意：content/pure、content/roles、content/pack（R18）一律不拷贝——红线见上。
+    # 老版本曾把纯爱/角色/地牢内容打进主包（v1.1.6 之前），已按要求移除。
     shutil.copytree(ROOT / "frontend" / "dist", PKG / "frontend" / "dist")
     shutil.copy2(ROOT / "LICENSE", PKG / "LICENSE")
     (PKG / "start.bat").write_text(START_BAT.format(version=VERSION), encoding="utf-8")

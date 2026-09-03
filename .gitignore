@@ -41,7 +41,10 @@ ollama/
 .vscode/
 .idea/
 # ===== public-push isolation (2026-09-03): NSFW role content & dungeon story assets stay local =====
+# R18 内容一律不随主仓库/主发布包分发，只走 DLC 大包（zh/en）由用户自行导入
 content/roles/
+content/pure/
+content/pack/
 backend/story_pack/
 _t032_*
 _t048_*
