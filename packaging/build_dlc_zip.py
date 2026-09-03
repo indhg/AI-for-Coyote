@@ -9,14 +9,15 @@
     build_release/Coyote-in-Cradle-DLC-zh-v<版本>.zip   中文大包
     build_release/Coyote-in-Cradle-DLC-en-v<版本>.zip   英文大包
 
-内容（与主发布包同源、同规则）：
-    content/pure            体验版（触手·纯爱试玩）
-    content/roles           正式角色稿（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后）
-    content/pack/dungeon    地牢主题包（地牢刻印 + 触手 / 品评会 / 哥布林 / 淫纹）
+内容（2026-09-03 用户定版）：
+    content/pure            纯爱体验版（触手·纯爱）——内置在主发布包，不走 DLC
+    content/roles           5 个正式角色稿（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后）——DLC 主体
+    content/pack/dungeon    地牢主题包——已随「地牢重做」废弃归档，不进入任何发行包
 
-- zh 包：中文内容（不含 -EN.md，规则与 packaging/build_release.py 一致）
-- en 包：仅英文稿（*-EN.md，保持 content/ 相对结构与文件名，程序按 -EN 同目录匹配加载）
-  地牢主题包当前无英文稿，故 en 包只含 pure + roles 的英文部分。
+- zh 包：仅 content/roles（5 个正式角色中文稿）
+- en 包：仅英文稿（*-EN.md，含 pure EN + roles EN，保持 content/ 相对结构与文件名，
+  程序按 -EN 同目录匹配加载；主包内置 pure CN，切 EN 需本包提供 pure EN）
+- 地牢主题包一律不打入 DLC（旧包废弃，新地牢未成型）
 """
 import shutil
 import sys
@@ -38,38 +39,33 @@ ZIP = BUILD / f"Coyote-in-Cradle-DLC-{LANG}-v{VERSION}.zip"
 
 
 def copy_zh() -> None:
-    """中文大包：pure + roles + pack 全量（排除 -EN.md / .git）。"""
-    step("1/2 角色内容（pure + roles）")
-    for name in ("pure", "roles"):
-        src = ROOT / "content" / name
-        if not src.exists():
-            print(f"[警告] 缺少 content/{name}，跳过", flush=True)
-            continue
-        shutil.copytree(src, PKG / "content" / name,
-                        ignore=shutil.ignore_patterns("*-EN.md", ".git", "__pycache__"))
-    step("2/2 地牢主题包")
-    pack = ROOT / "content" / "pack"
-    if pack.exists():
-        shutil.copytree(pack, PKG / "content" / "pack",
-                        ignore=shutil.ignore_patterns("*-EN.md", ".git", "__pycache__"))
-    else:
-        print("[警告] 缺少 content/pack，跳过地牢主题包", flush=True)
+    """中文大包：仅 content/roles（5 个正式角色稿）。
+
+    pure（纯爱体验版）内置在主发布包不走 DLC；地牢主题包已随地牢重做废弃归档。
+    """
+    step("1/1 正式角色稿（content/roles）")
+    src = ROOT / "content" / "roles"
+    if not src.exists():
+        raise SystemExit("缺少 content/roles，无法构建 zh 包")
+    shutil.copytree(src, PKG / "content" / "roles",
+                    ignore=shutil.ignore_patterns("*-EN.md", ".git", "__pycache__"))
 
 
 def copy_en() -> None:
-    """英文大包：全内容树中收集 *-EN.md，保持 content/ 相对结构。"""
+    """英文大包：pure + roles 内收集 *-EN.md，保持 content/ 相对结构（地牢不打入）。"""
     step("1/1 收集英文稿（*-EN.md）")
-    root_content = ROOT / "content"
-    if not root_content.exists():
-        raise SystemExit("缺少 content/")
     n = 0
-    for f in sorted(root_content.rglob("*-EN.md")):
-        rel = f.relative_to(root_content)          # 如 roles/触手-角色提示词-EN.md
-        dst = PKG / "content" / rel
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(f, dst)
-        n += 1
-        print(f"  + content/{rel}", flush=True)
+    for name in ("pure", "roles"):
+        src = ROOT / "content" / name
+        if not src.exists():
+            continue
+        for f in sorted(src.rglob("*-EN.md")):
+            rel = f.relative_to(ROOT / "content")     # 如 roles/触手-角色提示词-EN.md
+            dst = PKG / "content" / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(f, dst)
+            n += 1
+            print(f"  + content/{rel}", flush=True)
     if n == 0:
         print("[警告] 未找到任何 *-EN.md 英文稿", flush=True)
 

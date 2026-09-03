@@ -92,12 +92,13 @@ README_TXT = """Coyote in Cradle v{version}（绿色免装版）
 【急停】
 页面大红按钮，或页面不在输入框时长按空格 1 秒（松手取消）。
 
-【角色与内容（R18 请自行导入 DLC）】
-本包为纯软件，不含任何 R18 角色稿 / 地牢主题内容。
-角色内容（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后 + 地牢主题包）以 DLC 大包发布，
-请到发布渠道（GitHub Releases 的 DLC 仓库）下载「Coyote-in-Cradle-DLC-zh-*.zip」，
-在程序侧边栏「内容 / 语言包 → 选择 zip 并安装」一键导入，或解压合并到本目录 content/ 后重启。
+【角色与内容】
+本包内置「纯爱体验版」试玩内容，开箱即可体验。
+正式角色稿（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后）属 R18 内容，不随本包分发：
+到发布渠道下载「Coyote-in-Cradle-DLC-zh-*.zip」，在程序侧边栏「内容 / 语言包 →
+选择 zip 并安装」一键导入（或解压合并 content/roles 到本目录后重启）。
 英文稿另见「Coyote-in-Cradle-DLC-en-*.zip」，安装后聊天栏 ZH / EN 一键切换。
+（地牢玩法重做中，暂不随版本发布。）
 
 【许可】
 本软件为作者原创的专有软件（All Rights Reserved），未授权任何渠道转载、倒卖与二次分发。
@@ -196,13 +197,20 @@ def main() -> None:
     if PKG.exists():
         shutil.rmtree(PKG)
     (PKG / "config").mkdir(parents=True)
-    # R18 内容红线（用户 2026-09-03 明确）：content/（pure/roles/pack）一律不进主发布包，
-    # 只随 DLC 大包（build_dlc_zip.py zh/en）由用户自行导入。
+    # 内容红线（2026-09-03 用户定版）：主包 content/ 只内置「纯爱体验版」试玩（CN），
+    # 开箱即聊；5 个正式角色稿与地牢主题包（R18）一律不进主包，只随 DLC 大包由用户导入。
     (PKG / "content").mkdir(parents=True)
+    pure = ROOT / "content" / "pure"
+    if pure.exists():
+        shutil.copytree(pure, PKG / "content" / "pure",
+                        ignore=shutil.ignore_patterns("*-EN.md"))  # EN 稿走 DLC-en
+    else:
+        print("[警告] 缺少 content/pure：主包将无内置试玩内容", flush=True)
     (PKG / "content" / "安装内容包说明.txt").write_text(
-        "本目录用于放置 DLC 内容（角色稿 content/roles、体验版 content/pure、地牢主题包 "
-        "content/pack）。R18 内容不随主包分发：请在程序侧边栏「内容 / 语言包」选择 DLC "
-        "zh/en 大包 zip 一键安装，或手动把解压出的 content/ 合并进本目录后重启。\n",
+        "本目录已内置「纯爱体验版」试玩内容（content/pure）。\n"
+        "正式角色稿（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后）属 R18 内容，不随主包分发："
+        "请在程序侧边栏「内容 / 语言包」选择 DLC zh 大包 zip 一键安装，"
+        "或把解压出的 content/roles 合并进本目录后重启。\n",
         encoding="utf-8",
     )
     shutil.copy2(BUILD / "dist" / "AI-for-Coyote.exe", PKG / "AI-for-Coyote.exe")
