@@ -15,8 +15,8 @@
     content/pack/dungeon    地牢主题包——已随「地牢重做」废弃归档，不进入任何发行包
 
 - zh 包：仅 content/roles（5 个正式角色中文稿）
-- en 包：仅英文稿（*-EN.md，含 pure EN + roles EN，保持 content/ 相对结构与文件名，
-  程序按 -EN 同目录匹配加载；主包内置 pure CN，切 EN 需本包提供 pure EN）
+- en 包：仅 content/roles 的英文稿（*-EN.md，保持 content/ 相对结构与文件名，
+  程序按 -EN 同目录匹配加载；纯爱体验版的 EN 稿已随主包内置，不再重复进 en 包）
 - 地牢主题包一律不打入 DLC（旧包废弃，新地牢未成型）
 """
 import shutil
@@ -52,22 +52,21 @@ def copy_zh() -> None:
 
 
 def copy_en() -> None:
-    """英文大包：pure + roles 内收集 *-EN.md，保持 content/ 相对结构（地牢不打入）。"""
-    step("1/1 收集英文稿（*-EN.md）")
+    """英文大包：仅 roles 内收集 *-EN.md，保持 content/ 相对结构（pure EN 已随主包内置；地牢不打入）。"""
+    step("1/1 收集正式角色英文稿（roles/*-EN.md）")
+    src = ROOT / "content" / "roles"
+    if not src.exists():
+        raise SystemExit("缺少 content/roles，无法构建 en 包")
     n = 0
-    for name in ("pure", "roles"):
-        src = ROOT / "content" / name
-        if not src.exists():
-            continue
-        for f in sorted(src.rglob("*-EN.md")):
-            rel = f.relative_to(ROOT / "content")     # 如 roles/触手-角色提示词-EN.md
-            dst = PKG / "content" / rel
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(f, dst)
-            n += 1
-            print(f"  + content/{rel}", flush=True)
+    for f in sorted(src.rglob("*-EN.md")):
+        rel = f.relative_to(ROOT / "content")     # 如 roles/触手-角色提示词-EN.md
+        dst = PKG / "content" / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(f, dst)
+        n += 1
+        print(f"  + content/{rel}", flush=True)
     if n == 0:
-        print("[警告] 未找到任何 *-EN.md 英文稿", flush=True)
+        print("[警告] 未找到任何 roles/*-EN.md 英文稿", flush=True)
 
 
 def step(msg: str) -> None:
