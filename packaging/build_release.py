@@ -97,7 +97,8 @@ README_TXT = """Coyote in Cradle v{version}（绿色免装版）
 正式角色稿（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后）属 R18 内容，不随本包分发：
 到发布渠道下载「Coyote-in-Cradle-DLC-zh-*.zip」，在程序侧边栏「内容 / 语言包 →
 选择 zip 并安装」一键导入（或解压合并 content/roles 到本目录后重启）。
-英文稿另见「Coyote-in-Cradle-DLC-en-*.zip」，安装后聊天栏 ZH / EN 一键切换。
+纯爱体验版自带中英文稿（聊天栏 ZH / EN 一键切换）；正式角色的英文稿见
+「Coyote-in-Cradle-DLC-en-*.zip」。
 （地牢玩法重做中，暂不随版本发布。）
 
 【许可】
@@ -203,11 +204,11 @@ def main() -> None:
     pure = ROOT / "content" / "pure"
     if pure.exists():
         shutil.copytree(pure, PKG / "content" / "pure",
-                        ignore=shutil.ignore_patterns("*-EN.md"))  # EN 稿走 DLC-en
+                        ignore=shutil.ignore_patterns(".git", "__pycache__"))  # 纯爱 CN+EN 均内置
     else:
         print("[警告] 缺少 content/pure：主包将无内置试玩内容", flush=True)
     (PKG / "content" / "安装内容包说明.txt").write_text(
-        "本目录已内置「纯爱体验版」试玩内容（content/pure）。\n"
+        "本目录已内置「纯爱体验版」试玩内容（content/pure，含中英文稿，聊天栏 ZH / EN 切换）。\n"
         "正式角色稿（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后）属 R18 内容，不随主包分发："
         "请在程序侧边栏「内容 / 语言包」选择 DLC zh 大包 zip 一键安装，"
         "或把解压出的 content/roles 合并进本目录后重启。\n",

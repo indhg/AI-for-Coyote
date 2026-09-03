@@ -635,7 +635,7 @@ def make_app() -> FastAPI:
         if not avail.get(profile, True):
             return JSONResponse(
                 {
-                    "error": f"「{rmeta['label']}·{profile}」暂不可用（内容未内置）。",
+                    "error": f"「{rmeta['label']}·{profile}」暂不可用",
                 },
                 status_code=400,
             )

@@ -173,6 +173,9 @@ const DICT: Record<string, string> = {
   "当前 ×{s}": "now ×{s}",
   "切换失败：{msg}": "Couldn't switch: {msg}",
   "强度档切换失败：{msg}": "Couldn't switch intensity: {msg}",
+  未导入: "Not installed",
+  "内容稿未安装：到侧边栏「内容 / 语言包」安装 DLC 大包后即可使用":
+    "Script not installed — add it from the sidebar “Content / language packs” (DLC pack)",
   "✖ 请求失败：{e}": "✖ request failed: {e}",
   "⚠ 急停：全部清零、波形停止、AI 循环暂停": "⚠ E-Stop: zeroed, waves stopped, AI paused",
   急停已解除: "E-Stop cleared",

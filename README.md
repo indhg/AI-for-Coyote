@@ -24,13 +24,13 @@
 
 ## 🇨🇳 中文
 
-## ⬇️ 下载最新包（Windows）
+## ⬇️ 下载导航
 
-最新安装包/免装包发布在这里（或点页面顶部「下载」徽章）：
-
-👉 **<https://github.com/indhg/AI-for-Coyote/releases/latest>**
-
-下载 `Coyote-in-Cradle-setup-v*.exe`（安装版）或免装 zip，解压即用；用法见下方「快速开始」。
+| 端 | 下载 | 说明 |
+|---|---|---|
+| 🖥️ **PC（Windows）** | 👉 <https://github.com/indhg/AI-for-Coyote/releases/latest> | `Coyote-in-Cradle-setup-v*.exe`（安装版）或免装 zip，解压即用；用法见下方「快速开始」 |
+| 📱 **安卓（Android）** | 👉 <https://github.com/indhg/Coyote-in-Cradle-Android/releases/latest> | `Coyote-in-Cradle-*-release.apk`；独立 App，BLE 直连郊狼，无需 PC 与中继 |
+| 🧩 **DLC 内容（R18，自行导入）** | 👉 <https://github.com/indhg/AI-for-Coyote-DLC/releases> | 正式角色稿 zh / en 大包，不随主包分发；下载后程序内「内容 / 语言包」一键导入 |
 
 ---
 
@@ -42,37 +42,37 @@
 | 👁️🎤 | **摄像头 / 麦克风观察** | 画面变暗或无人 → 角色逐渐不耐烦再到暴怒；呻吟分级：普通呻吟小幅加码、惨叫立即收敛 |
 | 🤖 | **自动运行（Autopilot）** | 不需要打字，按间隔自动循环观察-描写-动作-发言；传感器跟随启停 |
 | 🎛️ | **手动控制台** | A/B 双通道独立控制：保持强度、增减、清除、24 种内置波形（可循环）；通道开关与强度上限（1–200，默认 100） |
-| 🗺️ | **紫金地牢（Dungeon）** | 内置地牢玩法：主题包 + 事件流 + 地图路线，三态体感反馈（无 / 轻微 / 持续），带真机反馈绑定 |
-| 🌐 | **中英一键切换** | 聊天栏上方的 ZH / EN 入口；整个界面与角色内容同步切英文（地牢事件正文按设计保留原文） |
-| 🛡️ | **多层安全** | 强度上限、单指令步长 ≤40、过热降限、中继 / App 断连自动清零、急停（按钮 / 长按空格 1 秒） |
-| 🧩 | **多角色内容** | 内置多个角色与地牢主题包（见下「内容清单」），角色卡直接切换 |
+| 🗺️ | **紫金地牢（Dungeon）** | 玩法重做中，暂不随版本发布 |
+| 🌐 | **中英一键切换** | 聊天栏上方的 ZH / EN 入口；界面与角色内容同步切英文 |
+| 🛡️ | **多层安全** | 强度上限、单指令步长 ≤40、中继 / App 断连自动清零、急停（按钮 / 长按空格 1 秒） |
+| 🧩 | **内容即装即用** | 内置体验版（中英）；正式角色经 DLC 大包在程序内一键导入（见「内容清单」） |
 | 📦 | **随开随用** | Windows 安装包 / 免装包；自动更新检测、公告浮窗、首次使用引导 |
 
 ---
 
 ## 🧩 内容清单
 
-内置内容（随正式发行包分发；本仓库托管代码主体，成人内容文件经作者渠道分发）：
+内容分两档：
 
-**角色**（`content/pure` + `content/roles`）
+- **随包内置**（开箱即玩）：体验版（Trial）——触手 · 纯爱向试玩内容，含中英文稿（聊天栏 ZH / EN 切换即用英文）；
+- **R18 正式内容**（不随主包分发，需自行导入）：正式角色稿经 **DLC 大包**导入后出现在角色卡。
 
-| 角色 | 说明 | 英文稿 |
+| 内容 | 分发形态 | 语言 |
 |---|---|---|
-| 体验版（Trial） | 触手 · 纯爱向试玩内容，默认开启 | ✅ |
-| 触手（Tentacle） | 完整角色稿：设定、风格规则、语料、示例 | ✅ |
-| 品评会（Appraisal） | 公开审评世界观角色 | ✅ |
-| 哥布林（Goblin） | 地牢向角色 | ✅ |
-| 史莱姆（Slime） | 软体触感向角色 | ✅ |
-| 蛛后（Arachne） | 支配向角色 | ✅ |
+| 体验版（触手 · 纯爱向） | ✅ 内置主包（content/pure） | 中文 + 英文 |
+| 触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后（正式角色稿） | DLC-zh 大包（R18，自行导入） | 中文 |
+| 上述正式角色稿的英文版 | DLC-en 大包（自行导入） | 英文 |
 
-> 在界面切换为 EN 后，角色稿自动加载对应的 `-EN.md` 英文版本（体验版走 `content/pure` 的纯爱英文稿）。
+> 正式角色稿（`content/roles`）与地牢主题包属 R18 内容：**主仓库与主发布包一律不含**，请通过作者渠道的 DLC 大包获得并自行导入。
 
-**地牢主题包**（`content/pack/dungeon`）
+### 安装 DLC（正式角色，R18）
 
-| 主题包 | 说明 |
-|---|---|
-| 地牢刻印（Marks） | 基础地牢：统一世界观 + 叙事者基调 + DM 骨架 |
-| 触手 / 品评会 / 哥布林 / 淫纹（Sigil） | 各主题的事件流、场景插图、设备反馈绑定表 |
+1. 到 **AI-for-Coyote-DLC** 仓库 Releases 下载 `Coyote-in-Cradle-DLC-zh-*.zip`（中文正式角色）或 `Coyote-in-Cradle-DLC-en-*.zip`（英文稿）：
+   👉 **<https://github.com/indhg/AI-for-Coyote-DLC/releases>**
+2. 打开程序 → 侧边栏底部 **「内容 / 语言包」→ 选择 zip 并安装**，自动合并进 `content/` 即时生效；
+3. 或手动解压，把 zip 内 `content/…` 合并到程序目录的 `content/` 后重启。
+
+> 地牢玩法正在重做（新世界观看板中），暂不随版本发布。
 
 **运行链路**
 
@@ -216,9 +216,7 @@ AI-for-Coyote\
 ├── packaging\            打包脚本（免装 zip + Inno Setup 安装器）
 ├── relay\                dglab-websocket-server（Bun，v4 端口 9998，GPL-3.0 第三方组件）
 ├── config\               示例配置 / waveforms.yaml 波形库
-├── content\pure\         触手 · 纯爱向内容（体验版角色稿，含 EN）
-├── content\roles\        正式角色稿（触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后，含 EN）
-├── content\pack\dungeon\ 地牢主题包（地牢刻印 + 触手 / 品评会 / 哥布林 / 淫纹）
+├── content\              本地内容目录（**不入库、不进主发布包**）：pure\ 纯爱体验版（CN+EN，随主包内置）；roles\ 正式角色稿（R18，经 DLC-zh 导入后出现）；pack\ 地牢素材（玩法重做中）
 ├── logs\                 运行日志
 └── start.bat             一键启动
 ```
@@ -237,8 +235,8 @@ AI-for-Coyote\
 
 **进行中**
 
-- 18+ 内容与英文版内容的发行渠道整合（仓库与 Release 拆分）；
-- 地牢叙事 / 事件正文的英文覆盖。
+- 地牢玩法全套重做（新世界观 / 三轴系统 / 事件与语料产出中，旧主题包已废弃归档）；
+- DLC 内容渠道运营（zh / en 大包随主版本同步更新）。
 
 **计划**
 
@@ -277,13 +275,13 @@ AI-for-Coyote\
 
 # 🇬🇧 English
 
-## ⬇️ Download the latest build（Windows）
+## ⬇️ Download hub
 
-Installers / portable builds are released here（or use the “下载” badge at the top of the page）:
-
-👉 **<https://github.com/indhg/AI-for-Coyote/releases/latest>**
-
-Grab `Coyote-in-Cradle-setup-v*.exe`（installer）or the portable zip and unzip it; usage below under “Quick start”.
+| Platform | Download | Notes |
+|---|---|---|
+| 🖥️ **PC (Windows)** | 👉 <https://github.com/indhg/AI-for-Coyote/releases/latest> | `Coyote-in-Cradle-setup-v*.exe`（installer）or the portable zip; see “Quick start” below |
+| 📱 **Android** | 👉 <https://github.com/indhg/Coyote-in-Cradle-Android/releases/latest> | `Coyote-in-Cradle-*-release.apk`; standalone app, BLE direct to the Coyote — no PC or relay needed |
+| 🧩 **DLC content (R18, install yourself)** | 👉 <https://github.com/indhg/AI-for-Coyote-DLC/releases> | Official-character zh / en packs, not shipped with the main build; import in-app via “Content / language packs” |
 
 ---
 
@@ -307,32 +305,37 @@ Grab `Coyote-in-Cradle-setup-v*.exe`（installer）or the portable zip and unzip
 | 👁️🎤 | **Camera / mic sensing** | Dark or empty frame → impatience, then anger; moans are graded — ordinary ones nudge intensity up, screams pull it straight down |
 | 🤖 | **Autopilot** | Runs the whole loop on an interval without typing; sensors follow it |
 | 🎛️ | **Manual console** | Independent A/B channels: hold, adjust, clear, 24 built-in waveforms（loopable）; per-channel on/off and caps（1–200, default 100） |
-| 🗺️ | **Dungeon mode** | Built-in dungeon themes with event flows, map routes, and feel feedback（none / light / steady）with real device-feedback bindings |
-| 🌐 | **One-tap bilingual UI** | ZH / EN switch above the chat panel; the whole interface and character content switch together |
+| 🗺️ | **Dungeon mode** | Being rebuilt — not shipped with current releases |
+| 🌐 | **One-tap bilingual UI** | ZH / EN switch above the chat panel; the interface and character content switch together |
 | 🛡️ | **Layered safety** | Caps, ≤40 step changes, overheat limit drop, auto-clear on disconnect, emergency stop（button / hold Space for 1s） |
-| 🧩 | **Multiple characters** | Built-in role cards and dungeon theme packs（see below） |
+| 🧩 | **Content, ready to load** | Trial version built in (ZH + EN); official characters installed in-app from DLC packs (see below) |
 | 📦 | **Open-and-play** | Windows installer / portable builds; update checks, announcement pop-ups, first-run onboarding |
 
 ---
 
-## 🧩 Built-in content
+## 🧩 Content
 
-Shipped with official releases（this GitHub repo hosts the code base; adult content files are distributed through the author's own channels）:
+Content ships in two tiers:
 
-**Characters**（`content/pure` + `content/roles`）
+- **Built into the main package**（ready to play）: the Trial version — Tentacle · pure-love sample, with both Chinese and English scripts（use the ZH / EN switch above the chat panel）;
+- **R18 official content**（not shipped; install it yourself）: official character scripts arrive via **DLC packs** and appear on the character card once installed.
 
-| Character | Notes | EN script |
+| Content | Distribution | Language |
 |---|---|---|
-| Trial（体验版） | Tentacle · pure-love sample content, enabled by default | ✅ |
-| Tentacle（触手） | Full script: setting, style rules, corpus, examples | ✅ |
-| Appraisal（品评会） | Public-appraisal world | ✅ |
-| Goblin（哥布林） | Dungeon-flavored | ✅ |
-| Slime（史莱姆） | Soft / gooey | ✅ |
-| Arachne（蛛后） | Dominant | ✅ |
+| Trial（Tentacle · pure-love sample） | ✅ Built in（content/pure） | Chinese + English |
+| Tentacle / Appraisal / Goblin / Slime / Arachne（official scripts） | DLC-zh pack（R18, install it yourself） | Chinese |
+| English versions of the official scripts above | DLC-en pack（install it yourself） | English |
 
-> Switching the UI to EN automatically loads each character's `-EN.md` script（Trial uses the pure-love EN file in `content/pure`）.
+> Official scripts（`content/roles`）and dungeon theme packs are R18 material: **neither this repo nor the main release contains them** — get them from the author's DLC packs and install them yourself.
 
-**Dungeon theme packs**（`content/pack/dungeon`）— Marks（地牢刻印）base dungeon + Tentacle / Appraisal / Goblin / Sigil（淫纹）theme packs, each with event flows, scene art, and device-binding tables.
+### Installing DLC（official characters, R18）
+
+1. Grab `Coyote-in-Cradle-DLC-zh-*.zip`（Chinese official characters）or `Coyote-in-Cradle-DLC-en-*.zip`（English scripts）from the **AI-for-Coyote-DLC** repo Releases:
+   👉 **<https://github.com/indhg/AI-for-Coyote-DLC/releases>**
+2. Open the app → sidebar footer **「Content / language packs」→ pick the zip and install** — files are merged into `content/` and take effect immediately;
+3. Or unzip manually and merge the `content/…` folder into the app's `content/`, then restart.
+
+> The dungeon is being rebuilt（new world-design board in progress）— not shipped with current releases.
 
 **Runtime chain**
 
@@ -466,9 +469,7 @@ AI-for-Coyote\
 ├── packaging\            Packaging scripts（portable zip + Inno Setup installer）
 ├── relay\                dglab-websocket-server（Bun, v4 on 9998; GPL-3.0 third-party）
 ├── config\               Example configs + waveforms.yaml
-├── content\pure\         Tentacle pure-love content（Trial script, incl. EN）
-├── content\roles\        Full role scripts（Tentacle / Appraisal / Goblin / Slime / Arachne, incl. EN）
-├── content\pack\dungeon\ Dungeon theme packs（Marks + Tentacle / Appraisal / Goblin / Sigil）
+├── content\               Local content dir（**not in this repo, not in the main release**）: pure\ Trial（CN+EN, shipped）; roles\ official scripts（R18, appear after installing DLC-zh）; pack\ dungeon material（being rebuilt）
 ├── logs\                 Runtime logs
 └── start.bat             One-click startup
 ```
@@ -483,8 +484,8 @@ AI-for-Coyote\
 
 **In progress**
 
-- Channeling 18+ / English content through dedicated distribution（repo & Release split）;
-- English coverage for dungeon narrative / event text.
+- Full dungeon rebuild（new world-design / three-axis system; event & corpus production in progress; old theme packs archived）;
+- DLC channel operation（zh / en packs stay in sync with main releases）.
 
 **Planned**
 

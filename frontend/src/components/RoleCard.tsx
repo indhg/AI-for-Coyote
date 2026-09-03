@@ -24,6 +24,14 @@ export default function RoleCard() {
   const role = useApp((st) => st.state?.role ?? "触手");
   const profile = useApp((st) => st.state?.profile ?? "纯爱");
   const intensity = useApp((st) => st.state?.intensity_level ?? "中");
+  const roles = useApp((st) => st.state?.roles); // 后端就绪清单（prompt 文件是否存在）
+
+  /** 入口就绪 = 后端该角色该档 available；查不到（老后端/未知入口）默认可用，避免误锁 */
+  const entryReady = (e: Entry): boolean => {
+    const r = roles?.find((x) => x.name === e.role);
+    const p = r?.profiles.find((x) => x.name === e.profile);
+    return p ? p.available : true;
+  };
   const [open, setOpen] = useState(false);
   const [listStep, setListStep] = useState(false); // 展开入口列表
   const [err, setErr] = useState("");
@@ -175,14 +183,24 @@ export default function RoleCard() {
                 >
                   {ENTRIES.map((e) => {
                     const active = e.role === role && e.profile === profile;
+                    const ready = entryReady(e);
+                    const disabledEntry = !ready && !active; // 当前激活项保留可点（防呆）
                     return (
                       <button
                         key={e.key}
+                        disabled={disabledEntry}
                         onClick={() => void switchEntry(e)}
+                        title={
+                          disabledEntry
+                            ? t("内容稿未安装：到侧边栏「内容 / 语言包」安装 DLC 大包后即可使用")
+                            : undefined
+                        }
                         className={`flex items-center gap-2 rounded-[6px] border px-2 py-1.5 text-left text-[12px] transition-all ${
                           active
                             ? `${ENTRY_RING_ACTIVE_CLS[e.key] ?? "border-line2 bg-accent/15"} font-medium text-text scale-[1.03]`
-                            : `border-transparent font-medium text-text hover:bg-panel2 hover:scale-[1.03] ${ENTRY_RING_CLS[e.key] ?? ""}`
+                            : `border-transparent font-medium text-text ${ENTRY_RING_CLS[e.key] ?? ""} ${
+                                ready ? "hover:bg-panel2 hover:scale-[1.03]" : "cursor-not-allowed opacity-40 grayscale"
+                              }`
                         }`}
                       >
                         <span className="flex h-5 w-5 flex-none items-center justify-center overflow-hidden rounded-[5px]">
@@ -193,6 +211,11 @@ export default function RoleCard() {
                           )}
                         </span>
                         <span className="min-w-0 flex-1">{t(e.label)}</span>
+                        {!ready && (
+                          <span className="flex-none rounded border border-line bg-panel2 px-1 py-px text-[9px] text-muted">
+                            {t("未导入")}
+                          </span>
+                        )}
                         {e.recommended && (
                           <span className="flex-none rounded border border-accent/40 px-1 py-px text-[9px] font-bold text-accent">
                             {t("推荐")}
