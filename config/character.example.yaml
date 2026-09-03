@@ -70,7 +70,7 @@ roles:
     profiles:
       正式:
         level: 重
-        note: 正式版（哥布林）：战利品/会响的货，嗡石鸡巴短促乱塞，急用、抢、丢开。
+        note: 正式版（哥布林）：战利品/会响的货，会震的短肉棒短促乱塞，急用、抢、丢开。
         prompt_file: content/roles/哥布林-角色提示词.md
         examples:
           - user: 我进来了。

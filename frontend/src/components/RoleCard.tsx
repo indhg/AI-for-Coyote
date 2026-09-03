@@ -26,11 +26,22 @@ export default function RoleCard() {
   const intensity = useApp((st) => st.state?.intensity_level ?? "中");
   const roles = useApp((st) => st.state?.roles); // 后端就绪清单（prompt 文件是否存在）
 
-  /** 入口就绪 = 后端该角色该档 available；查不到（老后端/未知入口）默认可用，避免误锁 */
+  /** 入口就绪 = 后端该角色该档 available；state 未加载（roles 为 null）时不误锁；
+   *  加载完但角色/档匹配不到 → 视为未导入（灰显，不静默放行） */
   const entryReady = (e: Entry): boolean => {
-    const r = roles?.find((x) => x.name === e.role);
+    if (!roles) return true;
+    const r = roles.find((x) => x.name === e.role);
     const p = r?.profiles.find((x) => x.name === e.profile);
-    return p ? p.available : true;
+    return p ? p.available : false;
+  };
+  /** 展开入口列表前拉一次最新 state（available 是后端热加载快照，打开即见最新未导入态） */
+  const refreshRoles = async () => {
+    try {
+      const s = await api.state();
+      useApp.setState({ state: s });
+    } catch {
+      /* 拉取失败沿用现有快照，不打断交互 */
+    }
   };
   const [open, setOpen] = useState(false);
   const [listStep, setListStep] = useState(false); // 展开入口列表
@@ -162,7 +173,11 @@ export default function RoleCard() {
               <span className="px-1 text-[10px] font-medium tracking-wide text-muted">{t("角色入口")}</span>
               <button
                 ref={rowRef}
-                onClick={() => setListStep((v) => !v)}
+                onClick={() => {
+                  const next = !listStep;
+                  if (next) void refreshRoles(); // 展开时刷新最新 available
+                  setListStep(next);
+                }}
                 className="flex items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12px] transition-colors hover:bg-panel2"
                 title={t("展开入口列表")}
               >
