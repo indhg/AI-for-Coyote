@@ -7,7 +7,7 @@
 
 <p>
   <a href="https://github.com/indhg/AI-for-Coyote/releases/latest"><img alt="Release" src="https://img.shields.io/badge/下载-Windows-blue?style=flat-square&logo=windows"></a>
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-All%20Rights%20Reserved-black?style=flat-square"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-非商用·可分享-green?style=flat-square"></a>
 </p>
 
 <p>
@@ -257,9 +257,9 @@ AI-for-Coyote\
 
 ## 📜 许可证
 
-- 本仓库主体为作者原创的**专有软件**（All Rights Reserved，见 [LICENSE](LICENSE)），未授权任何渠道转载、倒卖与二次分发；
+- 本仓库为作者原创，采用**「可分享 · 禁商用」许可**（见 [LICENSE](LICENSE)）：允许免费使用、修改与自由转发分享（保留许可声明与作者署名），**禁止任何盈利目的的分发、转售与收费**；商用授权请联系作者；
 - `relay/` 源自 [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0），作为独立第三方组件随包分发（见 `relay/LICENSE`）；
-- 角色稿与主题包内容版权归作者，仅通过作者分发的渠道获得；本 GitHub 仓库托管代码主体，不含成人内容文件。
+- 角色稿与主题包内容版权归作者，仅通过作者渠道获得并自行导入；本 GitHub 仓库托管代码主体，不含任何内容文件。
 
 ## 🙏 致谢与联系
 
@@ -499,9 +499,9 @@ For **adults only**, for personal entertainment under **voluntary, informed, and
 
 ## 📜 License
 
-- The repository as a whole is the author's original **proprietary software**（All Rights Reserved, see [LICENSE](LICENSE)）— no redistribution, resale, or republishing through other channels;
+- The repository is the author's original work under a **“Free-Share, Non-Commercial” license** (see [LICENSE](LICENSE)): free personal use, modification and redistribution are allowed as long as this license notice and the author credit are kept; **any profit-driven distribution, resale or paid hosting is prohibited**. Commercial licensing — contact the author;
 - `relay/` originates from [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0）, shipped as an independent third-party component（`relay/LICENSE`）;
-- Character scripts and theme-pack content are the author's copyright and are obtained only through the author's channels; this GitHub repo hosts the code base and does not include adult content files.
+- Character scripts and theme-pack content belong to the author and are obtained only through the author's channels, then imported by yourself; this GitHub repo hosts the code base and contains no content files.
 
 ## 🙏 Thanks & contact
 

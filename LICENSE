@@ -1,25 +1,59 @@
-Coyote in Cradle（原 AI for Coyote）
-专有软件许可声明 / Proprietary Software License Notice
+Coyote in Cradle — 可分享·禁商用许可（v1，2026-09-03）
+Free-Share, Non-Commercial License
 
-Copyright © 2025-2026 作者（Author）. All Rights Reserved.
-
-本仓库主体（backend / frontend / desktop / config 示例 / content/pure 等由作者原创的部分）
-为**专有软件**（proprietary software）。未经作者书面许可，任何人不得：
-
-1. 复制、分发、转售或以任何形式对外提供本软件或其任何部分的副本；
-2. 对本软件进行反编译、反汇编或提取源代码用于其他项目；
-3. 将本软件整体或部分用于商业用途或二次分发。
-
-本软件仅通过作者官方渠道发布，任何其他渠道（包括付费转卖、打包整合、镜像转载）
-均为未经授权。
+Copyright © 2025-2026 作者（Author）
 
 ────────────────────────────────────────────────
 
-第三方组件声明 / Third-Party Components
+【中文条款】
 
-- `relay/` 目录源自 dglab-websocket-server（GPL-3.0）
-  <https://github.com/ws94666ws/dglab-websocket-server>
-  该目录作为**独立第三方组件**随包分发，保留其原始 GPL-3.0 许可证，详见 relay/LICENSE。
-  本声明的专有条款不适用于 relay/ 目录中的代码。
+本仓库中的作品（代码、文档、配置示例及随附内容，合称「作品」）版权归作者所有，按以下条款授权使用：
 
-其余依赖均为宽松许可（MIT / BSD / Apache-2.0 / PSF 等），见各包自身声明。
+一、允许（免费，无需另行授权）
+1. 个人与非商业用途：使用、运行、学习、研究、修改本作品。
+2. 转发与分享：在保留本许可声明、版权信息与作者官方渠道链接（https://github.com/indhg/AI-for-Coyote ）的前提下，可自由复制、转载、再分发，包括社交媒体分享、镜像站与网盘公开分享。
+3. 个人二次创作：基于本作品的个人改编、扩展或学习项目，仅限非商业用途；改编作品须继续保留本许可声明。
+
+二、禁止（需作者书面授权）
+1. 商用盈利：任何以盈利为目的的使用或分发，包括但不限于：销售、收费下载、付费订阅/会员、广告变现、将本作品打包进收费产品、倒卖与盗版转售。
+2. 移除、篡改本许可声明或版权信息，或冒用作者身份。
+3. 将作品用于任何违法用途。
+
+三、成人内容特别条款
+作品中的成人（18+）虚构内容仅供成年人、双方自愿的虚构角色扮演使用；禁止用于现实非自愿场景、侵害他人或任何违法用途。下载与使用即视为你已成年并同意本条。
+
+四、无担保
+作品按「原样」（AS-IS）提供，作者不对其适用性、完整性或使用后果承担任何责任。
+
+五、第三方组件
+随作品分发的第三方组件保留其各自许可（如 relay/ 源自 dglab-websocket-server，GPL-3.0，见各组件自带许可文件）。
+
+────────────────────────────────────────────────
+
+【English】
+
+The work in this repository (code, docs, example configs and bundled content, together the "Work") is copyrighted by the author and licensed under the following terms:
+
+1. Permitted (free, no further permission needed)
+   1.1 Personal / non-commercial use, study, modification and running of the Work.
+   1.2 Redistribution and sharing — copying, reposting and re-distributing the Work freely (social media, mirrors, file hosts) as long as this license notice, the copyright line and a link to the official channel (https://github.com/indhg/AI-for-Coyote) are kept intact.
+   1.3 Personal derivative works for non-commercial purposes only; derivative works must keep this license notice.
+
+2. Prohibited (requires the author's written permission)
+   2.1 Any commercial or profit-driven use or distribution: selling, paid download, paid subscription / membership, ad monetization, bundling the Work into a paid product, reselling or pirated repackaging.
+   2.2 Removing or altering this license / copyright notice, or impersonating the author.
+   2.3 Using the Work for any unlawful purpose.
+
+3. Adult-content clause
+   18+ fictional content in the Work is for adults only, for consensual fictional role-play between consenting adults. Downloading and using it means you confirm you are an adult and agree to this clause.
+
+4. No warranty
+   The Work is provided "AS-IS" without warranty of any kind; the author is not liable for any consequences of its use.
+
+5. Third-party components
+   Third-party components keep their own licenses (e.g. relay/ originates from dglab-websocket-server, GPL-3.0; see the component's license file).
+
+────────────────────────────────────────────────
+
+商用授权与合作请联系作者官方渠道。
+For commercial licensing and partnerships, contact the author via official channels.
