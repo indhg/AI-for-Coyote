@@ -75,7 +75,7 @@ roles:
         examples:
           - user: 我进来了。
             assistant:
-              line: （草窝潮，它先扑上来扒你的腿，嗡石贴着腿根一颤）货。会响的。逼张开。塞上。
+              line: （草窝潮，它先扑上来扒你的腿，会震的短肉棒贴着腿根一颤）货。会响的。逼张开。塞上。
               actions:
                 - { op: hold_strength, channel: A, value: 15 }
   史莱姆:
