@@ -28,6 +28,12 @@ export default function ChatPanel() {
   const [qrRetries, setQrRetries] = useState(0); // 自动重试最多 6 次，避免 relay 异常时无限请求
   const boxRef = useRef<HTMLDivElement>(null);
 
+  // T058 P1.3：最后一个 "[sim]" 分界（进入测试模式）之前的消息块视为“切换前历史”
+  const simSince = messages.reduce(
+    (acc, m, i) => ((m.text ?? "").startsWith("[sim]") ? i : acc),
+    -1,
+  );
+
   // 切换角色/内容档时插一条系统分隔消息，防上下文串戏
   const roleKeyRef = useRef(`${role}·${profile}`);
   useEffect(() => {
@@ -216,7 +222,15 @@ export default function ChatPanel() {
           </div>
           <button
             onClick={() => {
-              void api.testMode(true).catch(() => {});
+              // T058 P1.3：进测试模式时 push 一条分界，让此线以上的 ✖ 未发送 明确是切换前历史
+              void api.testMode(true)
+                .then(() =>
+                  pushMsg({
+                    role: "sys",
+                    text: "[sim] " + t("已进入测试模式：上方 ✖ 未发送 均为切换前（真实设备）的历史"),
+                  }),
+                )
+                .catch(() => {});
             }}
             title={t("不连接设备，用模拟设备试跑聊天 / 地牢 / AI 全流程（不会真正电击）")}
             className="mt-1 rounded-lg border border-line2 bg-panel2 px-5 py-1.5 text-[12px] font-medium text-accent transition-colors hover:border-accent/60 hover:text-accent"
@@ -254,6 +268,8 @@ export default function ChatPanel() {
                     {s.replace(/^[▶✖×]/, "")}
                   </span>
                 );
+                // T058 P1.3：最后一个 "[sim]" 分界之前的 ✖ 块按“切换前历史”淡化
+                const historic = simSince >= 0 && i < simSince;
                 return (
                   <div
                     className={`mt-1 flex max-w-[90%] flex-col gap-1 border-t border-dashed border-line pt-1 ${
@@ -267,7 +283,10 @@ export default function ChatPanel() {
                       </div>
                     )}
                     {skipped.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1">
+                      <div
+                        title={historic ? t("切换测试模式前的历史") : undefined}
+                        className={`flex flex-wrap items-center gap-1 ${historic ? "opacity-50 saturate-50" : ""}`}
+                      >
                         <span className="text-[10px] text-red-400/80">{t("✖ 未发送 {n}", { n: skipped.length })}</span>
                         {skipped.map((a, j) => chip(a, j, "border-red-500/30 bg-red-500/10 text-red-200/90"))}
                       </div>

@@ -374,6 +374,18 @@ const DICT: Record<string, string> = {
   深层: "Depth",
   终局: "Ending",
   "下次更新前不再提示": "Don't show again until the next update",
+  // ---------- T058 修复（测试模式历史分界） ----------
+  "已进入测试模式：上方 ✖ 未发送 均为切换前（真实设备）的历史":
+    "Test mode is on: the ✖ blocked lines above happened before the switch (real device)",
+  "切换测试模式前的历史": "History from before switching to test mode",
+  // ---------- 内容包安装（程序内入口） ----------
+  "内容 / 语言包": "Content / language packs",
+  "安装 DLC 的 zh / en 内容包 zip，自动合并进 content/ 并即时生效。":
+    "Pick a zh / en content-pack zip — files are merged into content/ and take effect immediately.",
+  "选择 zip 并安装": "Install from zip",
+  "安装中…": "Installing…",
+  "已安装 {n} 个文件（新增 {a} / 更新 {u}），角色与地牢内容已刷新":
+    "Installed {n} files ({a} new / {u} updated); characters and dungeon content refreshed",
   // ---------- 审计补漏（第 4 轮） ----------
   "AI 模型配置": "AI model",
   内容版本说明: "About the content",

@@ -71,6 +71,11 @@ export const api = {
       "/api/character/lang",
       json({ lang }),
     ),
+  installContent: (file: File) =>
+    j<{ ok: boolean; files: number; added: number; updated: number; sections: string[] }>(
+      "/api/content/install",
+      { method: "POST", headers: { "Content-Type": "application/zip" }, body: file },
+    ),
   setAutopilot: (enabled: boolean) =>
     j<{ ok: boolean }>("/api/autopilot", json({ enabled })),
   setAutopilotInterval: (interval_s: number) =>

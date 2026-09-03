@@ -18,7 +18,7 @@ from pathlib import Path
 
 import httpx
 import qrcode
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -37,6 +37,7 @@ from .llm import LLM
 from .logging_utils import setup_logging
 from .device.factory import build_backend
 from .safety import SafetyManager
+from .content_install import ContentInstallError, install_zip_bytes
 from .dungeon.runtime import DungeonRuntime
 
 # 打包（PyInstaller）后以 exe 所在目录为项目根；开发时以仓库根
@@ -265,9 +266,11 @@ class AppState:
             if on == self._test_mode:
                 return {"ok": True, "test_mode": self._test_mode}
             if on:
+                # 前置 dry-run：切换窗口（stop 真实中继期间）进来的动作一律按模拟兜底，
+                # 避免 race 报「设备未连接（无 clientId/slotId）」（T058 P2.1）
+                self.safety.dry_run = True               # 全体标「模拟」+ AI 被告知 dry-run
                 await self._real_backend.stop()          # 停真实中继重连任务
                 self._attach_backend(self._sim_backend_instance())
-                self.safety.dry_run = True               # 全体标「模拟」+ AI 被告知 dry-run
                 self._test_mode = True
                 self.logger.info("已进入测试模式：模拟设备已配对，不发送真实命令")
                 # 与真实配对一致：缓 3 秒让 AI 主动开场
@@ -671,7 +674,27 @@ def make_app() -> FastAPI:
             }
         )
 
-    # （DLC 导入机制已随闭源移除：内容全部内置 content/roles/ 与 content/pack/dungeon/）
+    # ---------- 内容/语言包安装（zh/en 大包 zip，程序内入口） ----------
+    @app.post("/api/content/install")
+    async def api_content_install(request: Request) -> JSONResponse:
+        """接收内容包 zip 的原始字节，校验后合并进 content/，热加载角色与地牢主题包。"""
+        data = await request.body()
+        try:
+            res = install_zip_bytes(data, PROJECT_ROOT / "content")
+        except ContentInstallError as exc:
+            en = str(cfg["character"].get("lang") or "zh") == "en"
+            return JSONResponse({"error": exc.en if en else exc.zh}, status_code=400)
+        # 热加载：角色清单/角色稿（EN 并列稿也在重载范围内）+ 地牢主题包
+        try:
+            reload_character(cfg)
+        except Exception:  # noqa: BLE001
+            state.logger.exception("内容包安装后角色热加载失败")
+        try:
+            state.dungeon._reload()
+        except Exception:  # noqa: BLE001
+            state.logger.exception("内容包安装后地牢主题包重载失败")
+        await state.broadcast()
+        return JSONResponse({"ok": True, **res})
 
     # ---------- 地牢（紫金地牢，M4） ----------
     @app.get("/api/dungeon/state")
