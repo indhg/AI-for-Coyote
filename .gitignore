@@ -26,6 +26,8 @@ config/character_runtime.yaml
 *.bak
 .env
 *.pem
+#webview_storage保存路径
+config/webview_storage
 
 # ============ 私有内容包与生产工具（不上传） ============
 # 调教版提示词/语料（NSFW，私发内容包）
