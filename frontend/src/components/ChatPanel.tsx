@@ -239,7 +239,7 @@ export default function ChatPanel() {
           </button>
         </div>
       ) : (
-        <div ref={boxRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3.5">
+        <div ref={boxRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3.5 pb-25">
           {enabled !== undefined && !enabled.A && !enabled.B && (
             <div className="self-center rounded-xl border border-bad/50 bg-bad/10 px-3 py-2 text-center text-[11px] text-bad">
               {t("⚠️ 所有通道都已关闭，AI 不会输出任何刺激——请在左侧通道卡打开至少一个通道")}
