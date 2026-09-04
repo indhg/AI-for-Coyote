@@ -152,6 +152,10 @@ def main() -> None:
         # 4. 打开应用窗口
         import webview
 
+        # 5. WebView2 需要一个目录来存储 cookie、localStorage 等，默认是用户临时目录，private_mode状态下每次启动都会清空，会导致状态丢失。
+        storage_dir = root / "config" / "webview_storage"
+        storage_dir.mkdir(exist_ok=True)
+
         try:
             window = webview.create_window(
                 APP_TITLE,
@@ -160,7 +164,11 @@ def main() -> None:
                 height=900,
                 min_size=(1100, 700),
             )
-            webview.start()
+            webview.start(
+                debug=False,
+                storage_path=str(storage_dir),  
+                private_mode=False,        
+            )
         except webview.util.WebViewException as exc:
             log.exception("WebView 启动失败")
             message(
