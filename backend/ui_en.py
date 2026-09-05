@@ -46,7 +46,7 @@ def _wave(p: str) -> str:
     return WAVE_EN.get(p, p)
 
 
-# ---------- 4.1 _describe 的英文版（game_loop.py / dungeon/executor.py 共用） ----------
+# ---------- 4.1 _describe 的英文版（game_loop.py / dungeon_v2 体感共用） ----------
 def describe_en(cmd: dict) -> str:
     """按 §1.5 显示名模板生成英文执行说明。cmd 为已过安全层的内部命令。"""
     kind = cmd.get("kind")
@@ -137,7 +137,7 @@ def reason_en(zh: str) -> str:
 
 
 # ---------- 4.3 地牢 hint ----------
-_HINT_EN = {"无": "none", "轻微": "light", "持续": "steady", "已清理": "cleared"}
+_HINT_EN = {"无": "none", "轻微": "light", "持续": "steady", "已清理": "cleared", "试探": "tease", "连击": "combo", "停顿": "pause", "清理": "cleared"}
 
 
 def hint_en(hint: str) -> str:

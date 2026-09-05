@@ -1,0 +1,23 @@
+{
+  "id": "E014",
+  "title": "留 · 祭坛重铸",
+  "band": "end",
+  "room": "ending",
+  "kind": "ending",
+  "intensity": "none",
+  "species": "无",
+  "trigger": "你走回了祭坛。这一次，是自愿的。",
+  "seed": "祭坛的灰在你跪下时浮了起来，绕着你膝盖打转。你把手按在小腹的淫纹上，等它安静下来。它不闹了，像认出了你。地牢深处又响起了很轻的呼吸声，一下一下的，像在等你回去。你听见自己说：再来一局。",
+  "checks": [],
+  "settlement": ["end_stay"],
+  "choices": [
+    {
+      "label": "在祭坛前坐下，等下一扇门",
+      "settlement": "end_stay",
+      "next": "end",
+      "exit": "门在你面前合上又张开，还是那条石廊。"
+    }
+  ],
+  "feedback": "清理",
+  "note": "「留下/再刷」结局。允许再入（restart 后新开一局）；不留数值。"
+}

@@ -205,12 +205,13 @@ async def test_game_loop_chain() -> None:
           loop.patterns == {"A": None, "B": None}
           and not any(backend.loops_active().values()))
 
-    # 地牢 FeedbackExecutor 走同一链路（send 注入 backend.apply）
-    from backend.dungeon.executor import FeedbackExecutor
-    ex = FeedbackExecutor(safety, dry_run=False, send=backend.apply)
-    r = await ex.execute([{"op": "hold_strength", "channel": "B", "value": 20}])
-    check("链: 地牢反馈经 backend 真发", r["executed"] and r["executed"][0]["sent"],
-          detail=str([e["label"] for e in r["executed"]]))
+    # 地牢 FeedbackExecutor 走同一链路（send 注入 backend.apply）——dungeon_v2 版（旧 backend.dungeon 已归档 2026-09-04）
+    from backend.dungeon_v2.feedback import FeedbackExecutor
+    ex = FeedbackExecutor(cfg, safety)
+    ex.send = backend.apply
+    executed, dropped = await ex.run([{"op": "hold_strength", "channel": "B", "value": 20}])
+    check("链: 地牢反馈经 backend 真发", executed and executed[0]["sent"],
+          detail=str([e["label"] for e in executed]))
 
 
 async def test_estop_blocks_while_active() -> None:

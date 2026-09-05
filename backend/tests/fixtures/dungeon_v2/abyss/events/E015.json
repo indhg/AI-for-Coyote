@@ -1,0 +1,25 @@
+{
+  "id": "E015",
+  "title": "沉 · 魔神厅",
+  "band": "end",
+  "room": "ending",
+  "kind": "ending",
+  "intensity": "none",
+  "species": "无",
+  "trigger": "肉座沉到了底，或者你自己走下来的——厅里有座王座。",
+  "seed": "厅里没有灯，可你什么都看得见。王座立在大厅的中央，坐上去，像坐进了一团温热里。淫纹已经爬满了——定型，稳定，亮得坦荡。你的身体认得这座椅，比你的脑子更早。你想起「出去」这两个字，像想起前世的什么，轻飘飘的，抓不住。你坐了下去。这里就是你的位置了。",
+  "checks": [],
+  "settlement": ["end_sink"],
+  "choices": [
+    {
+      "label": "坐进王座",
+      "settlement": "end_sink",
+      "effects": {"stage_set": true},
+      "next": "end",
+      "estop_overrides": true,
+      "exit": "温热从座面上爬了上来，把你按稳——本局不再给探索选项。"
+    }
+  ],
+  "feedback": "清理（沉没结局也必须先停）",
+  "note": "「沉没」结局。叙事锁本局；急停仍能停这一秒；新局 crossed_gate=false 重来。stage_set 只作结局叙事用（S3 §二）。"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "E301",
+  "title": "石匣",
+  "band": "mid",
+  "room": "treasure",
+  "kind": "scene",
+  "intensity": "low",
+  "species": "无",
+  "trigger": "墙龛里嵌着一只没有锁的石匣。",
+  "seed": "匣盖轻得不像该在深渊里。里面有一枚凉晶，贴上皮肤会让脑子清醒一瞬——也有人说，那清醒是用别的东西换的。",
+  "checks": [],
+  "settlement": [
+    "take",
+    "leave"
+  ],
+  "choices": [
+    {
+      "label": "把晶石攥进手心",
+      "settlement": "take",
+      "effects": {
+        "mp": 2,
+        "ma": 5
+      },
+      "next": "map",
+      "exit": "凉意顺臂爬上来，随即散进雾里。"
+    },
+    {
+      "label": "放回去，转身离开",
+      "settlement": "leave",
+      "next": "map",
+      "exit": "匣盖自己合上。你当没看见。"
+    }
+  ],
+  "feedback": "无或试探"
+}

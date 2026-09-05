@@ -1,0 +1,24 @@
+{
+  "id": "E903",
+  "title": "逃 · 地表缝",
+  "band": "end",
+  "room": "ending",
+  "kind": "ending",
+  "intensity": "none",
+  "species": "无",
+  "trigger": "头顶有风。真正的风。",
+  "seed": "你爬出地表缝时，身上的纹还在亮，但雾已经够不着你了。这一局，你出去了。",
+  "checks": [],
+  "settlement": [
+    "end_escape"
+  ],
+  "choices": [
+    {
+      "label": "爬出去",
+      "settlement": "end_escape",
+      "next": "end",
+      "exit": "光把雾远远甩在身后。你还活着，也还是你。"
+    }
+  ],
+  "feedback": "清理"
+}

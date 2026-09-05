@@ -146,9 +146,6 @@ function ChannelCard({
             {cap}
           </button>
           <span className="ml-1 align-middle text-[10px] font-normal text-faint">{t("上限可调")}</span>
-          {req !== null && req !== undefined && req !== cur && (
-            <small className="text-[11px] font-normal text-warn"> {t("设定{req}", { req })}</small>
-          )}
           {capOpen && (
             <div className="absolute left-0 top-full z-40 mt-1 flex w-40 flex-col gap-1 rounded-[8px] border border-line bg-panel p-2 shadow-xl shadow-black/60">
               <span className="text-[10px] text-muted">{t("强度上限（1~{hardCap}）", { hardCap })}</span>

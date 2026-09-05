@@ -1,0 +1,34 @@
+{
+  "id": "E001",
+  "title": "层门 · 雾祭坛",
+  "band": "entry",
+  "room": "gate",
+  "kind": "scene",
+  "intensity": "low",
+  "species": "无",
+  "trigger": "雾里立着一扇半掩的石门，门前石台上还留着余温。",
+  "seed": "你站在层门前。石台是凉的，可小腹那点热提醒你：路在门后，选哪一层由你，但回不了头。门轴轻响，像在等你踏出去。",
+  "checks": [],
+  "settlement": [
+    "enter",
+    "rest"
+  ],
+  "choices": [
+    {
+      "label": "推门踏上路网",
+      "settlement": "enter",
+      "next": "map",
+      "exit": "雾在脚边分开，第一层节点亮了起来。"
+    },
+    {
+      "label": "先在石台边顺口气",
+      "settlement": "rest",
+      "effects": {
+        "hp": 1
+      },
+      "next": "map",
+      "exit": "力气回来了一点。你抬眼，路网在雾里等待。"
+    }
+  ],
+  "feedback": "无或试探"
+}

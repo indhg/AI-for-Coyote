@@ -1,0 +1,47 @@
+{
+  "id": "E501",
+  "title": "巢 · 潮室边",
+  "band": "lower",
+  "room": "nest",
+  "kind": "scene",
+  "intensity": "medium-high",
+  "species": "巢兽",
+  "trigger": "潮热从洞口涌出，里面有东西在换气。",
+  "seed": "巢壁是活的。你一靠近，就有细须贴上脚踝，像在邀请，又像在清点。再往里一步，就不只是路过了。",
+  "checks": [
+    "str"
+  ],
+  "settlement": [
+    "yield",
+    "escape"
+  ],
+  "choices": [
+    {
+      "label": "整个人送进去",
+      "settlement": "yield",
+      "effects": {
+        "ma": 15,
+        "yin_hua": 10
+      },
+      "estop_overrides": true,
+      "next": "map",
+      "exit": "巢松开你时，腿已经不太听使唤。"
+    },
+    {
+      "label": "撕开细须退出去（力）",
+      "settlement": "escape",
+      "require": {
+        "str": 10
+      },
+      "fail": {
+        "choice": 1
+      },
+      "effects": {
+        "hp": -1
+      },
+      "next": "map",
+      "exit": "细须断在地上还在抽。你没回头。"
+    }
+  ],
+  "feedback": "持续或连击"
+}

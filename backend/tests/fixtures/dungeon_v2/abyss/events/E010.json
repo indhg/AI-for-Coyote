@@ -1,0 +1,43 @@
+{
+  "id": "E010",
+  "title": "真菌肉毯",
+  "band": "lower",
+  "room": "encounter",
+  "kind": "scene",
+  "intensity": "high",
+  "species": "触手",
+  "trigger": "往左走到底，脚下忽然软了——地面在呼吸。",
+  "seed": "你踩了下去，地软得陷进了半寸，又慢慢地弹了回来。粉色的菌毯铺满了整个洞厅，随着你的体重一起一伏，像整块地在呼吸。深处有更粗的东西在雾里立了起来，是肉做的柱子，正慢慢地转向你。雾先到了——腥甜的孢子扑在脸上，你吸进了一口，小腹的淫纹烫得发亮。你捂住口鼻往后退，脚踝已经被菌毯包住了，越挣缠得越紧。一根肉柱横了过来，贴上你的背，把你往前推。更多的细丝爬上了腿根，不急着进去，先磨着。淫纹亮得能照见你自己的影子。穴口已经自己泌出了水，蹭在菌丝上，力气被一点一点地抽走。它认得你。是跑，还是让这里也认识你。",
+  "checks": ["str", "dex"],
+  "settlement": ["yield", "escape"],
+  "choices": [
+    {
+      "label": "站着不动，让它靠近",
+      "settlement": "yield",
+      "effects": {"yin_hua": 10, "ma": 15},
+      "next": "E011",
+      "exit": "菌丝裹着你，往更深的洞里送。",
+      "estop_overrides": true
+    },
+    {
+      "label": "拔脚往光的方向跑",
+      "require": {"str": 12},
+      "settlement": "escape",
+      "effects": {"hp": -1, "str": 1},
+      "next": "E006",
+      "fail": {"choice": 1},
+      "exit": "你撕开了菌丝跑出来，一路跑回了祭坛。"
+    },
+    {
+      "label": "蹲下把自己缩进菌毯",
+      "settlement": "yield",
+      "effects": {"ma": 20, "yin_hua": 5},
+      "next": "E011",
+      "exit": "菌毯把你完全包住了，一层一层地往下递。",
+      "note": "越躲越被包住",
+      "estop_overrides": true
+    }
+  ],
+  "feedback": "持续→连击",
+  "note": "深层事件授权更重，但不绕过安全上限。"
+}
