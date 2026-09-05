@@ -24,7 +24,7 @@ export default function ChannelControl() {
       <h3 className="mb-2 flex-none text-[12px] font-semibold tracking-[1.5px] text-muted">{t("A / B 双通道")}</h3>
       <div
         className={`grid items-start gap-2 ${
-          compact ? "grid-cols-1" : "grid-cols-[1fr_56px_1fr]"
+          compact ? "grid-cols-1" : "grid-cols-[1fr_56px_1fr] overflow-x-auto"
         }`}
       >
         <ChannelCard ch="A" focus={focusCh === "A"} cap={capOf("A")} onFocus={() => setFocus("A")} preset={lastPreset.A} />
