@@ -1,0 +1,43 @@
+{
+  "id": "E401",
+  "title": "陷阱 · 塌陷板",
+  "band": "upper",
+  "room": "trap",
+  "kind": "beat",
+  "intensity": "medium",
+  "species": "无",
+  "trigger": "脚下石板突然一沉，灰尘从缝里喷出来。",
+  "seed": "整块板在往下掉。你能看见下一层的热雾从裂缝里翻上来。抓住边缘，或干脆跟着落下去。",
+  "checks": [
+    "dex"
+  ],
+  "settlement": [
+    "escape",
+    "fall"
+  ],
+  "choices": [
+    {
+      "label": "蹬墙爬回去（敏）",
+      "settlement": "escape",
+      "require": {
+        "dex": 8
+      },
+      "fail": {
+        "choice": 2
+      },
+      "next": "map",
+      "exit": "你喘着爬回原层，膝盖蹭破了皮。"
+    },
+    {
+      "label": "认了，往下坠",
+      "settlement": "fall",
+      "effects": {
+        "hp": -2,
+        "ma": 6
+      },
+      "next": "map",
+      "exit": "落点是软的。你不想知道那是什么。"
+    }
+  ],
+  "feedback": "试探或停顿"
+}

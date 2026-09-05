@@ -1,0 +1,19 @@
+{
+  "format": "dungeon_v2",
+  "format_version": 1,
+  "id": "abyss_map",
+  "title": "深渊路网 · 最小内容池",
+  "themes": [
+    "abyss_map"
+  ],
+  "version": "1.0.0",
+  "lang": "zh",
+  "mode": "map",
+  "start_event": "E001",
+  "safe_room": "E201",
+  "events_dir": "events",
+  "theme_file": "theme.json",
+  "bindings_file": "bindings.json",
+  "base_setting_file": "base_setting.md",
+  "note": "D25 map 模式最小可玩池：按 room 抽事件；next=map 回路网；Boss→三结局；败北终局（裁决21）。"
+}

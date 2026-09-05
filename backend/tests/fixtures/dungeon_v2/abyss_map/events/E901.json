@@ -1,0 +1,69 @@
+{
+  "id": "E901",
+  "title": "主巢 · 深渊守门者",
+  "band": "lower",
+  "room": "boss",
+  "kind": "boss",
+  "intensity": "high",
+  "species": "守门者",
+  "trigger": "路网在此收束。巨大的影子挡住了所有去向结局的门。",
+  "seed": "它不需要自我介绍。三扇门在它身后若隐若现：逃、留、沉。你只能先过它这一关——用打、用逃、或用把自己交出去。败了，这局里就没有下一层。",
+  "checks": [
+    "str",
+    "dex"
+  ],
+  "settlement": [
+    "kill",
+    "escape",
+    "yield",
+    "defeat"
+  ],
+  "choices": [
+    {
+      "label": "拼死一搏冲向「逃」门（力）",
+      "settlement": "kill",
+      "require": {
+        "str": 14
+      },
+      "fail": {
+        "choice": 4
+      },
+      "next": "E903",
+      "exit": "你撞开一条缝，光刺得人睁不开眼。"
+    },
+    {
+      "label": "绕侧面去「留」门（敏）",
+      "settlement": "escape",
+      "require": {
+        "dex": 14
+      },
+      "fail": {
+        "choice": 4
+      },
+      "next": "E908",
+      "exit": "你滚进侧门。门外不是自由，是另一场等待。"
+    },
+    {
+      "label": "跪下，走「沉」门",
+      "settlement": "yield",
+      "effects": {
+        "ma": 30
+      },
+      "estop_overrides": true,
+      "next": "E907",
+      "exit": "它让开。沉门在你身后合上。"
+    },
+    {
+      "label": "硬扛到力竭",
+      "settlement": "defeat",
+      "effects": {
+        "hp": -10
+      },
+      "estop_overrides": true,
+      "next": "E903",
+      "exit": "世界翻白。这一局到此为止。"
+    }
+  ],
+  "feedback": "连击或持续",
+  "note": "败北由 hp→0 触发 map 终局（裁决21）；第四选项 effects 必触发败北。"
+}

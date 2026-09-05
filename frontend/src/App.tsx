@@ -7,12 +7,13 @@ import PresetPanel from "./components/PresetPanel";
 import BottomBar from "./components/BottomBar";
 import ChatPanel from "./components/ChatPanel";
 import DungeonPanel from "./components/DungeonPanel";
+import DungeonMapPanel from "./components/dungeon/DungeonMapPanel";
 import NoticeToast from "./components/NoticeToast";
 import OnboardingTour from "./components/OnboardingTour";
 import { TOURS } from "./onboarding";
 import { PairView, SettingsView, HelpView } from "./components/views";
 import { api } from "./api";
-import { useApp, useChat, useLayout } from "./store";
+import { useApp, useChat, useDungeon, useLayout } from "./store";
 import { doEstop } from "./commands";
 import { useT } from "./i18n";
 
@@ -84,6 +85,10 @@ export default function App() {
   const controlW = useLayout((s) => s.controlW);
   const mode = useLayout((s) => s.mode);
   const updateLayout = useLayout((s) => s.updateLayout);
+  // D24 §五：地牢局中态（board===dungeon 且有 render）宽屏右栏只显示大地图；
+  // 大厅/读档（无 render）或非宽屏/chat 时恢复设备组。mid/窄屏抽屉里地牢态仍显示设备组。
+  const dungeonRender = useDungeon((s) => s.render);
+  const showFullMap = board === "dungeon" && mode === "wide" && !!dungeonRender;
   // 中/窄屏：抽屉开关（右=设备/配对/设置视图；左=角色卡与入口，仅窄屏用）
   const [rightOpen, setRightOpen] = useState(false);
   const [leftOpen, setLeftOpen] = useState(false);
@@ -214,16 +219,27 @@ export default function App() {
               ? `${sidebarW}px 1fr 0`
               : `0 1fr 0`;
         const rightView = (
-          <main className="min-h-0 overflow-y-auto border-l border-line px-4 pb-14 pt-3">
-            {view === "control" && (
-              <div className="flex h-full min-h-0 flex-col gap-2">
-                <div className="min-h-0 flex-none">
-                  <DeviceStatus />
+          <main
+            className={
+              showFullMap
+                ? "flex h-full min-h-0 flex-col overflow-hidden border-l border-line px-4 pb-14 pt-3"
+                : "min-h-0 overflow-y-auto border-l border-line px-4 pb-14 pt-3"
+            }
+          >
+            {view === "control" &&
+              (showFullMap ? (
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                  <DungeonMapPanel />
                 </div>
-                <ChannelControl />
-                {board !== "dungeon" && <PresetPanel />}
-              </div>
-            )}
+              ) : (
+                <div className="flex h-full min-h-0 flex-col gap-2">
+                  <div className="min-h-0 flex-none">
+                    <DeviceStatus />
+                  </div>
+                  <ChannelControl />
+                  {board !== "dungeon" && <PresetPanel />}
+                </div>
+              ))}
             {view === "pair" && <PairView />}
             {view === "settings" && <SettingsView />}
             {view === "help" && (

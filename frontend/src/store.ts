@@ -102,18 +102,28 @@ interface DungeonStore {
   busy: boolean;
   error: string | null;
   notice: string | null;
+  /** D30 路网：地图与岔口卡共享的「已选中待确认」节点；每帧 render 到达即清空 */
+  selectedNodeId: string | null;
+  /** D30 路网：mid/窄屏底部抽屉开合 */
+  routeSheetOpen: boolean;
   setRender: (r: DungeonRender | null) => void;
   setBusy: (b: boolean) => void;
   setError: (e: string | null) => void;
   setNotice: (n: string | null) => void;
+  setSelectedNodeId: (id: string | null) => void;
+  setRouteSheetOpen: (o: boolean) => void;
 }
 export const useDungeon = create<DungeonStore>((set) => ({
   render: null,
   busy: false,
   error: null,
   notice: null,
-  setRender: (r) => set({ render: r, error: null }),
+  selectedNodeId: null,
+  routeSheetOpen: false,
+  setRender: (r) => set({ render: r, error: null, selectedNodeId: null, ...(r ? {} : { routeSheetOpen: false }) }),
   setBusy: (b) => set({ busy: b }),
   setError: (e) => set({ error: e }),
   setNotice: (n) => set({ notice: n }),
+  setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+  setRouteSheetOpen: (o) => set({ routeSheetOpen: o }),
 }));

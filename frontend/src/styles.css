@@ -19,6 +19,10 @@
   --color-bad: #ff5470;
   --color-arcane: #b98cf2;
   --color-arcane2: #8a5fd6;
+  /* 紫金地牢 D7：三轴条色（淫化 / 恶堕沿用 arcane / 魔化） */
+  --color-lust: #ff7ab8;
+  --color-demon: #d65cff;
+  --color-vital: #ff8a9e;
   --font-sans: "Inter", "Noto Sans SC", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
 }
 
@@ -118,3 +122,130 @@ input[type="range"]::-moz-range-thumb {
   z-index: 70 !important;
   pointer-events: none !important;
 }
+
+/* ---------- 紫金地牢 D7：深渊剖面当前节点脉动 / 掷点入场 ---------- */
+@keyframes dg-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 229, 154, 0.55); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 229, 154, 0); }
+}
+.dg-current {
+  animation: dg-pulse 1.8s ease-out infinite;
+}
+@keyframes dg-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.dg-rise {
+  animation: dg-rise 0.35s ease-out both;
+}
+/* 深渊层带底色：越深越紫 */
+.dg-strata {
+  background: linear-gradient(180deg, rgba(32, 32, 32, 0.9) 0%, rgba(44, 30, 64, 0.9) 100%);
+}
+
+
+/* ---------- D29 深渊路网 RouteMap（fable D26） ---------- */
+@keyframes dg-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.dg-breathe {
+  animation: dg-breathe 2.4s ease-in-out infinite;
+}
+@keyframes dg-flow-dash {
+  to { stroke-dashoffset: -28; }
+}
+.dg-flow {
+  animation: dg-flow-dash 20s linear infinite;
+}
+@keyframes dg-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+.dg-shake {
+  animation: dg-shake 0.2s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dg-breathe,
+  .dg-flow,
+  .dg-current,
+  .dg-rise,
+  .dg-shake,
+  .dg-leave-flash {
+    animation: none !important;
+  }
+}
+
+/* ---------- D30 深渊路网 · mid/窄底部抽屉 ---------- */
+@keyframes dg-sheet-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.dg-sheet-up {
+  animation: dg-sheet-up 0.28s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dg-sheet-up {
+    animation: none !important;
+  }
+}
+
+/* ---------- D34 chain 剖面 Boss/结局/走过闪 ---------- */
+.dg-boss-chip {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-demon) 55%, transparent),
+    0 0 8px color-mix(in srgb, var(--color-demon) 35%, transparent);
+  padding-inline: 0.4rem;
+  padding-block: 0.2rem;
+}
+.dg-ending-chip {
+  clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%);
+  border-radius: 2px;
+  border-color: color-mix(in srgb, var(--color-arcane2, var(--color-arcane)) 70%, transparent);
+  background: color-mix(in srgb, var(--color-arcane) 18%, transparent);
+}
+@keyframes dg-leave-flash {
+  0% { border-color: var(--color-accent); box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 50%, transparent); }
+  100% { border-color: inherit; box-shadow: none; }
+}
+.dg-leave-flash {
+  animation: dg-leave-flash 0.4s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dg-leave-flash {
+    animation: none !important;
+  }
+}
+
+
+/* ---------- D35 地图自适应填满（column fit-scale；默认 = D34 尺寸） ---------- */
+.dg-fit-scale {
+  --dg-fit-s: 1;
+  --dg-chip-fs: 11px;
+  --dg-chip-px: 0.375rem;
+  --dg-chip-py: 0.125rem;
+  --dg-chip-gap: 0.375rem;
+  --dg-row-py: 0.375rem;
+  --dg-band-fs: 10px;
+  --dg-band-tier-fs: 13px;
+  --dg-icon-size: 11px;
+  --dg-icon-boss-size: 13px;
+}
+.dg-chip {
+  font-size: var(--dg-chip-fs, 11px);
+  padding-inline: var(--dg-chip-px, 0.375rem);
+  padding-block: var(--dg-chip-py, 0.125rem);
+}
+.dg-chip-row {
+  gap: var(--dg-chip-gap, 0.375rem);
+}
+.dg-band-row {
+  padding-block: var(--dg-row-py, 0.375rem);
+}
+.dg-band-label {
+  font-size: var(--dg-band-fs, 10px);
+}
+.dg-band-tier {
+  font-size: var(--dg-band-tier-fs, 13px);
+}
+

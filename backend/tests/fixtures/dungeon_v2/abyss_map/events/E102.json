@@ -1,0 +1,56 @@
+{
+  "id": "E102",
+  "title": "遭遇 · 雾奴群",
+  "band": "upper",
+  "room": "encounter",
+  "kind": "beat",
+  "intensity": "medium-high",
+  "species": "雾奴",
+  "trigger": "数道人影从雾里并肩走来，眼睛都不看你的脸。",
+  "seed": "它们不说话，只伸手。指尖冰凉，却精准地按向你小腹的纹。你知道这不是问路——是收租。",
+  "checks": [
+    "int",
+    "dex"
+  ],
+  "settlement": [
+    "escape",
+    "yield",
+    "defeat"
+  ],
+  "choices": [
+    {
+      "label": "用话术拆开队形（智）",
+      "settlement": "escape",
+      "require": {
+        "int": 8
+      },
+      "fail": {
+        "choice": 2
+      },
+      "next": "map",
+      "exit": "你丢下一句假情报，它们互相绊住，你钻了空当。"
+    },
+    {
+      "label": "任它们按住纹",
+      "settlement": "yield",
+      "effects": {
+        "ma": 12,
+        "yin_hua": 8
+      },
+      "estop_overrides": true,
+      "next": "map",
+      "exit": "雾奴退开。纹更烫了。"
+    },
+    {
+      "label": "拼命挣到力竭",
+      "settlement": "defeat",
+      "effects": {
+        "hp": -10
+      },
+      "estop_overrides": true,
+      "next": "map",
+      "exit": "眼前发黑。路网在视野尽头碎成光点。"
+    }
+  ],
+  "feedback": "持续或连击"
+}

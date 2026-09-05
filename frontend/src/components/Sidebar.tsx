@@ -6,6 +6,7 @@ import type { ViewName, BoardName } from "./TopBar";
 import AccessoryConfig from "./AccessoryConfig";
 import CharacterConfig from "./CharacterConfig";
 import RoleCard from "./RoleCard";
+import { markLabel } from "./dungeon/labels";
 
 interface Props {
   view: ViewName;
@@ -65,7 +66,7 @@ export default function Sidebar({ view, onView, board }: Props) {
       {board !== "dungeon" && <CharacterConfig />}
 
       <p className="mt-3 px-3 text-[11px] leading-relaxed text-faint">
-        {t("强度与波形均受安全上限钳制；")}
+        {t("所有体感均受安全上限钳制；")}
         <br />
         {t("急停（长按空格 / 底部按钮）可随时清零。")}
       </p>
@@ -73,78 +74,67 @@ export default function Sidebar({ view, onView, board }: Props) {
   );
 }
 
-/* ---------- 地牢模式：左栏「本局信息」 ---------- */
-// 与 DungeonPanel.tsx 的 BASE_THEMES 保持一致（基础 = 地牢刻印 + 淫纹）
-const BASE_THEMES = ["dungeon", "mark"];
-
+/* ---------- 地牢模式：左栏「本局信息」（dungeon_v2 · D7 fable） ----------
+ * 字段全部来自 render.run（run.snapshot 拍平）。这里只放面板 HUD 之外的概览：
+ * 包名 / 种子 / 位置 / 身体 / 三轴 / 三维 / 淫纹 / 骰子。不含设备信息。 */
 function DungeonRunCard() {
   const render = useDungeon((s) => s.render);
   const t = useT();
-  // 主题 id → 中文标题（packs 由 /api/state 下发，显示名走词典）
   const dungeonPacks = useApp((s) => s.state?.dungeon?.packs ?? []);
-  const themeTitle = (tid: string) => t(dungeonPacks.find((p) => p.themes.includes(tid))?.title ?? tid);
 
   if (!render) {
     return (
       <div className="mb-3.5 rounded-[14px] border border-arcane/40 bg-panel p-3.5">
-        <p className="text-sm font-semibold text-arcane">{t("紫金地牢")}</p>
-        <p className="mt-1 text-xs text-muted">{t("在大厅配置主题后进入")}</p>
+        <p className="text-sm font-semibold text-arcane">{t("紫金地牢 demo")}</p>
+        <p className="mt-1 text-xs text-muted">{t("在大厅选好主题包后进入")}</p>
       </div>
     );
   }
 
   const run = render.run;
-  const rs = run.run_state;
-  // 基础包（dungeon + mark）合并显示为「基础」；其余主题按原顺序
-  const hasBase = run.active_themes.some((x) => BASE_THEMES.includes(x));
-  const otherThemes = run.active_themes.filter((x) => !BASE_THEMES.includes(x));
+  const ev = render.event;
+  const pack = dungeonPacks.find((p) => p.id === run.pack_id || p.themes.includes(ev.theme_id));
+  const ended = run.phase === "ended" || run.phase === "locked";
   return (
     <div className="mb-3.5 rounded-[14px] border border-arcane/40 bg-panel p-3.5">
       <p className="flex items-center justify-between text-sm font-semibold text-arcane">
         {t("本局信息")}
-        <span className="text-[11px] text-muted">Seed {String(run.seed).slice(0, 6)}</span>
+        <span className="text-[11px] text-muted">Seed {String(run.seed).slice(0, 8)}</span>
       </p>
       <div className="mt-2.5 space-y-1.5 text-xs text-muted">
         <div className="flex flex-wrap gap-1.5">
-          {hasBase && (
-            <span key="base" className="rounded-md border border-arcane/50 bg-arcane/10 px-2 py-0.5 text-arcane">
-              {t("基础")}
+          <span className="rounded-md border border-arcane/50 bg-arcane/10 px-2 py-0.5 text-arcane">{t(pack?.title ?? ev.theme_id)}</span>
+          {ended && (
+            <span className={`rounded-md border px-2 py-0.5 ${run.phase === "locked" ? "border-bad/50 text-bad" : "border-accent/50 text-accent"}`}>
+              {run.phase === "locked" ? t("已沉没锁定") : t("已结束")}
             </span>
           )}
-          {otherThemes.map((x) => (
-            <span key={x} className="rounded-md border border-arcane/50 bg-arcane/10 px-2 py-0.5 text-arcane">
-              {themeTitle(x)}
-            </span>
-          ))}
         </div>
         <p className="pt-1 text-text">
-          HP {hearts(rs.hp)}
+          {ev.title}
+          <span className="text-faint"> · {t("回合 {n}", { n: run.turn })}</span>
         </p>
-        <p className="text-text">{t("意志 {bars}", { bars: bars(rs.will, 6) })}</p>
-        {Object.keys(rs.affinity).length > 0 && (
-          <p className="text-text">
-            {t("亲和")}{" "}
-            {Object.entries(rs.affinity)
-              .map(([k, v]) => `${k} ${bars(v, 5)}`)
-              .join("  ")}
-          </p>
-        )}
-        <p className="pt-1">
-          {t("第 {f} 层 · 第 {r} 房 · 回合 {t}", {
-            f: run.floor_index,
-            r: run.room_index,
-            t: run.turn_index,
-          })}
+        <p className="text-text">
+          HP {bars(run.hp, 10)} {run.hp}
+        </p>
+        <p className="text-text">
+          MP {bars(run.mp, 10)} {run.mp}
+        </p>
+        <p className="text-text">
+          {t("淫化 {n}", { n: run.yin_hua })} · {t("恶堕 {n}", { n: run.e_duo })} · {t("魔化 {n}", { n: run.ma })}
+        </p>
+        <p className="text-text">
+          {t("力量")} {run.str} · {t("敏捷")} {run.dex} · {t("智慧")} {run.int}
+        </p>
+        <p>
+          {t("淫纹 {stage}", { stage: t(markLabel(run.mark_stage)) })} · {run.dice_name}
+          {run.defeats > 0 && <span> · {t("败北 {n}", { n: run.defeats })}</span>}
         </p>
       </div>
     </div>
   );
 }
 
-function hearts(hp: number): string {
-  const n = Math.max(0, Math.min(6, hp));
-  return "♥".repeat(n) + "♡".repeat(Math.max(0, 6 - n));
-}
 function bars(v: number, total: number): string {
   const n = Math.max(0, Math.min(total, v));
   return "▓".repeat(n) + "░".repeat(total - n);

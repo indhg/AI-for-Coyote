@@ -1,0 +1,25 @@
+{
+  "id": "E907",
+  "title": "沉 · 魔神厅",
+  "band": "end",
+  "room": "ending",
+  "kind": "ending",
+  "intensity": "none",
+  "species": "无",
+  "trigger": "王座是空的，正合适你的尺寸。",
+  "seed": "沉下去的时候没有痛。只有满。这一局，你不再往外走。",
+  "checks": [],
+  "settlement": [
+    "end_sink"
+  ],
+  "choices": [
+    {
+      "label": "坐进王座",
+      "settlement": "end_sink",
+      "next": "end",
+      "exit": "厅门关上。外面的路网对你失去意义。",
+      "estop_overrides": true
+    }
+  ],
+  "feedback": "清理"
+}

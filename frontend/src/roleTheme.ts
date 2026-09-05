@@ -52,14 +52,8 @@ export function entryAvatar(key: string): string | null {
   return ENTRY_AVATARS[key] ?? null;
 }
 
-// 入口标识色（用于卡片描边 / 列表点亮）
+// 入口标识色（用于卡片描边 / 列表点亮）—— 2026-09-05 用户拍板：非 active 透明、只 active 亮色（避免 violet 常态发亮）；现为空 map，hover/active 亮色由 ENTRY_RING_ACTIVE_CLS 提供
 export const ENTRY_RING_CLS: Record<string, string> = {
-  trial: "border-violet-500/60", // 体验版沿用触手紫
-  cushou: "border-violet-500/60",
-  appraisal: "border-rose-500/60",
-  goblin: "border-green-500/60",
-  slime: "border-cyan-500/60",
-  zhuhou: "border-purple-500/60",
 };
 
 export const ENTRY_RING_ACTIVE_CLS: Record<string, string> = {

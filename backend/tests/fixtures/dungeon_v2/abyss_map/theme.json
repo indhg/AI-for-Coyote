@@ -1,0 +1,52 @@
+{
+  "id": "abyss_map",
+  "title": "深渊路网",
+  "description": "每局按 seed 生成的有向路网。节点进事件，结算后选下一层；Boss 后三扇结局门。败北即本局结束。",
+  "player_pov": "女体闯入者（成年）",
+  "bands": {
+    "entry": "入口",
+    "mid": "浅层",
+    "upper": "中层",
+    "lower": "深层",
+    "end": "终点"
+  },
+  "rooms": {
+    "gate": "层门",
+    "corridor": "石廊",
+    "encounter": "遭遇",
+    "nest": "巢",
+    "rest": "安全区",
+    "treasure": "宝藏",
+    "trap": "陷阱",
+    "boss": "主巢",
+    "ending": "结局"
+  },
+  "feedback_labels": {
+    "无": "无",
+    "试探": "试探",
+    "持续": "持续",
+    "连击": "连击",
+    "停顿": "停顿",
+    "清理": "清理"
+  },
+  "ending_labels": {
+    "escape": "破渊者",
+    "stay": "理智崩溃",
+    "sink": "欲海沉沦"
+  },
+  "defeat_line": "力气到了底。路网在眼前熄灭——这一局结束了。",
+  "mark_stage_labels": {
+    "none": "无",
+    "bud": "萌芽",
+    "appear": "显现",
+    "form": "成形",
+    "set": "定型"
+  },
+  "ma_tier_labels": {
+    "human": "人",
+    "buffer": "缓冲",
+    "slow": "缓增",
+    "fast": "快增",
+    "instant": "完全魔化"
+  }
+}

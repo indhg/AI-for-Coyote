@@ -1,0 +1,64 @@
+{
+  "id": "E101",
+  "title": "遭遇 · 巡游兽",
+  "band": "mid",
+  "room": "encounter",
+  "kind": "beat",
+  "intensity": "medium",
+  "species": "兽",
+  "trigger": "石廊拐角传来低吼，一只巡游兽堵住了去路。",
+  "seed": "兽的鼻息喷在你小腿上。它不急着扑，只是绕着你转，像在估你还值不值得拆。你手里没有像样的武器，只有身体和刚才捡到的一点勇气。",
+  "checks": [
+    "str",
+    "dex"
+  ],
+  "settlement": [
+    "kill",
+    "escape",
+    "yield"
+  ],
+  "choices": [
+    {
+      "label": "硬拼（力）",
+      "settlement": "kill",
+      "require": {
+        "str": 8
+      },
+      "fail": {
+        "choice": 3
+      },
+      "effects": {
+        "e_duo": 5
+      },
+      "next": "map",
+      "exit": "兽倒下。路上的血很快被雾吞掉。"
+    },
+    {
+      "label": "侧身溜走（敏）",
+      "settlement": "escape",
+      "require": {
+        "dex": 8
+      },
+      "fail": {
+        "choice": 3
+      },
+      "effects": {
+        "hp": -1
+      },
+      "next": "map",
+      "exit": "你擦着石壁窜过，兽爪只刮到衣角。"
+    },
+    {
+      "label": "站住受它打量",
+      "settlement": "yield",
+      "effects": {
+        "ma": 8,
+        "hp": -1
+      },
+      "estop_overrides": true,
+      "next": "map",
+      "exit": "它闻够了，腻味地走开。你腿还在抖。"
+    }
+  ],
+  "feedback": "试探或持续"
+}

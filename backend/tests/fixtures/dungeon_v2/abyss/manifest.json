@@ -1,0 +1,17 @@
+{
+  "format": "dungeon_v2",
+  "format_version": 1,
+  "id": "abyss",
+  "title": "紫金地牢 · 深渊层带",
+  "themes": ["abyss"],
+  "version": "1.0.0",
+  "lang": "zh",
+  "start_event": "E001",
+  "safe_room": "E006",
+  "events_dir": "events",
+  "theme_file": "theme.json",
+  "bindings_file": "bindings.json",
+  "base_setting_file": "base_setting.md",
+  "source": "S2-首批事件表 v2.1 / S3-字段定义补充 v2.1.1 / S4-骰子道具表 v1",
+  "note": "首批 E001-E016：入口(E001/E002) → 中层(E003/E004/E005/E016/E006) → 上带(E007/E008/E009) → 下带(E010/E011/E012) → 终点(E013/E014/E015)。"
+}
