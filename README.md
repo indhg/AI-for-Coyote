@@ -34,7 +34,7 @@
 
 ### ☕ 自愿打赏
 
-若本项目对你有帮助，欢迎在爱发电自愿支持作者喵：
+如果你喜欢这个项目，欢迎在爱发电自愿支持作者喵：
 
 👉 **<https://ifdian.net/a/cinnanirch>**
 
@@ -297,7 +297,7 @@ AI-for-Coyote\
 
 ### ☕ Voluntary tips
 
-If this project helps you, you can optionally support the author on Afdian / 爱发电:
+If you like this project, you can optionally support the author on Afdian / 爱发电:
 
 👉 **<https://ifdian.net/a/cinnanirch>**
 
