@@ -1,0 +1,24 @@
+{
+  "id": "E908",
+  "title": "留 · 祭坛重铸",
+  "band": "end",
+  "room": "ending",
+  "kind": "ending",
+  "intensity": "none",
+  "species": "无",
+  "trigger": "你回到一座更大的祭坛前。门会再开，但不是现在。",
+  "seed": "留下不是失败。你坐在祭坛边，等下一扇门——这一局到此收束。",
+  "checks": [],
+  "settlement": [
+    "end_stay"
+  ],
+  "choices": [
+    {
+      "label": "在祭坛前坐下",
+      "settlement": "end_stay",
+      "next": "end",
+      "exit": "香灰落在膝上。你选择留下。"
+    }
+  ],
+  "feedback": "清理"
+}

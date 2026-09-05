@@ -38,7 +38,7 @@ from .logging_utils import setup_logging
 from .device.factory import build_backend
 from .safety import SafetyManager
 from .content_install import ContentInstallError, install_zip_bytes
-from .dungeon.runtime import DungeonRuntime
+from .dungeon_v2 import DungeonRuntime
 
 # 打包（PyInstaller）后以 exe 所在目录为项目根；开发时以仓库根
 if getattr(sys, "frozen", False):
@@ -701,6 +701,14 @@ def make_app() -> FastAPI:
     async def api_dungeon_state() -> JSONResponse:
         return JSONResponse(state.dungeon.to_state())
 
+    @app.get("/api/dungeon/render")
+    async def api_dungeon_render() -> JSONResponse:
+        """上一帧 render（D11 E1）：前端刷新后恢复进行中视图；只读，不触发设备动作。"""
+        try:
+            return JSONResponse(state.dungeon.render())
+        except Exception as exc:  # noqa: BLE001
+            return JSONResponse({"error": str(exc)}, status_code=400)
+
     @app.post("/api/dungeon/start")
     async def api_dungeon_start(body: dict) -> JSONResponse:
         try:
@@ -724,6 +732,16 @@ def make_app() -> FastAPI:
                 text=body.get("text"),
                 map_target=body.get("map_target"),
             )
+        except Exception as exc:  # noqa: BLE001
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        await state.broadcast()
+        return JSONResponse(result)
+
+    @app.post("/api/dungeon/move")
+    async def api_dungeon_move(body: dict) -> JSONResponse:
+        """map 选路（D25）：{node_id} → render；仅 awaiting_move 且 reachable。"""
+        try:
+            result = await state.dungeon.move(node_id=body.get("node_id"))
         except Exception as exc:  # noqa: BLE001
             return JSONResponse({"error": str(exc)}, status_code=400)
         await state.broadcast()

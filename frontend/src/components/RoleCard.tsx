@@ -228,7 +228,7 @@ export default function RoleCard() {
                         <span className="min-w-0 flex-1">{t(e.label)}</span>
                         {!ready && (
                           <span className="flex-none rounded border border-line bg-panel2 px-1 py-px text-[9px] text-muted">
-                            {t("未导入")}
+                            {t("不支持")}
                           </span>
                         )}
                         {e.recommended && (

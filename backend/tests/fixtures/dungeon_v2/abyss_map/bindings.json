@@ -1,0 +1,66 @@
+{
+  "format": "dungeon_v2_bindings",
+  "note": "feedback 核心词 → 体感动作模板。数字只在这里，叙事里 0 数字。所有动作经 SafetyManager.validate 钳制（上限/步长/时长/急停），bindings 不能抬上限。$strength = band_strength[band] × intensity_scale[intensity] ±20% 真随机扰动，再钳到安全层 cap_for。",
+  "channels": ["A", "B"],
+  "band_strength": {
+    "entry": 8,
+    "mid": 14,
+    "upper": 20,
+    "lower": 26,
+    "end": 0
+  },
+  "intensity_scale": {
+    "none": 0,
+    "low": 0.6,
+    "medium": 0.8,
+    "medium-high": 1.0,
+    "high": 1.2
+  },
+  "rhythm": {
+    "无": {
+      "desc": "不输出。入口带/安全区默认。",
+      "actions": []
+    },
+    "试探": {
+      "desc": "皮肤接触阶：先清上一场残留，单路短促起伏三秒 + 临时强度三秒，到点自动归零。",
+      "actions": [
+        {"op": "clear"},
+        {"op": "pulse", "channel": "A", "pattern": "呼吸", "duration_s": 3},
+        {"op": "temp_strength", "channel": "A", "value": "$strength", "duration_s": 3}
+      ]
+    },
+    "持续": {
+      "desc": "吸入/插入阶：先清残留，双路各起伏八秒，保持强度到下一场 停顿/清理 为止。群攻=交替，不叠加。",
+      "actions": [
+        {"op": "clear"},
+        {"op": "pulse", "channel": "A", "pattern": "潮汐", "duration_s": 8},
+        {"op": "hold_strength", "channel": "A", "value": "$strength"},
+        {"op": "pulse", "channel": "B", "pattern": "呼吸", "duration_s": 8},
+        {"op": "hold_strength", "channel": "B", "value": "$strength"}
+      ]
+    },
+    "连击": {
+      "desc": "吞服/高潮结算阶（短，必须可停）：先清残留，双路短促密集五秒，临时强度五秒到点归零。",
+      "actions": [
+        {"op": "clear"},
+        {"op": "pulse", "channel": "A", "pattern": "连击", "duration_s": 5},
+        {"op": "temp_strength", "channel": "A", "value": "$strength", "duration_s": 5},
+        {"op": "pulse", "channel": "B", "pattern": "快速按捏", "duration_s": 5},
+        {"op": "temp_strength", "channel": "B", "value": "$strength", "duration_s": 5}
+      ]
+    },
+    "停顿": {
+      "desc": "清全部，不输出（岔口/宝藏/陷阱后的喘息）。",
+      "actions": [
+        {"op": "clear"}
+      ]
+    },
+    "清理": {
+      "desc": "安全区/败北/结局：清全部 + 全部清零。结算前必须执行。",
+      "actions": [
+        {"op": "clear"},
+        {"op": "stop"}
+      ]
+    }
+  }
+}

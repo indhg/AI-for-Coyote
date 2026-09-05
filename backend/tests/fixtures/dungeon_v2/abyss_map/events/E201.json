@@ -1,0 +1,36 @@
+{
+  "id": "E201",
+  "title": "安全区 · 小祭坛",
+  "band": "mid",
+  "room": "rest",
+  "kind": "rest",
+  "intensity": "none",
+  "species": "无",
+  "trigger": "一层安静的石室，中央小祭坛还燃着残香。",
+  "seed": "这里暂时没有东西会碰你。你可以坐下来，让心跳慢一点，也可以马上起身继续往下。",
+  "checks": [],
+  "settlement": [
+    "rest"
+  ],
+  "choices": [
+    {
+      "label": "歇到力气回来",
+      "settlement": "rest",
+      "effects": {
+        "hp": 2
+      },
+      "next": "map",
+      "exit": "呼吸稳了。你重新看向出口。"
+    },
+    {
+      "label": "只坐一息便走",
+      "settlement": "rest",
+      "effects": {
+        "hp": 1
+      },
+      "next": "map",
+      "exit": "你拍掉膝上的灰，起身。"
+    }
+  ],
+  "feedback": "清理"
+}

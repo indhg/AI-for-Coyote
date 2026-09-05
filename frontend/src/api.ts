@@ -107,15 +107,14 @@ export const api = {
     ),
   // ---------- 地牢 ----------
   dungeonState: () => j<DungeonState>("/api/dungeon/state"),
-  dungeonStart: (body: {
-    active_themes?: string[];
-    mix_policy?: string;
-    floors?: number;
-    seed?: number;
-    map_mode?: boolean;
-  }) => j<DungeonRender>("/api/dungeon/start", json(body)),
-  dungeonAdvance: (body: { choice_id?: string; text?: string; map_target?: { row: number; col: number } }) =>
+  /** 上一帧 render（D11 E1）：刷新后恢复进行中视图；只读，不触发设备动作 */
+  dungeonRender: () => j<DungeonRender>("/api/dungeon/render"),
+  dungeonStart: (body: { active_themes?: string[]; seed?: number }) =>
+    j<DungeonRender>("/api/dungeon/start", json(body)),
+  dungeonAdvance: (body: { choice_id?: string; text?: string }) =>
     j<DungeonRender>("/api/dungeon/advance", json(body)),
+  /** 路网选路（D25/D30）：仅 map 模式、awaiting_move 且目标 reachable；否则 400 [not_reachable]/[not_awaiting]/[estop] */
+  dungeonMove: (node_id: string) => j<DungeonRender>("/api/dungeon/move", json({ node_id })),
   dungeonSave: (slot: string) =>
     j<{ ok: boolean; path: string }>("/api/dungeon/save", json({ slot })),
   dungeonLoad: (slot: string) => j<DungeonRender>("/api/dungeon/load", json({ slot })),

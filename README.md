@@ -3,18 +3,17 @@
 <div align="center">
 
 <h1>Coyote in Cradle</h1>
-<p><strong>AI 角色扮演 × 郊狼（DG-Lab）—— 会看、会听、会出手的本地角色扮演</strong></p>
+<p><strong>AI 角色扮演 × 郊狼（DG-Lab）</strong></p>
 
 <p>
   <a href="https://github.com/indhg/AI-for-Coyote/releases/latest"><img alt="Release" src="https://img.shields.io/badge/下载-Windows-blue?style=flat-square&logo=windows"></a>
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-非商用·可分享-green?style=flat-square"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-green?style=flat-square"></a>
+  <a href="https://ifdian.net/a/cinnanirch"><img alt="Afdian" src="https://img.shields.io/badge/爱发电-求求打赏🙏-946ce6?style=flat-square"></a>
 </p>
 
 <p>
   <a href="#中文">中文</a> · <a href="#english">English</a>
 </p>
-
-<p><sub>18+ · 成人向 · 请在自愿、知情、同意的前提下使用</sub></p>
 
 </div>
 
@@ -30,7 +29,14 @@
 |---|---|---|
 | 🖥️ **PC（Windows）** | 👉 <https://github.com/indhg/AI-for-Coyote/releases/latest> | `Coyote-in-Cradle-setup-v*.exe`（安装版）或免装 zip，解压即用；用法见下方「快速开始」 |
 | 📱 **安卓（Android）** | 👉 <https://github.com/indhg/Coyote-in-Cradle-Android/releases/latest> | `Coyote-in-Cradle-*-release.apk`；独立 App，BLE 直连郊狼，无需 PC 与中继 |
-| 🧩 **DLC 内容（R18，自行导入）** | 👉 <https://github.com/indhg/AI-for-Coyote-DLC/releases> | 正式角色稿 zh / en 大包，不随主包分发；下载后程序内「内容 / 语言包」一键导入 |
+| 🧩 **DLC 内容（R18，自行导入）** | 👉 <https://github.com/indhg/AI-for-Coyote-DLC/releases> | 正式角色稿 + **紫金地牢 demo** 剧情包；不随主包分发；程序内「内容 / 语言包」一键导入 |
+| 🗺️ **紫金地牢 demo**（剧情包） | 👉 <https://github.com/indhg/AI-for-Coyote-DLC/releases> 内 `Coyote-in-Cradle-DLC-zijin-demo.zip` | 导入后得到 `content/pack/dungeon/zijin/`；需主程序含 dungeon_v2 |
+
+### ☕ 自愿打赏
+
+如果你喜欢这个项目，欢迎在爱发电自愿支持作者喵：
+
+👉 **<https://ifdian.net/a/cinnanirch>**
 
 ---
 
@@ -42,7 +48,7 @@
 | 👁️🎤 | **摄像头 / 麦克风观察** | 画面变暗或无人 → 角色逐渐不耐烦再到暴怒；呻吟分级：普通呻吟小幅加码、惨叫立即收敛 |
 | 🤖 | **自动运行（Autopilot）** | 不需要打字，按间隔自动循环观察-描写-动作-发言；传感器跟随启停 |
 | 🎛️ | **手动控制台** | A/B 双通道独立控制：保持强度、增减、清除、24 种内置波形（可循环）；通道开关与强度上限（1–200，默认 100） |
-| 🗺️ | **紫金地牢（Dungeon）** | 玩法重做中，暂不随版本发布 |
+| 🗺️ | **紫金地牢 demo** | 引擎随主程序；剧情包走 DLC（zijin-demo zip） |
 | 🌐 | **中英一键切换** | 聊天栏上方的 ZH / EN 入口；界面与角色内容同步切英文 |
 | 🛡️ | **多层安全** | 强度上限、单指令步长 ≤40、中继 / App 断连自动清零、急停（按钮 / 长按空格 1 秒） |
 | 🧩 | **内容即装即用** | 内置体验版（中英）；正式角色经 DLC 大包在程序内一键导入（见「内容清单」） |
@@ -60,19 +66,22 @@
 | 内容 | 分发形态 | 语言 |
 |---|---|---|
 | 体验版（触手 · 纯爱向） | ✅ 内置主包（content/pure） | 中文 + 英文 |
-| 触手 / 品评会 / 哥布林 / 史莱姆 / 蛛后（正式角色稿） | DLC-zh 大包（R18，自行导入） | 中文 |
+| 触手 / 品评会（正式角色稿） | DLC-zh 大包（R18，自行导入） | 中文 |
 | 上述正式角色稿的英文版 | DLC-en 大包（自行导入） | 英文 |
+| 紫金地牢 demo（剧情包） | DLC `Coyote-in-Cradle-DLC-zijin-demo.zip` | 中文 |
 
 > 正式角色稿（`content/roles`）与地牢主题包属 R18 内容：**主仓库与主发布包一律不含**，请通过作者渠道的 DLC 大包获得并自行导入。
 
-### 安装 DLC（正式角色，R18）
+### 安装 DLC（正式角色 / 地牢剧情包，R18）
 
-1. 到 **AI-for-Coyote-DLC** 仓库 Releases 下载 `Coyote-in-Cradle-DLC-zh-*.zip`（中文正式角色）或 `Coyote-in-Cradle-DLC-en-*.zip`（英文稿）：
+1. 到 **AI-for-Coyote-DLC** 仓库 Releases 下载需要的包：
+   - 角色：`Coyote-in-Cradle-DLC-zh-*.zip` / `Coyote-in-Cradle-DLC-en-*.zip`
+   - 地牢：`Coyote-in-Cradle-DLC-zijin-demo.zip`（紫金地牢 demo 剧情）
    👉 **<https://github.com/indhg/AI-for-Coyote-DLC/releases>**
 2. 打开程序 → 侧边栏底部 **「内容 / 语言包」→ 选择 zip 并安装**，自动合并进 `content/` 即时生效；
 3. 或手动解压，把 zip 内 `content/…` 合并到程序目录的 `content/` 后重启。
 
-> 地牢玩法正在重做（新世界观看板中），暂不随版本发布。
+> 紫金地牢：**引擎在主程序**；**剧情文本只走 DLC**（导入后出现大厅「紫金地牢 demo」）。
 
 **运行链路**
 
@@ -216,7 +225,7 @@ AI-for-Coyote\
 ├── packaging\            打包脚本（免装 zip + Inno Setup 安装器）
 ├── relay\                dglab-websocket-server（Bun，v4 端口 9998，GPL-3.0 第三方组件）
 ├── config\               示例配置 / waveforms.yaml 波形库
-├── content\              本地内容目录（**不入库、不进主发布包**）：pure\ 纯爱体验版（CN+EN，随主包内置）；roles\ 正式角色稿（R18，经 DLC-zh 导入后出现）；pack\ 地牢素材（玩法重做中）
+├── content\              本地内容目录（**不入库、不进主发布包**）：pure\ 纯爱体验版（CN+EN，随主包内置）；roles\ 正式角色稿（R18，经 DLC-zh 导入后出现）；pack\ 地牢剧情包（R18，经 DLC-zijin-demo 导入；不入库）
 ├── logs\                 运行日志
 └── start.bat             一键启动
 ```
@@ -235,7 +244,7 @@ AI-for-Coyote\
 
 **进行中**
 
-- 地牢玩法全套重做（新世界观 / 三轴系统 / 事件与语料产出中，旧主题包已废弃归档）；
+- 紫金地牢 demo 已可玩（引擎主仓 + 剧情 DLC）；继续打磨中；
 - DLC 内容渠道运营（zh / en 大包随主版本同步更新）。
 
 **计划**
@@ -257,13 +266,15 @@ AI-for-Coyote\
 
 ## 📜 许可证
 
-- 本仓库为作者原创，采用**「可分享 · 禁商用」许可**（见 [LICENSE](LICENSE)）：允许免费使用、修改与自由转发分享（保留许可声明与作者署名），**禁止任何盈利目的的分发、转售与收费**；商用授权请联系作者；
-- `relay/` 源自 [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0），作为独立第三方组件随包分发（见 `relay/LICENSE`）；
+- 本仓库为作者原创，采用 **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)**（见 [LICENSE](LICENSE)）：可免费使用、修改与分享，**须署名**，**禁止商业性使用**；完整条款以 LICENSE 内法律文本为准；
+- `relay/` 源自 [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0），作为独立第三方组件随包分发（见 `relay/LICENSE`），不受本仓库 CC 条款约束；
 - 角色稿与主题包内容版权归作者，仅通过作者渠道获得并自行导入；本 GitHub 仓库托管代码主体，不含任何内容文件。
 
 ## 🙏 致谢与联系
 
 - 作者推特：<https://x.com/cinnanirch>（支持请去点个关注喵～）
+- **自愿打赏（爱发电）**：👉 <https://ifdian.net/a/cinnanirch>  
+  完全自愿；**不解锁任何功能 / 更新 / DLC**，软件与内容仍按许可证免费使用与分享。打赏用于作者维护、真机测试与基础设施等（感谢你的支持喵～）
 - 中继协议与上游：[dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)
 - 问题反馈 / 建议：GitHub [Issues](https://github.com/indhg/AI-for-Coyote/issues) / [Discussions](https://github.com/indhg/AI-for-Coyote/discussions)
 
@@ -281,7 +292,14 @@ AI-for-Coyote\
 |---|---|---|
 | 🖥️ **PC (Windows)** | 👉 <https://github.com/indhg/AI-for-Coyote/releases/latest> | `Coyote-in-Cradle-setup-v*.exe`（installer）or the portable zip; see “Quick start” below |
 | 📱 **Android** | 👉 <https://github.com/indhg/Coyote-in-Cradle-Android/releases/latest> | `Coyote-in-Cradle-*-release.apk`; standalone app, BLE direct to the Coyote — no PC or relay needed |
-| 🧩 **DLC content (R18, install yourself)** | 👉 <https://github.com/indhg/AI-for-Coyote-DLC/releases> | Official-character zh / en packs, not shipped with the main build; import in-app via “Content / language packs” |
+| 🧩 **DLC content (R18, install yourself)** | 👉 <https://github.com/indhg/AI-for-Coyote-DLC/releases> | Official characters + **Violet Dungeon demo** story pack; import in-app via “Content / language packs” |
+| 🗺️ **Violet Dungeon demo** | 👉 <https://github.com/indhg/AI-for-Coyote-DLC/releases> → `Coyote-in-Cradle-DLC-zijin-demo.zip` | Installs to `content/pack/dungeon/zijin/`; needs a build with dungeon_v2 |
+
+### ☕ Voluntary tips
+
+If you like this project, you can optionally support the author on Afdian / 爱发电:
+
+👉 **<https://ifdian.net/a/cinnanirch>**
 
 ---
 
@@ -323,19 +341,22 @@ Content ships in two tiers:
 | Content | Distribution | Language |
 |---|---|---|
 | Trial（Tentacle · pure-love sample） | ✅ Built in（content/pure） | Chinese + English |
-| Tentacle / Appraisal / Goblin / Slime / Arachne（official scripts） | DLC-zh pack（R18, install it yourself） | Chinese |
+| Tentacle / Appraisal（official scripts） | DLC-zh pack（R18, install it yourself） | Chinese |
 | English versions of the official scripts above | DLC-en pack（install it yourself） | English |
+| Violet Dungeon demo（story pack） | DLC `Coyote-in-Cradle-DLC-zijin-demo.zip` | Chinese |
 
 > Official scripts（`content/roles`）and dungeon theme packs are R18 material: **neither this repo nor the main release contains them** — get them from the author's DLC packs and install them yourself.
 
-### Installing DLC（official characters, R18）
+### Installing DLC（characters / dungeon story, R18）
 
-1. Grab `Coyote-in-Cradle-DLC-zh-*.zip`（Chinese official characters）or `Coyote-in-Cradle-DLC-en-*.zip`（English scripts）from the **AI-for-Coyote-DLC** repo Releases:
+1. From **AI-for-Coyote-DLC** Releases grab what you need:
+   - Characters: `Coyote-in-Cradle-DLC-zh-*.zip` / `Coyote-in-Cradle-DLC-en-*.zip`
+   - Dungeon: `Coyote-in-Cradle-DLC-zijin-demo.zip`（Violet Dungeon demo story pack）
    👉 **<https://github.com/indhg/AI-for-Coyote-DLC/releases>**
-2. Open the app → sidebar footer **「Content / language packs」→ pick the zip and install** — files are merged into `content/` and take effect immediately;
-3. Or unzip manually and merge the `content/…` folder into the app's `content/`, then restart.
+2. Open the app → sidebar footer **「Content / language packs」→ pick the zip and install** — merged into `content/` immediately;
+3. Or unzip manually and merge `content/…` into the app's `content/`, then restart.
 
-> The dungeon is being rebuilt（new world-design board in progress）— not shipped with current releases.
+> Violet Dungeon: **engine in the main app**; **story text only via DLC** (lobby shows “紫金地牢 demo” after install).
 
 **Runtime chain**
 
@@ -469,7 +490,7 @@ AI-for-Coyote\
 ├── packaging\            Packaging scripts（portable zip + Inno Setup installer）
 ├── relay\                dglab-websocket-server（Bun, v4 on 9998; GPL-3.0 third-party）
 ├── config\               Example configs + waveforms.yaml
-├── content\               Local content dir（**not in this repo, not in the main release**）: pure\ Trial（CN+EN, shipped）; roles\ official scripts（R18, appear after installing DLC-zh）; pack\ dungeon material（being rebuilt）
+├── content\               Local content dir（**not in this repo, not in the main release**）: pure\ Trial（CN+EN, shipped）; roles\ official scripts（R18, appear after installing DLC-zh）; pack\ dungeon story pack（R18, via DLC-zijin-demo; not in git）
 ├── logs\                 Runtime logs
 └── start.bat             One-click startup
 ```
@@ -484,7 +505,7 @@ AI-for-Coyote\
 
 **In progress**
 
-- Full dungeon rebuild（new world-design / three-axis system; event & corpus production in progress; old theme packs archived）;
+- Violet Dungeon demo playable (engine in main repo + story DLC); still being polished;
 - DLC channel operation（zh / en packs stay in sync with main releases）.
 
 **Planned**
@@ -499,13 +520,15 @@ For **adults only**, for personal entertainment under **voluntary, informed, and
 
 ## 📜 License
 
-- The repository is the author's original work under a **“Free-Share, Non-Commercial” license** (see [LICENSE](LICENSE)): free personal use, modification and redistribution are allowed as long as this license notice and the author credit are kept; **any profit-driven distribution, resale or paid hosting is prohibited**. Commercial licensing — contact the author;
-- `relay/` originates from [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0）, shipped as an independent third-party component（`relay/LICENSE`）;
+- The repository is the author's original work under **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** (see [LICENSE](LICENSE)): you may use, modify and share it for free with **attribution**, for **NonCommercial** purposes only. The LICENSE file contains the full legal text;
+- `relay/` originates from [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)（GPL-3.0）, shipped as an independent third-party component（`relay/LICENSE`）and is not covered by this repo's CC terms;
 - Character scripts and theme-pack content belong to the author and are obtained only through the author's channels, then imported by yourself; this GitHub repo hosts the code base and contains no content files.
 
 ## 🙏 Thanks & contact
 
 - Author on X（Twitter）: <https://x.com/cinnanirch>
+- **Voluntary tips (Afdian / 爱发电)**: 👉 <https://ifdian.net/a/cinnanirch>  
+  Entirely optional — **does not unlock features, updates, or DLC**. The software stays free to use and share under the license. Tips help with maintenance, device testing, and infrastructure. Thank you!
 - Relay protocol & upstream: [dglab-websocket-server](https://github.com/ws94666ws/dglab-websocket-server)
 - Bugs / ideas: GitHub [Issues](https://github.com/indhg/AI-for-Coyote/issues) / [Discussions](https://github.com/indhg/AI-for-Coyote/discussions)
 

@@ -1,0 +1,42 @@
+{
+  "id": "E007",
+  "title": "湿热巢 · 哥布林群",
+  "band": "upper",
+  "room": "encounter",
+  "kind": "scene",
+  "intensity": "medium-high",
+  "species": "哥布林",
+  "trigger": "石阶到了底，热气扑在脸上——巢里全是手印。",
+  "seed": "你走下最后一级，热气糊在了脸上。五只哥布林从四面八方冒了出来，最短的那只先摸上了你的腿，手热得发黏。你往后一退，踩进了一滩滑液，脚踝被两只手攥住了。你踢开了一只，另一只已经钻进了你两腿之间，短硬的东西抵着你的穴口乱撞。它们不说话，轮流压你的肩、掰你的膝，把你按成了挨塞的姿势。一只顶了进来，又短又急，你的腰被按得贴着地。淫纹在发烫，穴里在往外湿。你听见外面有脚步声，不是你的，也不是它们的。它们还没用完你。外面那脚步，你是喊，还是不喊。",
+  "checks": ["dex", "str"],
+  "settlement": ["yield", "defeat", "escape"],
+  "choices": [
+    {
+      "label": "缩起身子硬挨到它们完",
+      "settlement": "yield",
+      "effects": {"yin_hua": 8, "ma": 15},
+      "next": "E008",
+      "exit": "它们完事散开了，你从巢里爬了出来。",
+      "estop_overrides": true
+    },
+    {
+      "label": "喊出声",
+      "settlement": "defeat",
+      "effects": {"ma": 3, "hp": -1},
+      "next": "E009",
+      "exit": "外面那脚步停了一瞬，然后朝着你过来了——不是救兵。",
+      "note": "增援机制：出声引来游荡魔物"
+    },
+    {
+      "label": "抢它们换手的空当爬出去",
+      "require": {"dex": 10},
+      "settlement": "escape",
+      "effects": {"dex": 1},
+      "next": "E006",
+      "fail": {"choice": 1},
+      "exit": "你从三条腿之间滚了出去，跑回了石阶。"
+    }
+  ],
+  "feedback": "持续；群攻=交替给动作，不叠破上限",
+  "flags": {"reinforcement": "下一遭遇变双体或换更重房间"}
+}

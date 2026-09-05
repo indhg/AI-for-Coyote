@@ -1,0 +1,34 @@
+{
+  "id": "E016",
+  "title": "骰子宝藏",
+  "band": "mid",
+  "room": "treasure",
+  "kind": "scene",
+  "intensity": "low",
+  "species": "无",
+  "trigger": "放回晶石，或者顺着墙缝的冷光再往里摸——一束光从缝里漏出来。",
+  "seed": "你退了一步，脚后跟踢到一点凉的东西。墙缝里卡着一只小木匣，比石匣还小，开着一道缝，冷光从里面漏出来。你把它抠出来，匣盖自己弹开——里面躺着一颗骰子。它没有固定的面，光在棱上流，像在数你的运气。骰子贴着手心发烫。你小腹的淫纹跟着跳了一下，像认出了它。是拿走，还是放回去。",
+  "checks": [],
+  "settlement": ["take", "leave"],
+  "choices": [
+    {
+      "label": "把它攥进手里",
+      "settlement": "take",
+      "effects": {"dice_gain": true, "visit_n_eq": 1},
+      "next": "E006",
+      "exit": "骰子在你手里稳了下来，沉甸甸的，像把命运也攥住了。",
+      "note": "随机抽 d4/d6/ed6 换进骰子栏，替换当前（仅首次）"
+    },
+    {
+      "label": "放回去",
+      "settlement": "leave",
+      "next": "E006",
+      "exit": "匣盖合上，冷光灭了，你退回了祭坛的方向。"
+    }
+  ],
+  "feedback": "停顿",
+  "variants": [
+    "木匣还卡在墙缝里，盖子开着，空了。那束冷光也没了。你的骰子还在兜里发着热。"
+  ],
+  "note": "骰子宝藏（见 S4）。dice_gain = run RNG 从 d4/d6/ed6 抽一颗换上，visit_n_eq:1 仅首次；重访匣空走 v2。"
+}

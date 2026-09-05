@@ -99,10 +99,10 @@ README_TXT = """Coyote in Cradle v{version}（绿色免装版）
 选择 zip 并安装」一键导入（或解压合并 content/roles 到本目录后重启）。
 纯爱体验版自带中英文稿（聊天栏 ZH / EN 一键切换）；正式角色的英文稿见
 「Coyote-in-Cradle-DLC-en-*.zip」。
-（地牢玩法重做中，暂不随版本发布。）
+主包已含地牢引擎（dungeon_v2 +「深渊剖面」地图）；紫金地牢剧情包请下载 Coyote-in-Cradle-DLC-zijin-demo.zip，在程序侧边栏「内容 / 语言包」导入。
 
 【许可】
-本软件为作者原创的专有软件（All Rights Reserved），未授权任何渠道转载、倒卖与二次分发。
+本软件以 Creative Commons Attribution-NonCommercial 4.0 International （CC BY-NC 4.0）授权，详见本目录 LICENSE。
 中继基于 dglab-websocket-server（GPL-3.0），作为独立第三方组件分发，见 relay\\LICENSE。
 """
 
